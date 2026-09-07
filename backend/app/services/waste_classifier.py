@@ -92,6 +92,18 @@ class WasteClassifier:
 
         return matched_category or "other"
 
+    def classify_with_confidence(self, description: str) -> tuple[str, float]:
+        """Return the baseline prediction and an evidence-based confidence."""
+        if not description or not description.strip():
+            return "other", 0.0
+
+        text = description.lower().strip()
+        matched_category = self._find_category(text)
+        if matched_category is None:
+            return "other", 0.2
+
+        return matched_category, 0.9
+
     def _find_category(self, text: str) -> str | None:
         """
         Find the first matching waste category.

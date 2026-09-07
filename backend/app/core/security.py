@@ -6,13 +6,14 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from app.core.config import SECRET_KEY
+from app.core.config import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    JWT_ALGORITHM,
+    SECRET_KEY,
+)
+from app.core.roles import RoleID
 from app.db.database import get_db
 from app.models.user import User
-
-
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 pwd_context = CryptContext(
@@ -50,7 +51,7 @@ def create_access_token(
     return jwt.encode(
         payload,
         SECRET_KEY,
-        algorithm=ALGORITHM,
+        algorithm=JWT_ALGORITHM,
     )
 
 
@@ -73,7 +74,7 @@ def get_current_user(
         payload = jwt.decode(
             token,
             SECRET_KEY,
-            algorithms=[ALGORITHM],
+            algorithms=[JWT_ALGORITHM],
         )
 
         user_id = payload.get("sub")
@@ -86,7 +87,14 @@ def get_current_user(
     except (JWTError, ValueError):
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == user_id,
+            User.is_active.is_(True),
+        )
+        .first()
+    )
 
     if user is None:
         raise credentials_exception
@@ -94,11 +102,28 @@ def get_current_user(
     return user
 
 
-def require_role(required_role_id: int):
+def require_role(required_role_id: int | RoleID):
     def role_checker(
         current_user: User = Depends(get_current_user),
     ) -> User:
         if current_user.role_id != required_role_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+
+        return current_user
+
+    return role_checker
+
+
+def require_roles(*required_role_ids: int | RoleID):
+    allowed_roles = {int(role_id) for role_id in required_role_ids}
+
+    def role_checker(
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        if current_user.role_id not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

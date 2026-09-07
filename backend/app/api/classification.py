@@ -42,11 +42,9 @@ def classify_waste_report(
             detail="Waste report not found",
         )
 
-    predicted_type = classifier.classify(
+    predicted_type, confidence = classifier.classify_with_confidence(
         report.description
     )
-
-    confidence = 0.85
 
     report.ai_waste_type = predicted_type
     report.ai_confidence = confidence

@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.roles import RoleID
 from app.core.security import get_current_user, require_role
 from app.db.database import get_db
 from app.models.collection import WasteCollection
@@ -13,6 +12,7 @@ from app.schemas.collection import (
     CollectionResponse,
     CollectionStatusUpdate,
 )
+from app.services.collection_service import update_collection_status
 
 
 router = APIRouter(
@@ -27,7 +27,7 @@ router = APIRouter(
 )
 def create_collection(
     collection_data: CollectionCreate,
-    current_user: User = Depends(require_role(4)),
+    current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
     report = (
@@ -62,7 +62,7 @@ def create_collection(
             db.query(User)
             .filter(
                 User.id == collection_data.collector_id,
-                User.role_id == 6,
+                User.role_id == int(RoleID.COLLECTOR),
             )
             .first()
         )
@@ -116,7 +116,7 @@ def get_my_collections(
     response_model=list[CollectionResponse],
 )
 def get_all_collections(
-    current_user: User = Depends(require_role(4)),
+    current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
     collections = (
@@ -138,19 +138,6 @@ def update_collection_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    allowed_statuses = {
-        "assigned",
-        "in_progress",
-        "collected",
-        "cancelled",
-    }
-
-    if status_data.status not in allowed_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid collection status",
-        )
-
     collection = (
         db.query(WasteCollection)
         .filter(WasteCollection.id == collection_id)
@@ -163,9 +150,9 @@ def update_collection_status(
             detail="Collection not found",
         )
 
-    is_admin = current_user.role_id == 4
+    is_admin = current_user.role_id == int(RoleID.ADMIN)
     is_assigned_collector = (
-        current_user.role_id == 6
+        current_user.role_id == int(RoleID.COLLECTOR)
         and collection.collector_id == current_user.id
     )
 
@@ -175,11 +162,15 @@ def update_collection_status(
             detail="Insufficient permissions",
         )
 
-    collection.status = status_data.status
+    try:
+        update_collection_status(collection, status_data.status)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
 
-    if status_data.status == "collected":
-        collection.collected_at = datetime.now(timezone.utc)
-
+    if collection.status == "collected":
         report = (
             db.query(WasteReport)
             .filter(

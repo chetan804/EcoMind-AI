@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from app.core.security import get_current_user
+
+from app.core.roles import RoleID
+from app.core.security import get_current_user, hash_password, require_role
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
-from app.core.security import hash_password
-from app.core.security import get_current_user, hash_password, require_role
 
 router = APIRouter(
     prefix="/users",
@@ -18,17 +19,37 @@ def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
 ):
+    if user_data.role_id not in (None, int(RoleID.CITIZEN)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Public registration is limited to citizens",
+        )
+
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email is already registered",
+        )
+
     hashed_password = hash_password(user_data.password)
 
     user = User(
         name=user_data.name,
         email=user_data.email,
         password_hash=hashed_password,
-        role_id=user_data.role_id,
+        role_id=int(RoleID.CITIZEN),
     )
 
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email is already registered",
+        )
     db.refresh(user)
 
     return user
@@ -41,7 +62,7 @@ def get_my_profile(
 
 @router.get("/admin-test")
 def admin_test(
-    current_user: User = Depends(require_role(4)),
+    current_user: User = Depends(require_role(RoleID.ADMIN)),
 ):
     return {
         "message": "Admin access granted",

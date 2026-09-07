@@ -43,6 +43,10 @@ class WasteReport(Base):
         nullable=False,
     )
 
+    latitude = Column(Float, nullable=True)
+
+    longitude = Column(Float, nullable=True)
+
     status = Column(
         String(30),
         nullable=False,
@@ -62,6 +66,13 @@ class WasteReport(Base):
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
+        nullable=False,
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
 

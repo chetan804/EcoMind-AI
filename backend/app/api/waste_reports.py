@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import sqlalchemy
 from sqlalchemy.orm import Session
 
+from app.core.roles import RoleID
 from app.core.security import get_current_user, require_role
 from app.db.database import get_db
 from app.models.user import User
@@ -10,6 +11,7 @@ from app.schemas.waste_report import (
     WasteReportCreate,
     WasteReportResponse,
 )
+from app.services.reward_service import award_points
 
 
 router = APIRouter(
@@ -32,9 +34,18 @@ def create_waste_report(
         waste_type=report_data.waste_type,
         description=report_data.description,
         location=report_data.location,
+        latitude=report_data.latitude,
+        longitude=report_data.longitude,
     )
 
     db.add(report)
+    db.flush()
+    award_points(
+        db,
+        current_user.id,
+        "report_submitted",
+        f"waste_report:{report.id}",
+    )
     db.commit()
     db.refresh(report)
 
@@ -64,7 +75,7 @@ def get_my_waste_reports(
     response_model=list[WasteReportResponse],
 )
 def get_all_waste_reports(
-    current_user: User = Depends(require_role(4)),
+    current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
     reports = (
@@ -82,7 +93,7 @@ def get_all_waste_reports(
 def update_report_status(
     report_id: int,
     new_status: str,
-    current_user: User = Depends(require_role(4)),
+    current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
     allowed_statuses = {

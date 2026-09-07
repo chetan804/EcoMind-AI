@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -10,7 +11,12 @@ class CollectionCreate(BaseModel):
 
 
 class CollectionStatusUpdate(BaseModel):
-    status: str
+    status: Literal[
+        "assigned",
+        "in_progress",
+        "collected",
+        "cancelled",
+    ]
 
 
 class CollectionResponse(BaseModel):

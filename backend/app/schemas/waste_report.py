@@ -1,27 +1,44 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+WasteType = Literal[
+    "plastic",
+    "paper",
+    "glass",
+    "metal",
+    "organic",
+    "e-waste",
+    "other",
+]
 
 
 class WasteReportCreate(BaseModel):
-    waste_type: str
-    description: str
-    location: str
+    waste_type: WasteType
+    description: str = Field(min_length=3, max_length=5000)
+    location: str = Field(min_length=2, max_length=255)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
 class WasteReportResponse(BaseModel):
     id: int
     user_id: int
-    waste_type: str
+    waste_type: WasteType
     description: str
     location: str
+    latitude: float | None = None
+    longitude: float | None = None
     status: str
     ai_waste_type: str | None = None
     ai_confidence: float | None = None
     created_at: datetime
+    updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WasteClassificationResponse(BaseModel):

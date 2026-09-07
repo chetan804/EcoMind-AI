@@ -58,3 +58,5 @@ class WasteCollection(Base):
         "User",
         foreign_keys=[collector_id],
     )
+
+    route_stops = relationship("RouteStop", back_populates="collection")

@@ -1,11 +1,13 @@
-from pydantic import BaseModel, EmailStr
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=2, max_length=100)
     email: EmailStr
-    password: str
-    role_id: int
+    password: str = Field(min_length=8, max_length=128)
+    role_id: int | None = None
 
 
 class UserResponse(BaseModel):
@@ -13,6 +15,8 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     role_id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
