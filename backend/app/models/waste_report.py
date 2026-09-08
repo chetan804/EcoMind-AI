@@ -63,6 +63,12 @@ class WasteReport(Base):
         nullable=True,
     )
 
+    ai_model_name = Column(String(120), nullable=True)
+    ai_model_version = Column(String(50), nullable=True)
+    ai_provider = Column(String(80), nullable=True)
+    ai_inference_ms = Column(Float, nullable=True)
+    ai_created_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),

@@ -3,11 +3,16 @@ from decimal import Decimal
 
 from fastapi import HTTPException
 
+from app.ai.assistant import FallbackAssistant
+from app.ai.complaint_analyzer import KeywordComplaintAnalyzer
+from app.ai.waste_classifier import KeywordWasteClassifier
 from app.models.collection import WasteCollection
 from app.models.carbon import CarbonCredit
+from app.models.municipality import Municipality, ServiceArea
 from app.models.waste_report import WasteReport
 from app.services.carbon_service import purchase_credit
 from app.services.collection_service import update_collection_status
+from app.services.municipality_service import build_municipality_summary
 from app.services.route_optimizer import optimize_collections
 from app.services.waste_classifier import WasteClassifier
 
@@ -26,6 +31,35 @@ class WasteClassifierTests(unittest.TestCase):
         )
 
         self.assertEqual(prediction, ("other", 0.2))
+
+    def test_prediction_contains_model_traceability(self):
+        prediction = KeywordWasteClassifier().predict("paper carton")
+
+        self.assertEqual(prediction.label, "paper")
+        self.assertEqual(prediction.model_name, "keyword-waste-classifier")
+        self.assertEqual(prediction.model_version, "1.0.0")
+        self.assertGreaterEqual(prediction.inference_time_ms, 0)
+
+
+class AIRecommendationTests(unittest.TestCase):
+    def test_complaint_analysis_recommends_hazard_priority(self):
+        analysis = KeywordComplaintAnalyzer().analyze(
+            "Chemical spill",
+            "Hazardous chemical waste reported near the road",
+        )
+
+        self.assertEqual(analysis.category, "hazardous_waste")
+        self.assertEqual(analysis.priority, "critical")
+        self.assertIn("chemical", analysis.keywords)
+
+    def test_assistant_falls_back_to_guidance(self):
+        response = FallbackAssistant().answer(
+            "How do I recycle e-waste?",
+            {"report_count": 0, "role_id": 5},
+        )
+
+        self.assertTrue(response.is_fallback)
+        self.assertIn("electronics", response.answer.lower())
 
 
 class CollectionServiceTests(unittest.TestCase):
@@ -119,6 +153,26 @@ class CarbonServiceTests(unittest.TestCase):
 
         with self.assertRaises(HTTPException):
             purchase_credit(session, 3, 1, Decimal("2.000"))
+
+
+class MunicipalityIntegrationTests(unittest.TestCase):
+    def test_municipality_summary_counts_active_service_areas(self):
+        municipality = Municipality(
+            name="Nairobi County",
+            code="NBO",
+            region="Central",
+        )
+        municipality.service_areas = [
+            ServiceArea(name="West Ward", code="WST", status="active"),
+            ServiceArea(name="East Ward", code="EST", status="inactive"),
+        ]
+
+        summary = build_municipality_summary(municipality)
+
+        self.assertEqual(summary["code"], "NBO")
+        self.assertEqual(summary["total_service_areas"], 2)
+        self.assertEqual(summary["active_service_areas"], 1)
+        self.assertEqual(summary["region"], "Central")
 
 
 if __name__ == "__main__":

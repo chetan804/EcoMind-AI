@@ -35,6 +35,11 @@ class WasteReportResponse(BaseModel):
     status: str
     ai_waste_type: str | None = None
     ai_confidence: float | None = None
+    ai_model_name: str | None = None
+    ai_model_version: str | None = None
+    ai_provider: str | None = None
+    ai_inference_ms: float | None = None
+    ai_created_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -45,3 +50,7 @@ class WasteClassificationResponse(BaseModel):
     report_id: int
     waste_type: str
     confidence: float
+    model_name: str | None = None
+    model_version: str | None = None
+    provider: str | None = None
+    inference_time_ms: float | None = None

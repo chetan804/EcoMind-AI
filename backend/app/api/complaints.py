@@ -1,6 +1,10 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.ai.complaint_analyzer import KeywordComplaintAnalyzer
+from app.models.ai_operation import AIOperationLog
 from app.core.roles import RoleID
 from app.core.security import get_current_user, require_role
 from app.db.database import get_db
@@ -18,6 +22,7 @@ from app.services.notification_service import create_notification
 
 
 router = APIRouter(prefix="/complaints", tags=["Complaints"])
+complaint_analyzer = KeywordComplaintAnalyzer()
 
 
 @router.post("/", response_model=ComplaintResponse, status_code=status.HTTP_201_CREATED)
@@ -38,12 +43,26 @@ def create_complaint(
         if report is None:
             raise HTTPException(status_code=404, detail="Waste report not found")
 
+    analysis = complaint_analyzer.analyze(
+        complaint_data.title,
+        complaint_data.description,
+    )
     complaint = Complaint(
         user_id=current_user.id,
         report_id=complaint_data.report_id,
+        title=complaint_data.title,
         description=complaint_data.description,
         location=complaint_data.location,
+        latitude=complaint_data.latitude,
+        longitude=complaint_data.longitude,
         status="submitted",
+        ai_category=analysis.category,
+        ai_priority=analysis.priority,
+        ai_keywords=json.dumps(analysis.keywords),
+        ai_confidence=analysis.confidence,
+        ai_model_name=analysis.model_name,
+        ai_model_version=analysis.model_version,
+        ai_created_at=analysis.created_at,
     )
     complaint.history.append(
         ComplaintStatusHistory(
@@ -53,6 +72,21 @@ def create_complaint(
         )
     )
     db.add(complaint)
+    db.add(
+        AIOperationLog(
+            user_id=current_user.id,
+            operation="complaint_analysis",
+            model_name=analysis.model_name,
+            model_version=analysis.model_version,
+            provider=analysis.provider,
+            input_type="text",
+            output_summary=(
+                f"category={analysis.category};priority={analysis.priority}"
+            ),
+            confidence=analysis.confidence,
+            latency_ms=analysis.inference_time_ms,
+        )
+    )
     db.commit()
     db.refresh(complaint)
     return complaint

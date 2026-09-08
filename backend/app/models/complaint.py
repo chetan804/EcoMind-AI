@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -14,8 +14,18 @@ class Complaint(Base):
     assigned_to = Column(Integer, ForeignKey("users.id"), nullable=True)
     description = Column(Text, nullable=False)
     location = Column(String(255), nullable=False)
+    title = Column(String(200), nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     status = Column(String(30), nullable=False, default="submitted")
     resolution = Column(Text, nullable=True)
+    ai_category = Column(String(50), nullable=True)
+    ai_priority = Column(String(20), nullable=True)
+    ai_keywords = Column(Text, nullable=True)
+    ai_confidence = Column(Float, nullable=True)
+    ai_model_name = Column(String(120), nullable=True)
+    ai_model_version = Column(String(50), nullable=True)
+    ai_created_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(
         DateTime(timezone=True),
