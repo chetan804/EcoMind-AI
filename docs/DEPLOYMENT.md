@@ -45,6 +45,9 @@ Before deploying beyond local evaluation, configure the following values through
 ## Operational notes
 
 - The backend runs database migrations automatically on startup.
+- `/liveness` reports process health without querying PostgreSQL. `/readiness`
+  and `/health` run a read-only database probe and return `503` when PostgreSQL
+  is unavailable.
 - The frontend is served by a static Nginx container.
 - Postgres data is persisted in the `postgres_data` Docker volume.
 - The default AI mode is the documented fallback classifier. External inference providers remain optional and should be configured intentionally.

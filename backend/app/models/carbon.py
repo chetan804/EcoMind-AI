@@ -9,7 +9,7 @@ class CarbonCredit(Base):
     __tablename__ = "carbon_credits"
 
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     amount = Column(Numeric(12, 3), nullable=False)
     source = Column(String(100), nullable=False)
     status = Column(String(30), nullable=False, default="available")

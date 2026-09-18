@@ -10,7 +10,7 @@ class AIOperationLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    operation = Column(String(80), nullable=False)
+    operation = Column(String(80), nullable=False, index=True)
     model_name = Column(String(120), nullable=False)
     model_version = Column(String(50), nullable=False)
     provider = Column(String(80), nullable=False)

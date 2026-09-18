@@ -35,6 +35,11 @@ class Municipality(Base):
         cascade="all, delete-orphan",
     )
 
+    __table_args__ = (
+        UniqueConstraint("code", name="municipalities_code_key"),
+        UniqueConstraint("external_id", name="municipalities_external_id_key"),
+    )
+
 
 class ServiceArea(Base):
     __tablename__ = "service_areas"

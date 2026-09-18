@@ -7,7 +7,6 @@ from uuid import uuid4
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
 from sqlalchemy.exc import DataError, IntegrityError
 from jose import JWTError, jwt
 
@@ -22,6 +21,7 @@ from app.core.config import (
 )
 from app.db.database import engine
 from app.db.database import SessionLocal
+from app.core.health import database_is_available
 from app.models.user import User
 from app.realtime import manager
 
@@ -190,11 +190,7 @@ def root():
 
 @app.get("/health", tags=["System"])
 def health_check():
-    try:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-    except Exception:
-        logger.exception("Database health check failed")
+    if not database_is_available(engine):
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"status": "degraded", "database": "unavailable"},
@@ -214,10 +210,7 @@ def liveness_check():
 
 @app.get("/readiness", tags=["System"])
 def readiness_check():
-    try:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-    except Exception:
+    if not database_is_available(engine):
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"status": "not_ready", "database": "unavailable"},

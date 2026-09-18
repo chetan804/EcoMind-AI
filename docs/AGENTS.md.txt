@@ -1,0 +1,431 @@
+# EcoMind-AI — Codex Development Instructions
+
+## 1. Project Identity
+
+Project name: EcoMind-AI
+
+EcoMind-AI is a modular AI-powered application designed as a scalable
+full-stack system with a FastAPI backend, React frontend, PostgreSQL
+database, authentication, authorization, AI services, workflow
+management, and human-in-the-loop controls.
+
+The architecture defined in this repository is authoritative.
+
+DO NOT redesign the architecture unless explicitly instructed by the user.
+
+DO NOT replace technologies without explicit user approval.
+
+DO NOT introduce unnecessary frameworks or dependencies.
+
+---
+
+## 2. Technology Stack
+
+### Backend
+
+- Python
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- Alembic
+- Pydantic
+- JWT authentication
+- Role-based access control
+- pytest
+
+### Frontend
+
+- React
+- TypeScript
+- modern component architecture
+- API-based communication with FastAPI
+
+### Database
+
+- PostgreSQL
+- SQLAlchemy models
+- Alembic migrations
+
+### Development
+
+- Git
+- GitHub
+- environment variables
+- virtual environment
+
+---
+
+## 3. Architecture Rules
+
+Use a modular architecture.
+
+Backend responsibilities must remain separated into:
+
+- API/routes
+- schemas
+- models
+- services
+- repositories where required
+- core configuration
+- authentication/security
+- database
+- AI/agent functionality
+- utilities
+
+Do not place business logic directly inside route handlers when it
+belongs in a service.
+
+Do not place database queries throughout unrelated modules.
+
+Keep responsibilities separated.
+
+---
+
+## 4. Authentication
+
+Authentication must use JWT-based authentication.
+
+Authentication responsibilities include:
+
+- user registration
+- user login
+- password hashing
+- password verification
+- token generation
+- token validation
+- authenticated-user retrieval
+
+Never store plaintext passwords.
+
+Never expose password hashes through API responses.
+
+Never hardcode secrets.
+
+Secrets must come from environment variables.
+
+---
+
+## 5. Authorization
+
+EcoMind-AI uses role-based access control.
+
+Roles and permissions must be implemented separately from authentication.
+
+Authentication answers:
+
+"Who is this user?"
+
+Authorization answers:
+
+"What is this user allowed to do?"
+
+Do not mix these responsibilities.
+
+---
+
+## 6. Database
+
+PostgreSQL is the authoritative relational database.
+
+SQLAlchemy is the ORM.
+
+Alembic is the migration system.
+
+Database schema changes must be represented through migrations.
+
+Never manually modify production database structure without a migration.
+
+Every new database model must include:
+
+- SQLAlchemy model
+- appropriate relationships
+- appropriate indexes
+- appropriate constraints
+- migration
+- tests where applicable
+
+---
+
+## 7. API Design
+
+Use RESTful API conventions.
+
+Routes should be organized by domain.
+
+Use:
+
+- appropriate HTTP methods
+- appropriate status codes
+- Pydantic request schemas
+- Pydantic response schemas
+- consistent error responses
+
+Do not expose internal database models directly as API contracts.
+
+---
+
+## 8. AI Architecture
+
+AI functionality must remain modular.
+
+AI providers must not be hardcoded throughout the application.
+
+AI functionality should be accessed through service abstractions.
+
+The AI layer must be replaceable.
+
+Do not couple database logic directly to an AI provider.
+
+Do not place AI business logic directly inside API route functions.
+
+---
+
+## 9. Human-in-the-Loop
+
+Where an AI operation can create an important project change,
+require explicit human approval when defined by the application workflow.
+
+AI must not silently perform destructive or irreversible operations.
+
+Approval state must be represented explicitly.
+
+---
+
+## 10. Configuration
+
+All environment-specific configuration must be externalized.
+
+Use environment variables.
+
+Never commit:
+
+- passwords
+- API keys
+- JWT secrets
+- database credentials
+- private tokens
+
+Maintain an appropriate `.env.example`.
+
+---
+
+## 11. Error Handling
+
+Use predictable and consistent error handling.
+
+Do not silently swallow exceptions.
+
+Do not use broad exception handling unless necessary.
+
+Log useful diagnostic information without exposing secrets.
+
+---
+
+## 12. Testing
+
+Every implemented module must have appropriate tests.
+
+At minimum test:
+
+- successful behavior
+- invalid input
+- authentication failures
+- authorization failures
+- database constraints
+- important edge cases
+
+Do not declare a feature complete until tests have been run.
+
+---
+
+## 13. Git Rules
+
+Before modifying files:
+
+1. Inspect the current repository state.
+2. Inspect relevant existing files.
+3. Understand the existing architecture.
+4. Do not overwrite working code unnecessarily.
+
+After implementation:
+
+1. Run tests.
+2. Run formatting/linting if configured.
+3. Inspect git diff.
+4. Inspect git status.
+5. Fix issues.
+6. Commit the completed change.
+
+Do not amend existing commits unless explicitly instructed.
+
+Do not delete existing work without explicit approval.
+
+Do not create unnecessary branches.
+
+Use meaningful commit messages.
+
+---
+
+## 14. Dependency Rules
+
+Before adding a dependency:
+
+1. Check whether the functionality already exists.
+2. Check whether an existing dependency can provide it.
+3. Only add a new dependency when justified.
+
+Do not add packages merely for convenience.
+
+After adding a dependency, update the appropriate dependency file.
+
+---
+
+## 15. File Modification Rules
+
+Before creating a new file:
+
+- check whether an equivalent file already exists.
+
+Before modifying a file:
+
+- inspect the existing implementation.
+
+Do not duplicate functionality.
+
+Do not create multiple competing implementations of the same feature.
+
+---
+
+## 16. Frontend Rules
+
+Keep frontend code modular.
+
+Separate:
+
+- pages
+- components
+- API clients
+- authentication state
+- reusable UI
+- domain-specific logic
+
+Do not duplicate API request logic across components.
+
+Use a centralized API communication layer.
+
+---
+
+## 17. Documentation
+
+Documentation must describe the actual implementation.
+
+Do not document features that do not exist.
+
+Update documentation when architecture or APIs change.
+
+Important architectural decisions must be documented.
+
+---
+
+## 18. Development Workflow
+
+Implement the project in dependency order.
+
+Do not skip ahead to later modules.
+
+Complete each module before starting dependent modules.
+
+Each module must pass its validation before moving forward.
+
+The implementation order is:
+
+1. Repository verification
+2. Project documentation
+3. Backend foundation
+4. Database foundation
+5. Roles
+6. Users
+7. Authentication
+8. Authorization
+9. Core API infrastructure
+10. Frontend foundation
+11. Frontend authentication
+12. Dashboard/application shell
+13. Core EcoMind domain modules
+14. AI service layer
+15. AI workflows/agents
+16. Human-in-the-loop workflow
+17. Integration
+18. Testing
+19. Security hardening
+20. Documentation
+21. Deployment preparation
+
+---
+
+## 19. Critical Rule
+
+DO NOT make architectural changes simply because another approach
+appears easier during implementation.
+
+If an existing implementation conflicts with this specification:
+
+STOP.
+
+Explain the conflict.
+
+Do not silently redesign the system.
+
+---
+
+## 20. Completion Rule
+
+A module is complete only when:
+
+- implementation exists
+- relevant tests exist
+- tests pass
+- no obvious regressions exist
+- documentation is updated where required
+- git diff has been inspected
+- git status is understood
+- the change has been committed
+
+Do not claim a module is complete merely because files were created.
+
+---
+
+## 21. Communication Rule
+
+For every task:
+
+1. Explain what you are going to inspect.
+2. Inspect before editing.
+3. Make the smallest coherent change.
+4. Run validation.
+5. Report files changed.
+6. Report tests executed.
+7. Report remaining issues.
+
+Do not make unrelated improvements.
+
+Do not refactor unrelated code during feature implementation.
+
+---
+
+## 22. User Approval Rule
+
+If a task requires:
+
+- architecture changes
+- database redesign
+- technology replacement
+- deletion of major functionality
+- destructive database operations
+- security-sensitive changes
+- production deployment changes
+
+STOP and ask for explicit approval.
+
+For normal implementation within the approved architecture,
+proceed without unnecessary questions.
