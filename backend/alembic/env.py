@@ -12,10 +12,7 @@ from alembic import context
 
 from app.core.config import DATABASE_URL
 from app.db.database import Base
-from app.models.role import Role
-from app.models.user import User
-from app.models.waste_report import WasteReport
-from app.models.collection import WasteCollection
+import app.models  # noqa: F401
 
 
 config = context.config

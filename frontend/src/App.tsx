@@ -3,9 +3,10 @@ import type { FormEvent, ReactNode } from 'react'
 import { BrowserRouter, Link, NavLink, Outlet, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 import { trackEvent } from './analytics'
+import { api, API_URL } from './services/api'
 
 type Role = 'Admin' | 'Citizen' | 'Collector'
-type View = 'overview' | 'reports' | 'create-report' | 'collections' | 'routes' | 'notifications'
+type View = 'overview' | 'reports' | 'create-report' | 'collections' | 'routes' | 'complaints' | 'create-complaint' | 'notifications'
 
 type Profile = { id: number; name: string; email: string; role_id: number }
 type Report = {
@@ -20,6 +21,7 @@ type Report = {
 type Collection = { id: number; report_id: number; status: string; scheduled_at?: string }
 type Route = { id: number; status: string; estimated_distance_km: number; stops: { id: number }[] }
 type Notification = { id: number; title: string; message: string; read_at?: string }
+type Complaint = { id: number; title?: string; description: string; location: string; status: string; ai_priority?: string }
 
 type DashboardStats = {
   total_users: number
@@ -39,10 +41,10 @@ type DashboardData = {
   collections?: Collection[]
   routes?: Route[]
   notifications?: Notification[]
+  complaints?: Complaint[]
   points?: number
 }
 
-const API_URL = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const roleNames: Record<number, Role> = { 4: 'Admin', 5: 'Citizen', 6: 'Collector' }
 
 function usePageMeta(title: string, description: string) {
@@ -61,18 +63,6 @@ function usePageMeta(title: string, description: string) {
       metaOgDescription.setAttribute('content', description)
     }
   }, [title, description])
-}
-
-async function api<T>(path: string, token: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...options?.headers },
-  })
-  if (!response.ok) {
-    const body = await response.json().catch(() => null)
-    throw new Error(body?.detail ?? `Request failed (${response.status})`)
-  }
-  return response.json()
 }
 
 function App() {
@@ -98,6 +88,9 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="features" element={<FeaturesPage />} />
+          <Route path="how-it-works" element={<HowItWorksPage />} />
+          <Route path="technology" element={<TechnologyPage />} />
+          <Route path="sustainability" element={<SustainabilityPage />} />
           <Route path="contact" element={<ContactPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="terms" element={<TermsPage />} />
@@ -120,6 +113,7 @@ function PublicLayout({
     { label: 'Home', to: '/' },
     { label: 'About', to: '/about' },
     { label: 'Features', to: '/features' },
+    { label: 'Technology', to: '/technology' },
     { label: 'Contact', to: '/contact' },
   ]
 
@@ -307,6 +301,45 @@ function FeaturesPage() {
   )
 }
 
+function HowItWorksPage() {
+  usePageMeta('How EcoMind AI Works', 'Follow a waste report from citizen submission through classification, collection, and measurable impact.')
+  return (
+    <section className="section-shell narrow-shell">
+      <p className="eyebrow">How it works</p>
+      <h1>Turn a reported problem into a verified operational outcome.</h1>
+      <div className="feature-grid feature-list">
+        {['Report with context and location', 'Classify with a documented AI baseline', 'Assign and schedule collection work', 'Route field teams with optional road data', 'Verify completion and notify the citizen', 'Measure rewards and sustainability impact'].map((step, index) => (
+          <article key={step} className="info-card compact-card"><h3>{index + 1}. {step}</h3></article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function TechnologyPage() {
+  usePageMeta('EcoMind AI Technology', 'Explore the open-source technologies and adapter-based architecture behind EcoMind AI.')
+  return (
+    <section className="section-shell narrow-shell">
+      <p className="eyebrow">Technology</p>
+      <h1>Open architecture for practical environmental operations.</h1>
+      <p>EcoMind is built with FastAPI, PostgreSQL, SQLAlchemy, Alembic, React, TypeScript, and Vite. Optional adapters provide controlled integration points for OSRM routing, local AI providers, future optimization, notifications, and IoT.</p>
+      <p>Current AI classification uses an explicitly documented deterministic fallback. External models and live services are enabled only when configured and verified in the deployment environment.</p>
+    </section>
+  )
+}
+
+function SustainabilityPage() {
+  usePageMeta('EcoMind AI Sustainability', 'Understand how EcoMind AI connects waste operations, rewards, and sustainability measurement.')
+  return (
+    <section className="section-shell narrow-shell">
+      <p className="eyebrow">Sustainability</p>
+      <h1>Measure the work behind cleaner communities.</h1>
+      <p>EcoMind connects verified reports, completed collections, environmental records, and citizen participation so teams can understand operational impact over time.</p>
+      <p>Reward points and sustainability records are separate from legally recognized carbon credits. Any environmental calculation must be configured with a documented methodology and source.</p>
+    </section>
+  )
+}
+
 function ContactPage() {
   usePageMeta('Contact EcoMind AI', 'Contact EcoMind AI to learn more about the waste management platform, AI services, municipal deployment, or partnership conversations.')
   return (
@@ -412,6 +445,7 @@ function AuthenticatedApp({ token, onSignOut }: { token: string; onSignOut: () =
     if (profile.role_id === 5) {
       requests.push(api<Report[]>('/waste-reports/my-reports', token).then((reports) => setData((current) => ({ ...current, reports }))))
       requests.push(api<{ points: number }>('/rewards/me', token).then(({ points }) => setData((current) => ({ ...current, points }))))
+      requests.push(api<Complaint[]>('/complaints/my', token).then((complaints) => setData((current) => ({ ...current, complaints }))))
     }
     if (profile.role_id === 6) {
       requests.push(api<Collection[]>('/collections/my-collections', token).then((collections) => setData((current) => ({ ...current, collections }))))
@@ -441,6 +475,7 @@ function AuthenticatedApp({ token, onSignOut }: { token: string; onSignOut: () =
         <nav aria-label="Primary navigation">
           <NavButton active={view === 'overview'} onClick={() => setView('overview')}>Overview</NavButton>
           {role === 'Citizen' && <><NavButton active={view === 'reports'} onClick={() => setView('reports')}>My reports</NavButton><NavButton active={view === 'create-report'} onClick={() => setView('create-report')}>New report</NavButton></>}
+          {role === 'Citizen' && <><NavButton active={view === 'complaints'} onClick={() => setView('complaints')}>Complaints</NavButton><NavButton active={view === 'create-complaint'} onClick={() => setView('create-complaint')}>New complaint</NavButton></>}
           {role === 'Collector' && <><NavButton active={view === 'collections'} onClick={() => setView('collections')}>Collections</NavButton><NavButton active={view === 'routes'} onClick={() => setView('routes')}>Routes</NavButton></>}
           <NavButton active={view === 'notifications'} onClick={() => setView('notifications')}>Notifications <span className="nav-count">{data.notifications?.filter((item) => !item.read_at).length ?? 0}</span></NavButton>
         </nav>
@@ -454,6 +489,8 @@ function AuthenticatedApp({ token, onSignOut }: { token: string; onSignOut: () =
         {view === 'create-report' && <CreateReport token={token} onCreated={() => { setView('reports'); api<Report[]>('/waste-reports/my-reports', token).then((reports) => setData((current) => ({ ...current, reports }))) }} />}
         {view === 'collections' && <CollectionList collections={data.collections ?? []} />}
         {view === 'routes' && <RouteList routes={data.routes ?? []} />}
+        {view === 'complaints' && <ComplaintList complaints={data.complaints ?? []} />}
+        {view === 'create-complaint' && <CreateComplaint token={token} onCreated={() => { setView('complaints'); api<Complaint[]>('/complaints/my', token).then((complaints) => setData((current) => ({ ...current, complaints }))) }} />}
         {view === 'notifications' && <NotificationList notifications={data.notifications ?? []} />}
       </section>
     </main>
@@ -521,8 +558,23 @@ function ReportList({ reports, points }: { reports: Report[]; points: number }) 
 function CollectionList({ collections }: { collections: Collection[] }) { return <section className="panel-list"><div className="section-intro"><div><p className="eyebrow">Field operations</p><h2>Assigned collections</h2></div><span className="count-pill">{collections.length} tasks</span></div>{collections.length === 0 ? <EmptyState text="No collections assigned." /> : collections.map((item) => <div className="list-row" key={item.id}><div className="row-icon">C</div><div className="row-main"><strong>Collection #{item.id}</strong><span>Report #{item.report_id}{item.scheduled_at ? ` · ${new Date(item.scheduled_at).toLocaleString()}` : ''}</span></div><Status value={item.status} /></div>)}</section> }
 function RouteList({ routes }: { routes: Route[] }) { return <section className="panel-list"><div className="section-intro"><div><p className="eyebrow">Route planning</p><h2>Optimized routes</h2></div><span className="count-pill">{routes.length} routes</span></div>{routes.length === 0 ? <EmptyState text="No optimized routes yet." /> : routes.map((route) => <div className="list-row" key={route.id}><div className="row-icon">R</div><div className="row-main"><strong>Route #{route.id}</strong><span>{route.stops.length} stops · {route.estimated_distance_km.toFixed(2)} km</span></div><Status value={route.status} /></div>)}</section> }
 function NotificationList({ notifications }: { notifications: Notification[] }) { return <section className="panel-list"><div className="section-intro"><div><p className="eyebrow">Updates</p><h2>Notifications</h2></div></div>{notifications.length === 0 ? <EmptyState text="You're all caught up." /> : notifications.map((item) => <div className={`list-row ${item.read_at ? 'read' : ''}`} key={item.id}><div className="row-icon">N</div><div className="row-main"><strong>{item.title}</strong><span>{item.message}</span></div><small>{item.read_at ? 'Read' : 'New'}</small></div>)}</section> }
+function ComplaintList({ complaints }: { complaints: Complaint[] }) { return <section className="panel-list"><div className="section-intro"><div><p className="eyebrow">Citizen support</p><h2>My complaints</h2></div><span className="count-pill">{complaints.length} cases</span></div>{complaints.length === 0 ? <EmptyState text="No complaints submitted yet." /> : complaints.map((item) => <div className="list-row" key={item.id}><div className="row-icon">!</div><div className="row-main"><strong>{item.title ?? `Complaint #${item.id}`}</strong><span>{item.location} · {item.ai_priority ?? 'Review pending'}</span></div><Status value={item.status} /></div>)}</section> }
+function CreateComplaint({ token, onCreated }: { token: string; onCreated: () => void }) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [location, setLocation] = useState('')
+  const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setSaving(true); setMessage('')
+    try { await api('/complaints/', token, { method: 'POST', body: JSON.stringify({ title, description, location }) }); onCreated() }
+    catch (error) { setMessage((error as Error).message) }
+    finally { setSaving(false) }
+  }
+  return <section className="panel form-panel"><div className="section-intro"><div><p className="eyebrow">Citizen support</p><h2>Submit a complaint</h2></div></div><form className="report-form" onSubmit={submit}><label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} minLength={2} maxLength={200} required /></label><label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} minLength={3} maxLength={5000} required /></label><label>Location<input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required /></label>{message && <div className="form-error">{message}</div>}<button className="primary-button" disabled={saving}>{saving ? 'Submitting...' : 'Submit complaint'}</button></form></section>
+}
 function Status({ value }: { value: string }) { return <span className={`status status-${value.replace('_', '-')}`}>{value.replace('_', ' ')}</span> }
 function EmptyState({ text }: { text: string }) { return <div className="empty-state">{text}</div> }
-function viewTitle(view: View) { return { overview: 'Overview', reports: 'My reports', 'create-report': 'New report', collections: 'Collections', routes: 'Routes', notifications: 'Notifications' }[view] }
+function viewTitle(view: View) { return { overview: 'Overview', reports: 'My reports', 'create-report': 'New report', collections: 'Collections', routes: 'Routes', complaints: 'Complaints', 'create-complaint': 'New complaint', notifications: 'Notifications' }[view] }
 
 export default App

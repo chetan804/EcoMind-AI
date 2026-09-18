@@ -18,6 +18,8 @@ class User(Base):
 
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
 
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True, index=True)
+
     is_active = Column(
         Boolean,
         nullable=False,
@@ -39,3 +41,4 @@ class User(Base):
     )
 
     role = relationship("Role")
+    organization = relationship("Organization", back_populates="users")

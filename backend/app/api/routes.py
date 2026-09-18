@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.roles import RoleID
+from app.core.config import OSRM_BASE_URL, ROUTING_PROVIDER
+from app.core.roles import RoleID, RoleName
 from app.core.security import get_current_user, require_role
 from app.db.database import get_db
 from app.models.collection import WasteCollection
 from app.models.route import CollectionRoute, RouteStop
 from app.models.user import User
 from app.schemas.route import RouteResponse
+from app.integrations.routing.base import RoutingUnavailable
+from app.integrations.routing.osrm_adapter import OSRMAdapter
 from app.services.route_optimizer import optimize_collections
 
 
@@ -28,7 +31,7 @@ def generate_route(
         db.query(User)
         .filter(
             User.id == collector_id,
-            User.role_id == int(RoleID.COLLECTOR),
+            User.role.has(name=RoleName.COLLECTOR.value),
             User.is_active.is_(True),
         )
         .first()
@@ -45,7 +48,15 @@ def generate_route(
         )
         .all()
     )
-    plan = optimize_collections(collections)
+    routing_adapter = (
+        OSRMAdapter(OSRM_BASE_URL)
+        if ROUTING_PROVIDER.lower() == "osrm"
+        else None
+    )
+    try:
+        plan = optimize_collections(collections, routing_adapter=routing_adapter)
+    except RoutingUnavailable:
+        plan = optimize_collections(collections)
     route = CollectionRoute(
         collector_id=collector_id,
         status="generated",
@@ -99,6 +110,7 @@ def get_route(
     route = db.query(CollectionRoute).filter(CollectionRoute.id == route_id).first()
     if route is None:
         raise HTTPException(status_code=404, detail="Route not found")
-    if current_user.role_id != int(RoleID.ADMIN) and route.collector_id != current_user.id:
+    is_admin = current_user.role is not None and current_user.role.name == RoleName.ADMIN.value
+    if not is_admin and route.collector_id != current_user.id:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     return route

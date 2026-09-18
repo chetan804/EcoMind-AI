@@ -20,6 +20,7 @@ class WasteReportCreate(BaseModel):
     waste_type: WasteType
     description: str = Field(min_length=3, max_length=5000)
     location: str = Field(min_length=2, max_length=255)
+    image_path: str | None = Field(default=None, max_length=500)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
 
@@ -30,6 +31,7 @@ class WasteReportResponse(BaseModel):
     waste_type: WasteType
     description: str
     location: str
+    image_path: str | None = None
     latitude: float | None = None
     longitude: float | None = None
     status: str

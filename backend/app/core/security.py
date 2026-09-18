@@ -11,7 +11,7 @@ from app.core.config import (
     JWT_ALGORITHM,
     SECRET_KEY,
 )
-from app.core.roles import RoleID
+from app.core.roles import RoleID, RoleName, role_name_for_id
 from app.db.database import get_db
 from app.models.user import User
 
@@ -102,11 +102,17 @@ def get_current_user(
     return user
 
 
-def require_role(required_role_id: int | RoleID):
+def require_role(required_role: int | RoleID | str | RoleName):
+    required_role_name = (
+        role_name_for_id(int(required_role))
+        if isinstance(required_role, (int, RoleID))
+        else RoleName(required_role)
+    )
+
     def role_checker(
         current_user: User = Depends(get_current_user),
     ) -> User:
-        if current_user.role_id != required_role_id:
+        if current_user.role is None or current_user.role.name != required_role_name:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",
@@ -117,13 +123,18 @@ def require_role(required_role_id: int | RoleID):
     return role_checker
 
 
-def require_roles(*required_role_ids: int | RoleID):
-    allowed_roles = {int(role_id) for role_id in required_role_ids}
+def require_roles(*required_roles: int | RoleID | str | RoleName):
+    allowed_roles = {
+        role_name_for_id(int(role))
+        if isinstance(role, (int, RoleID))
+        else RoleName(role)
+        for role in required_roles
+    }
 
     def role_checker(
         current_user: User = Depends(get_current_user),
     ) -> User:
-        if current_user.role_id not in allowed_roles:
+        if current_user.role is None or current_user.role.name not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

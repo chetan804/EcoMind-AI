@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from math import asin, cos, radians, sin, sqrt
-
+from app.integrations.routing.base import RoutingAdapter
 from app.models.collection import WasteCollection
 
 
@@ -41,6 +41,7 @@ def optimize_collections(
     start_latitude: float | None = None,
     start_longitude: float | None = None,
     average_speed_kmh: float = 25.0,
+    routing_adapter: RoutingAdapter | None = None,
 ) -> RoutePlan:
     pending = [
         collection
@@ -94,4 +95,38 @@ def optimize_collections(
         if average_speed_kmh > 0
         else 0.0
     )
+
+    if routing_adapter is not None and ordered:
+        route_coordinates: list[tuple[float, float]] = []
+        if start_latitude is not None and start_longitude is not None:
+            route_coordinates.append((start_latitude, start_longitude))
+        route_coordinates.extend(
+            (stop.collection.report.latitude, stop.collection.report.longitude)
+            for stop in ordered
+        )
+        legs = routing_adapter.route(route_coordinates)
+        if len(legs) == len(ordered):
+            ordered = [
+                OrderedStop(
+                    collection=stop.collection,
+                    stop_order=stop.stop_order,
+                    distance_from_previous_km=leg.distance_km,
+                )
+                for stop, leg in zip(ordered, legs)
+            ]
+            total_distance = sum(leg.distance_km for leg in legs)
+            estimated_duration = sum(leg.duration_minutes for leg in legs)
+        elif start_latitude is None and len(legs) == len(ordered) - 1:
+            first_stop = ordered[0]
+            ordered = [first_stop] + [
+                OrderedStop(
+                    collection=stop.collection,
+                    stop_order=stop.stop_order,
+                    distance_from_previous_km=leg.distance_km,
+                )
+                for stop, leg in zip(ordered[1:], legs)
+            ]
+            total_distance = sum(leg.distance_km for leg in legs)
+            estimated_duration = sum(leg.duration_minutes for leg in legs)
+
     return RoutePlan(ordered, total_distance, estimated_duration)

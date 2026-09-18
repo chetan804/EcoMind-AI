@@ -12,6 +12,7 @@ from app.schemas.waste_report import (
     WasteReportResponse,
 )
 from app.services.reward_service import award_points
+from app.services.waste_report_service import update_report_status
 
 
 router = APIRouter(
@@ -31,9 +32,11 @@ def create_waste_report(
 ):
     report = WasteReport(
         user_id=current_user.id,
+        organization_id=current_user.organization_id,
         waste_type=report_data.waste_type,
         description=report_data.description,
         location=report_data.location,
+        image_path=report_data.image_path,
         latitude=report_data.latitude,
         longitude=report_data.longitude,
     )
@@ -78,11 +81,10 @@ def get_all_waste_reports(
     current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    reports = (
-        db.query(WasteReport)
-        .order_by(WasteReport.created_at.desc())
-        .all()
-    )
+    query = db.query(WasteReport)
+    if current_user.organization_id is not None:
+        query = query.filter(WasteReport.organization_id == current_user.organization_id)
+    reports = query.order_by(WasteReport.created_at.desc()).all()
 
     return reports
 
@@ -96,24 +98,10 @@ def update_report_status(
     current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    allowed_statuses = {
-        "reported",
-        "assigned",
-        "collected",
-        "resolved",
-    }
-
-    if new_status not in allowed_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid report status",
-        )
-
-    report = (
-        db.query(WasteReport)
-        .filter(WasteReport.id == report_id)
-        .first()
-    )
+    query = db.query(WasteReport).filter(WasteReport.id == report_id)
+    if current_user.organization_id is not None:
+        query = query.filter(WasteReport.organization_id == current_user.organization_id)
+    report = query.first()
 
     if not report:
         raise HTTPException(
@@ -121,7 +109,10 @@ def update_report_status(
             detail="Waste report not found",
         )
 
-    report.status = new_status
+    try:
+        update_report_status(report, new_status)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     db.commit()
     db.refresh(report)

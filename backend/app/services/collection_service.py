@@ -4,9 +4,12 @@ from app.models.collection import WasteCollection
 
 
 STATUS_TRANSITIONS = {
-    "assigned": {"assigned", "in_progress", "cancelled"},
-    "in_progress": {"in_progress", "collected", "cancelled"},
-    "collected": {"collected"},
+    "assigned": {"assigned", "accepted", "in_progress", "cancelled"},
+    "accepted": {"accepted", "in_progress", "cancelled"},
+    "in_progress": {"in_progress", "arrived", "collected", "cancelled"},
+    "arrived": {"arrived", "collected", "cancelled"},
+    "collected": {"collected", "verified"},
+    "verified": {"verified"},
     "cancelled": {"cancelled"},
 }
 

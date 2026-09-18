@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.roles import RoleID
+from app.core.roles import RoleID, RoleName
 from app.core.security import get_current_user, require_role
 from app.db.database import get_db
 from app.models.collection import WasteCollection
@@ -13,6 +13,8 @@ from app.schemas.collection import (
     CollectionStatusUpdate,
 )
 from app.services.collection_service import update_collection_status
+from app.services.notification_service import create_notification
+from app.services.reward_service import award_points
 
 
 router = APIRouter(
@@ -62,7 +64,7 @@ def create_collection(
             db.query(User)
             .filter(
                 User.id == collection_data.collector_id,
-                User.role_id == int(RoleID.COLLECTOR),
+                User.role.has(name=RoleName.COLLECTOR.value),
             )
             .first()
         )
@@ -150,9 +152,10 @@ def update_collection_status(
             detail="Collection not found",
         )
 
-    is_admin = current_user.role_id == int(RoleID.ADMIN)
+    is_admin = current_user.role is not None and current_user.role.name == RoleName.ADMIN.value
     is_assigned_collector = (
-        current_user.role_id == int(RoleID.COLLECTOR)
+        current_user.role is not None
+        and current_user.role.name == RoleName.COLLECTOR.value
         and collection.collector_id == current_user.id
     )
 
@@ -162,6 +165,7 @@ def update_collection_status(
             detail="Insufficient permissions",
         )
 
+    previous_status = collection.status
     try:
         update_collection_status(collection, status_data.status)
     except ValueError as exc:
@@ -170,17 +174,34 @@ def update_collection_status(
             detail=str(exc),
         ) from exc
 
-    if collection.status == "collected":
-        report = (
-            db.query(WasteReport)
-            .filter(
-                WasteReport.id == collection.report_id
+    report = (
+        db.query(WasteReport)
+        .filter(WasteReport.id == collection.report_id)
+        .first()
+    )
+    if report:
+        if collection.status in {"collected", "verified"}:
+            report.status = (
+                "verified_collection"
+                if collection.status == "verified"
+                else "collected"
             )
-            .first()
-        )
-
-        if report:
-            report.status = "collected"
+        if previous_status != collection.status:
+            db.add(
+                create_notification(
+                    user_id=report.user_id,
+                    event_type="collection_status_changed",
+                    title="Collection status updated",
+                    message=f"Your collection is now {collection.status}.",
+                )
+            )
+            if collection.status == "collected":
+                award_points(
+                    db,
+                    report.user_id,
+                    "collection_completed",
+                    f"waste_collection:{collection.id}",
+                )
 
     db.commit()
     db.refresh(collection)

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.ai.complaint_analyzer import KeywordComplaintAnalyzer
 from app.models.ai_operation import AIOperationLog
-from app.core.roles import RoleID
+from app.core.roles import RoleID, RoleName
 from app.core.security import get_current_user, require_role
 from app.db.database import get_db
 from app.models.complaint import Complaint, ComplaintStatusHistory
@@ -49,6 +49,7 @@ def create_complaint(
     )
     complaint = Complaint(
         user_id=current_user.id,
+        organization_id=current_user.organization_id,
         report_id=complaint_data.report_id,
         title=complaint_data.title,
         description=complaint_data.description,
@@ -110,7 +111,10 @@ def get_all_complaints(
     current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    return db.query(Complaint).order_by(Complaint.created_at.desc()).all()
+    query = db.query(Complaint)
+    if current_user.organization_id is not None:
+        query = query.filter(Complaint.organization_id == current_user.organization_id)
+    return query.order_by(Complaint.created_at.desc()).all()
 
 
 @router.patch("/admin/{complaint_id}", response_model=ComplaintResponse)
@@ -120,7 +124,10 @@ def update_complaint(
     current_user: User = Depends(require_role(RoleID.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    query = db.query(Complaint).filter(Complaint.id == complaint_id)
+    if current_user.organization_id is not None:
+        query = query.filter(Complaint.organization_id == current_user.organization_id)
+    complaint = query.first()
     if complaint is None:
         raise HTTPException(status_code=404, detail="Complaint not found")
 
@@ -129,7 +136,7 @@ def update_complaint(
             db.query(User)
             .filter(
                 User.id == update_data.assigned_to,
-                User.role_id == int(RoleID.COLLECTOR),
+                User.role.has(name=RoleName.COLLECTOR.value),
                 User.is_active.is_(True),
             )
             .first()

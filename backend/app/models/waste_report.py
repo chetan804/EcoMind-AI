@@ -28,6 +28,8 @@ class WasteReport(Base):
         nullable=False,
     )
 
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True, index=True)
+
     waste_type = Column(
         String(50),
         nullable=False,
@@ -42,6 +44,8 @@ class WasteReport(Base):
         String(255),
         nullable=False,
     )
+
+    image_path = Column(String(500), nullable=True)
 
     latitude = Column(Float, nullable=True)
 

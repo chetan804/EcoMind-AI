@@ -10,6 +10,7 @@ class Complaint(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True, index=True)
     report_id = Column(Integer, ForeignKey("waste_reports.id"), nullable=True)
     assigned_to = Column(Integer, ForeignKey("users.id"), nullable=True)
     description = Column(Text, nullable=False)

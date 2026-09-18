@@ -14,3 +14,4 @@ from app.models.environmental import (
 )
 from app.models.municipality import Municipality, MunicipalSyncLog, ServiceArea
 from app.models.ai_operation import AIOperationLog
+from app.models.organization import Organization

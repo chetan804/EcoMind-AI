@@ -1,7 +1,7 @@
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.roles import RoleID
+from app.core.roles import RoleName
 from app.models.collection import WasteCollection
 from app.models.complaint import Complaint
 from app.models.user import User
@@ -12,13 +12,13 @@ def dashboard_stats(db: Session) -> dict[str, int]:
     total_users = db.query(func.count(User.id)).scalar() or 0
     citizens = (
         db.query(func.count(User.id))
-        .filter(User.role_id == int(RoleID.CITIZEN))
+        .filter(User.role.has(name=RoleName.CITIZEN.value))
         .scalar()
         or 0
     )
     collectors = (
         db.query(func.count(User.id))
-        .filter(User.role_id == int(RoleID.COLLECTOR))
+        .filter(User.role.has(name=RoleName.COLLECTOR.value))
         .scalar()
         or 0
     )

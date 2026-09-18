@@ -13,8 +13,11 @@ class CollectionCreate(BaseModel):
 class CollectionStatusUpdate(BaseModel):
     status: Literal[
         "assigned",
+        "accepted",
         "in_progress",
+        "arrived",
         "collected",
+        "verified",
         "cancelled",
     ]
 

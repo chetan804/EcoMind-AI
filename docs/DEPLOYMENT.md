@@ -7,6 +7,19 @@ This project includes a basic production-oriented Docker setup for the database,
 - Docker Desktop or Docker Engine
 - Docker Compose v2
 
+## Configure secrets
+
+Create a root `.env` file that is excluded from Git:
+
+```dotenv
+POSTGRES_PASSWORD=use-a-unique-database-password
+SECRET_KEY=generate-a-unique-random-value-at-least-32-characters-long
+CORS_ORIGINS=http://localhost
+```
+
+Compose fails fast when `POSTGRES_PASSWORD` or `SECRET_KEY` is missing. The
+backend also rejects known placeholder or short JWT secrets in production mode.
+
 ## Start the full stack
 
 ```bash
@@ -21,11 +34,12 @@ The stack exposes:
 
 ## Important production settings
 
-Before deploying beyond local evaluation, update the following values:
+Before deploying beyond local evaluation, configure the following values through
+`.env` or the deployment secret manager:
 
-- `SECRET_KEY` in `docker-compose.yml`
+- `SECRET_KEY`
 - `CORS_ORIGINS` to your real frontend origin
-- `DATABASE_URL` credentials and database name if needed
+- `POSTGRES_PASSWORD`
 - reverse-proxy TLS settings for public access
 
 ## Operational notes
