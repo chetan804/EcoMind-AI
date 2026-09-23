@@ -1,6 +1,6 @@
 # EcoMind-AI — Build Report & Final Audits
 
-**Date:** 2026-09-23 · **Commits:** `d7b3169` (backend) · `4cf951e` (frontend) · docs/deploy/CI follow-up
+**Date:** 2026-09-23 · **Commits:** `d7b3169` (backend) · `4cf951e` (frontend) · `c7c142e` (docs/deploy/CI/hardening)
 **Scope:** Clean rebuild of the platform per the Final Master Build Prompt (phases 0–18).
 
 ---
@@ -101,8 +101,14 @@ Logins: `admin@aurora.demo` … password `EcoDemo2026!` (quick-fill on the login
 
 ## Final audit 1 — Engineering
 
-- **Backend:** 51/51 tests green (incl. release-blocking tenant-isolation suite);
-  ruff clean; real migrations in tests (no mocked DB); async throughout.
+- **Backend:** 52/52 tests green (incl. release-blocking tenant-isolation suite);
+  ruff clean across app/tests/scripts; real migrations in tests (no mocked DB);
+  async throughout.
+- **Lint gate found three real defects, fixed at root cause:** (1) `GET
+  /organizations/mine` referenced an undefined name → runtime 500 (regression test
+  added); (2) complaints service kept a never-persisted `ai_inference_id` assignment;
+  (3) `seed_demo --reset` left demo users behind (users are not org-scoped), breaking
+  re-runs — reset now removes them by the reserved demo email domain.
 - **Frontend:** strict TS clean; 22/22 vitest; production build 4 chunks (vendor/map/
   charts/app, all < 500 kB); every API call typed against verified response shapes
   (all 25 endpoints probed against the live API).
