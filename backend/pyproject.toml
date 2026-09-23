@@ -1,0 +1,57 @@
+[project]
+name = "ecomind-ai"
+version = "2.0.0"
+description = "EcoMind-AI — multi-tenant smart waste management & environmental intelligence platform"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "argon2-cffi>=23.1",
+    "pyjwt>=2.10",
+    "python-multipart>=0.0.17",
+    "httpx>=0.28",
+    "structlog>=24.4",
+    "shapely>=2.0.6",
+    "ortools>=9.11",
+    "email-validator>=2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "ruff>=0.8",
+    "pgserver>=0.1.4",
+]
+redis = ["redis>=5.2"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["B008"]  # FastAPI dependency defaults
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+testpaths = ["tests"]
+pythonpath = ["tests", "."]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.alembic]
+script_location = "alembic"
+
