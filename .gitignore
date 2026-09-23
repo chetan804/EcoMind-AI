@@ -31,3 +31,7 @@ backend/data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Frontend build artifacts
+frontend/tsconfig.tsbuildinfo
+frontend/.vite/
