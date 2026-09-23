@@ -22,7 +22,8 @@ from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, new_request_id, request_id_var
 from app.core.rate_limit import client_ip
 from app.fleet.router import router as fleet_router
-from app.iot.router import ingest_router, router as iot_router
+from app.iot.router import ingest_router
+from app.iot.router import router as iot_router
 from app.media.router import router as media_router
 from app.notifications.router import router as notifications_router
 from app.orgs.router import router as orgs_router
@@ -58,7 +59,6 @@ async def lifespan(app: FastAPI):
         import asyncio
 
         import app.jobs.handlers  # noqa: F401
-
         from app.jobs.queue import worker_loop
 
         worker_task = asyncio.create_task(worker_loop())

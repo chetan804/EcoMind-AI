@@ -9,8 +9,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.auth.deps import AuthCtx, DbSession, require_perm
-from app.complaints.models import Complaint, ComplaintComment
+from app.auth.deps import AuthCtx, DbSession
+from app.complaints.models import Complaint
 from app.complaints.schemas import ComplaintCreate, ComplaintOut, ComplaintUpdateIn
 from app.complaints.service import (
     add_comment,

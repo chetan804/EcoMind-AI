@@ -14,7 +14,6 @@ from conftest import (
     api,
     create_point,
     make_org_with_admin,
-    register_user,
 )
 
 

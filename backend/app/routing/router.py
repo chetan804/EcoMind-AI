@@ -11,7 +11,6 @@ from sqlalchemy import func, select
 
 from app.auth.deps import AuthCtx, DbSession, require_perm
 from app.collection.models import CollectionPoint
-from app.core.errors import NotFoundError, ValidationApiError
 from app.routing.models import Route, RouteStop
 from app.routing.service import (
     generate_route,

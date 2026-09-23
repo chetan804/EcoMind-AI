@@ -3,7 +3,7 @@ tenant-isolation registry sees all tenant-scoped tables before any query runs.""
 
 from app.ai.models import AiInference, AiReview
 from app.audit.models import AuditEvent
-from app.auth.models import Permission, RefreshToken, Role, User, PasswordResetToken, role_permissions
+from app.auth.models import PasswordResetToken, Permission, RefreshToken, Role, User, role_permissions
 from app.collection.models import (
     CollectionEvent,
     CollectionPoint,
@@ -38,12 +38,12 @@ from app.media.models import MediaAsset, MediaKind, ScanStatus
 from app.notifications.models import Notification, NotificationCategory
 from app.orgs.models import (
     OperationalUnit,
+    Organization,
     OrgInvitation,
     OrgMembership,
     OrgStatus,
     OrgType,
     OrgUsageCounters,
-    Organization,
     Zone,
 )
 from app.rewards.models import RewardLedger, RewardReason

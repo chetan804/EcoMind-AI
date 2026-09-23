@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 from conftest import api, make_org_with_admin
 
 
@@ -89,7 +87,13 @@ async def test_high_temperature_triggers_critical_alert(client):
     org, admin_token = await make_org_with_admin(client)
     await api(
         client, "POST", "/api/v1/iot/alert-rules", admin_token, org["id"],
-        json={"name": "Fire risk", "metric": "temperature_c", "operator": "gt", "threshold": 55, "severity": "critical"},
+        json={
+            "name": "Fire risk",
+            "metric": "temperature_c",
+            "operator": "gt",
+            "threshold": 55,
+            "severity": "critical",
+        },
     )
     device = await _register_device(client, admin_token, org["id"])
     r = await client.post(
@@ -150,10 +154,9 @@ async def test_key_rotation_invalidates_old_key(client):
 
 async def test_simulator_writes_labelled_data_only(client):
     """Simulated telemetry must always carry is_simulated=true."""
+
     from app.core.db import SessionLocal, tenant_context
-    from app.iot.models import Device, TelemetryReading
     from app.iot.simulator import tick
-    from sqlalchemy import select
 
     org, admin_token = await make_org_with_admin(client)
     r = await api(

@@ -18,13 +18,15 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
-    Enum as SAEnum,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

@@ -15,16 +15,16 @@ import argparse
 import asyncio
 import random
 import sys
-import uuid
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.core.db import SessionLocal, tenant_context, utcnow, unscoped  # noqa: E402
 from sqlalchemy import select  # noqa: E402
-from app.core.security import hash_password  # noqa: E402
+
 import app.models  # noqa: E402,F401 — full metadata for FK resolution
+from app.core.db import SessionLocal, tenant_context, unscoped, utcnow  # noqa: E402
+from app.core.security import hash_password  # noqa: E402
 
 DEMO_PASSWORD = "EcoDemo2026!"
 DEMO_SLUG = "aurora-demo"
@@ -85,7 +85,7 @@ COMPLAINTS = [
 
 
 async def reset(session, slug: str) -> None:
-    from sqlalchemy import delete, select
+    from sqlalchemy import select
 
     from app.orgs.models import Organization
 
@@ -93,16 +93,19 @@ async def reset(session, slug: str) -> None:
         org = (
             await session.execute(select(Organization).where(Organization.slug == slug))
         ).scalar_one_or_none()
-    if org is None:
-        return
-    # ON DELETE CASCADE on organization_id clears tenant rows.
-    from app.core.db import engine
-
     from sqlalchemy import text
 
+    from app.core.db import engine
+
     async with engine.begin() as conn:
-        await conn.execute(text(f"DELETE FROM organizations WHERE id = '{org.id}'"))
-    print(f"removed existing demo org {slug}")
+        if org is not None:
+            # ON DELETE CASCADE on organization_id clears tenant rows.
+            await conn.execute(text(f"DELETE FROM organizations WHERE id = '{org.id}'"))
+        # Users are not org-scoped (memberships cascade with the org, users don't):
+        # remove the demo users by their reserved demo email domain so the seeder
+        # is fully re-runnable. Per-user rows (notifications, tokens) cascade.
+        await conn.execute(text("DELETE FROM users WHERE email LIKE '%@aurora.demo'"))
+    print(f"removed existing demo org {slug} and demo users")
 
 
 async def main(reset_first: bool) -> None:
@@ -113,13 +116,20 @@ async def main(reset_first: bool) -> None:
     from app.fleet.models import DriverProfile, FuelType, Vehicle, VehicleStatus, VehicleType
     from app.iot.models import Alert, AlertSeverity, AlertStatus, Device, DeviceKind, TelemetryReading, TelemetrySource
     from app.notifications.models import Notification, NotificationCategory
-    from app.orgs.models import OrgMembership, Organization
+    from app.orgs.models import OrgMembership
     from app.orgs.service import create_organization
     from app.rewards.models import RewardLedger, RewardReason
     from app.routing.models import Route, RouteStatus, RouteStop, StopStatus
     from app.sustainability.models import DataQuality, WasteTreatment
     from app.sustainability.service import seed_emission_factors
-    from app.waste.models import ReportSeverity, ReportSource, ReportStatus, WasteCategory, WasteReport, WasteReportEvent
+    from app.waste.models import (
+        ReportSeverity,
+        ReportSource,
+        ReportStatus,
+        WasteCategory,
+        WasteReport,
+        WasteReportEvent,
+    )
 
     async with SessionLocal() as session:
         await seed_emission_factors(session)
@@ -198,7 +208,6 @@ async def main(reset_first: bool) -> None:
                 citizens.append(u)
 
             # --- Zones ---------------------------------------------------------
-            from app.orgs.models import Zone
             from app.orgs.service import create_zone
 
             zones = []
@@ -229,7 +238,10 @@ async def main(reset_first: bool) -> None:
                         zone_id=zones[zi].id,
                         latitude=round(lat, 6),
                         longitude=round(lng, 6),
-                        address=f"{random.randint(1, 99)} {random.choice(['Maple', 'Cedar', 'Birch', 'Willow', 'Aspen'])} Street, {ZONES[zi][1]}",
+                        address=(
+                            f"{random.randint(1, 99)} "
+                            f"{random.choice(['Maple', 'Cedar', 'Birch', 'Willow', 'Aspen'])} Street, {ZONES[zi][1]}"
+                        ),
                         households_served=random.randint(40, 300),
                         capacity_volume_m3=random.choice([1.1, 2.5, 3.2, 4.5]),
                         est_fill_pct=random.randint(20, 80),
@@ -317,7 +329,7 @@ async def main(reset_first: bool) -> None:
                 ).scalars().all()
             }
             reports = []
-            for i in range(38):
+            for _ in range(38):
                 desc, cat_code, severity = random.choice(REPORT_DESCRIPTIONS)
                 age_days = random.randint(0, 29)
                 created = utcnow() - timedelta(days=age_days, hours=random.randint(0, 20))
@@ -409,7 +421,12 @@ async def main(reset_first: bool) -> None:
             for i, (subject, cat, prio) in enumerate(COMPLAINTS * 3):
                 created = utcnow() - timedelta(days=random.randint(0, 25), hours=random.randint(1, 20))
                 status = random.choices(
-                    [ComplaintStatus.resolved, ComplaintStatus.in_progress, ComplaintStatus.submitted, ComplaintStatus.closed],
+                    [
+                        ComplaintStatus.resolved,
+                        ComplaintStatus.in_progress,
+                        ComplaintStatus.submitted,
+                        ComplaintStatus.closed,
+                    ],
                     weights=[0.5, 0.2, 0.2, 0.1],
                 )[0]
                 reporter = random.choice(citizens)
@@ -438,7 +455,8 @@ async def main(reset_first: bool) -> None:
             for day_offset in range(30, -1, -1):
                 d = today - timedelta(days=day_offset)
                 for p in points:
-                    if (hash(p.id) % 2 == 0 and d.weekday() in (1, 4)) or (hash(p.id) % 2 == 1 and d.weekday() in (2, 5)):
+                    even_bin = hash(p.id) % 2 == 0
+                    if (even_bin and d.weekday() in (1, 4)) or (not even_bin and d.weekday() in (2, 5)):
                         status = EventStatus.completed if random.random() > 0.06 else EventStatus.missed
                         e = CollectionEvent(
                             organization_id=org_id,
@@ -467,7 +485,8 @@ async def main(reset_first: bool) -> None:
                         select(WasteCategory).where(WasteCategory.id == e.waste_category_id)
                     )
                 ).scalar_one()
-                destination = {"mixed": "landfill", "recyclable": "recycling", "organic": "composting"}.get(cat.code, "landfill")
+                destinations = {"mixed": "landfill", "recyclable": "recycling", "organic": "composting"}
+                destination = destinations.get(cat.code, "landfill")
                 session.add(
                     WasteTreatment(
                         organization_id=org_id,
@@ -530,7 +549,11 @@ async def main(reset_first: bool) -> None:
                             est_distance_from_prev_km=round(random.uniform(0.4, 2.2), 2),
                             est_duration_from_prev_min=round(random.uniform(2, 8), 1),
                             status=st,
-                            completed_at=datetime(d.year, d.month, d.day, 8, seq * 15 % 60) if st == StopStatus.completed else None,
+                            completed_at=(
+                                datetime(d.year, d.month, d.day, 8, seq * 15 % 60)
+                                if st == StopStatus.completed
+                                else None
+                            ),
                             weight_kg=round(random.uniform(60, 300), 1) if st == StopStatus.completed else None,
                             created_at=datetime(d.year, d.month, d.day, 6, 0),
                         )
@@ -539,7 +562,7 @@ async def main(reset_first: bool) -> None:
             await session.flush()
 
             # --- Alerts from simulated telemetry ---------------------------------------
-            for i in range(9):
+            for _ in range(9):
                 sev = random.choice([AlertSeverity.warning, AlertSeverity.high, AlertSeverity.critical])
                 d = random.choice(sim_devices)
                 session.add(
@@ -547,7 +570,10 @@ async def main(reset_first: bool) -> None:
                         organization_id=org_id,
                         device_id=d.id,
                         severity=sev,
-                        title=f"{'Overflow risk' if sev != AlertSeverity.critical else 'High temperature (fire risk)'}: {d.name}",
+                        title=(
+                            f"{'Overflow risk' if sev != AlertSeverity.critical else 'High temperature (fire risk)'}"
+                            f": {d.name}"
+                        ),
                         message=f"SIMULATED DEMO DATA — device {d.device_key} reported "
                                 f"{'fill 91%' if sev != AlertSeverity.critical else 'temperature 57.2°C'}.",
                         status=AlertStatus.open if random.random() < 0.5 else AlertStatus.resolved,

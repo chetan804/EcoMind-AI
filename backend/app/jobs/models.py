@@ -14,7 +14,8 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Enum as SAEnum, Float, Index, Integer, String, Text
+from sqlalchemy import JSON, DateTime, Float, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base, TimestampMixin, UUIDMixin

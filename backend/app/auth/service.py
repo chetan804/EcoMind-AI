@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import select, update
 
 from app.auth.models import PasswordResetToken, RefreshToken, User
 from app.auth.rbac import PERMISSIONS, ROLES
@@ -21,7 +21,7 @@ from app.core.security import (
     verify_password,
 )
 from app.notifications.service import notify_user
-from app.orgs.models import OrgMembership, Organization
+from app.orgs.models import Organization, OrgMembership
 
 log = get_logger("auth")
 

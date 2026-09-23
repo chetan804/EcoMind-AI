@@ -24,7 +24,7 @@ class Page(BaseModel):
     pagination: PageMeta = PageMeta()
 
     @classmethod
-    def build(cls, items: list[Any], total: int, page: int, page_size: int) -> "Page":
+    def build(cls, items: list[Any], total: int, page: int, page_size: int) -> Page:
         return cls(
             items=items,
             pagination=PageMeta(

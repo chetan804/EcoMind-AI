@@ -17,15 +17,17 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
-    Enum as SAEnum,
-    ForeignKey,
     Float,
+    ForeignKey,
     Index,
     Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -117,7 +119,8 @@ class WasteTreatment(UUIDMixin, TimestampMixin, TenantScoped, Base):
     waste_category_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("waste_categories.id", ondelete="SET NULL")
     )
-    destination: Mapped[str] = mapped_column(String(48), nullable=False)  # landfill | recycling | composting | incineration | ad
+    # landfill | recycling | composting | incineration | ad (anaerobic digestion) | other
+    destination: Mapped[str] = mapped_column(String(48), nullable=False)
     weight_kg: Mapped[float] = mapped_column(Numeric(12, 3), nullable=False)
     quality: Mapped[DataQuality] = mapped_column(
         SAEnum(DataQuality, native_enum=False, length=16), default=DataQuality.estimated, nullable=False

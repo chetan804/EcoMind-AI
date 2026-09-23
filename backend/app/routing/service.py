@@ -115,9 +115,7 @@ async def generate_route(
             "Check vehicle capacities and stop demand."
         )
 
-    geometry_provider = "estimated"
     geometry_estimated = True
-    primary_vehicle = vehicle_map[primary_plan.vehicle_key]
 
     created_routes: list[Route] = []
     for plan_i, plan in enumerate(result.plans):
@@ -128,7 +126,6 @@ async def generate_route(
             (point_map[k].latitude, point_map[k].longitude) for k in plan.stop_keys
         ] + [(depot_lat, depot_lng)]
         road = await route_path(waypoint_points)
-        geometry_provider = road.provider
         geometry_estimated = road.estimated
 
         route = Route(

@@ -55,9 +55,8 @@ async def demo_simulator_schedule(session, payload: dict, organization_id: uuid.
     from datetime import timedelta
 
     from app.core.db import utcnow
-    from app.jobs.queue import enqueue
-
     from app.iot.simulator import tick
+    from app.jobs.queue import enqueue
 
     await tick(session, organization_id=organization_id)
     await session.commit()

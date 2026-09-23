@@ -7,11 +7,10 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.audit.service import record as audit
 from app.auth.deps import AuthCtx, DbSession, require_perm
-from app.core.db import utcnow
 from app.core.errors import NotFoundError, ValidationApiError
 from app.fleet.models import DriverProfile, FuelType, Vehicle, VehicleStatus, VehicleType
 

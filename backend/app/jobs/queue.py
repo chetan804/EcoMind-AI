@@ -11,7 +11,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
 
-from sqlalchemy import func, select, update
+from sqlalchemy import select, update
 
 from app.core.config import settings
 from app.core.db import SessionLocal, tenant_context, utcnow
@@ -96,7 +96,9 @@ async def run_job(job: Job) -> None:
         )
 
 
-async def _finish(job_id, status: JobStatus, *, error: str | None = None, duration_ms: float | None = None, retry_in=None) -> None:
+async def _finish(
+    job_id, status: JobStatus, *, error: str | None = None, duration_ms: float | None = None, retry_in=None
+) -> None:
     async with SessionLocal() as session:
         values = {"status": status}
         if error is not None:
@@ -133,7 +135,8 @@ async def worker_loop(stop_after: float | None = None) -> None:
             idle_cycles = 0
         else:
             idle_cycles += 1
-            await asyncio_sleep(settings.worker_poll_seconds if idle_cycles < 5 else min(5.0, settings.worker_poll_seconds * 5))
+            poll = settings.worker_poll_seconds if idle_cycles < 5 else min(5.0, settings.worker_poll_seconds * 5)
+            await asyncio_sleep(poll)
 
 
 async def asyncio_sleep(seconds: float) -> None:

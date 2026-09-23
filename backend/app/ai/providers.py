@@ -62,7 +62,9 @@ from app.ai.schemas import WasteClass  # noqa: E402
 
 _RULES: list[tuple[WasteClass, list[str]]] = [
     (WasteClass.hazardous, ["battery", "batteries", "chemical", "paint", "asbestos", "medical", "syringe", "toxic"]),
-    (WasteClass.e_waste, ["electronic", "electronics", "tv", "monitor", "laptop", "cable", "wire", "appliance", "fridge"]),
+    (WasteClass.e_waste, [
+        "electronic", "electronics", "tv", "monitor", "laptop", "cable", "wire", "appliance", "fridge",
+    ]),
     (WasteClass.construction, ["construction", "debris", "concrete", "brick", "rubble", "demolition"]),
     (WasteClass.organic, ["food", "organic", "kitchen", "garden", "leaves", "vegetable", "compost"]),
     (WasteClass.recyclable, ["plastic", "bottle", "paper", "cardboard", "glass", "can", "recycl", "metal"]),
@@ -184,7 +186,10 @@ class OpenAiProvider(AiProvider):
         body: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_content}],
-            "response_format": {"type": "json_schema", "json_schema": {"name": "result", "schema": schema, "strict": False}},
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {"name": "result", "schema": schema, "strict": False},
+            },
             "max_tokens": 800,
         }
         async with httpx.AsyncClient(timeout=settings.ai_request_timeout_seconds) as client:
@@ -206,7 +211,12 @@ class OpenAiProvider(AiProvider):
             import base64
 
             content.append(
-                {"type": "image_url", "image_url": {"url": f"data:{mime or 'image/jpeg'};base64,{base64.b64encode(image_bytes).decode()}"}}
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mime or 'image/jpeg'};base64,{base64.b64encode(image_bytes).decode()}"
+                    },
+                }
             )
         content.append({"type": "text", "text": text_hint or "(no description provided)"})
         raw = await self._chat(system=_WASTE_SYSTEM, user_content=content, schema=_WASTE_SCHEMA)
@@ -246,7 +256,12 @@ class AnthropicProvider(AiProvider):
             raise AiProviderError(self.name, "Anthropic API key not configured.", retryable=False)
 
     async def _messages(self, *, system: str, content: list[dict]) -> dict:
-        body = {"model": self.model, "max_tokens": 1024, "system": system, "messages": [{"role": "user", "content": content}]}
+        body = {
+            "model": self.model,
+            "max_tokens": 1024,
+            "system": system,
+            "messages": [{"role": "user", "content": content}],
+        }
         async with httpx.AsyncClient(timeout=settings.ai_request_timeout_seconds) as client:
             resp = await client.post(
                 f"{settings.anthropic_base_url}/v1/messages",
@@ -267,25 +282,38 @@ class AnthropicProvider(AiProvider):
             import base64
 
             content.append(
-                {"type": "image", "source": {"type": "base64", "media_type": mime or "image/jpeg",
-                                             "data": base64.b64encode(image_bytes).decode()}}
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": mime or "image/jpeg",
+                        "data": base64.b64encode(image_bytes).decode(),
+                    },
+                }
             )
-        content.append({"type": "text", "text": (text_hint or "(no description)") + "\n\nRespond as JSON matching: "
-                        + json.dumps(_WASTE_SCHEMA)})
+        prompt = (text_hint or "(no description)") + "\n\nRespond as JSON matching: " + json.dumps(_WASTE_SCHEMA)
+        content.append({"type": "text", "text": prompt})
         raw = await self._messages(system=_WASTE_SYSTEM, content=content)
         return WasteClassificationOut.model_validate(raw)
 
     async def analyze_complaint(self, *, subject, description) -> ComplaintAnalysisOut:
+        prompt = (
+            f"Subject: {subject}\n\nDescription: {description}\n\n"
+            f"Respond as JSON matching: {json.dumps(_COMPLAINT_SCHEMA)}"
+        )
         raw = await self._messages(
             system=_COMPLAINT_SYSTEM,
-            content=[{"type": "text", "text": f"Subject: {subject}\n\nDescription: {description}\n\nRespond as JSON matching: "
-                      + json.dumps(_COMPLAINT_SCHEMA)}],
+            content=[{"type": "text", "text": prompt}],
         )
         return ComplaintAnalysisOut.model_validate(raw)
 
     async def assistant_answer(self, *, question, context_snippets) -> AssistantAnswer:
+        system = (
+            "You are the EcoMind-AI operations assistant. Answer ONLY from the provided data snippets; "
+            "if insufficient, say so. Respond as JSON with keys answer, used_data, confidence."
+        )
         raw = await self._messages(
-            system="You are the EcoMind-AI operations assistant. Answer ONLY from the provided data snippets; if insufficient, say so. Respond as JSON with keys answer, used_data, confidence.",
+            system=system,
             content=[{"type": "text", "text": "DATA:\n" + "\n".join(context_snippets) + f"\n\nQUESTION: {question}"}],
         )
         return AssistantAnswer.model_validate(raw)
@@ -326,8 +354,14 @@ class GoogleProvider(AiProvider):
         if image_bytes:
             import base64
 
-            parts.append({"inline_data": {"mime_type": mime or "image/jpeg",
-                                          "data": base64.b64encode(image_bytes).decode()}})
+            parts.append(
+                {
+                    "inline_data": {
+                        "mime_type": mime or "image/jpeg",
+                        "data": base64.b64encode(image_bytes).decode(),
+                    }
+                }
+            )
         parts.append({"text": text_hint or "(no description provided)"})
         raw = await self._generate(system=_WASTE_SYSTEM, parts=parts, schema=_WASTE_SCHEMA)
         return WasteClassificationOut.model_validate(raw)
@@ -341,8 +375,12 @@ class GoogleProvider(AiProvider):
         return ComplaintAnalysisOut.model_validate(raw)
 
     async def assistant_answer(self, *, question, context_snippets) -> AssistantAnswer:
+        system = (
+            "You are the EcoMind-AI operations assistant. Answer ONLY from the provided data snippets; "
+            "if insufficient, say so."
+        )
         raw = await self._generate(
-            system="You are the EcoMind-AI operations assistant. Answer ONLY from the provided data snippets; if insufficient, say so.",
+            system=system,
             parts=[{"text": "DATA:\n" + "\n".join(context_snippets) + f"\n\nQUESTION: {question}"}],
             schema=AssistantAnswer.model_json_schema(),
         )

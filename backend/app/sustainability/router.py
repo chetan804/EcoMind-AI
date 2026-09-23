@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-import uuid
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 
 from app.auth.deps import AuthCtx, DbSession, require_perm
-from app.core.config import settings
-from app.core.db import AsyncSession
 from app.sustainability.models import EmissionFactor
-from app.sustainability.service import period_summary, recompute_period, seed_emission_factors
+from app.sustainability.service import period_summary, recompute_period
 
 router = APIRouter(prefix="/sustainability", tags=["sustainability"])
 

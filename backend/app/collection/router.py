@@ -7,13 +7,12 @@ from datetime import date, datetime
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.audit.service import record as audit
 from app.auth.deps import AuthCtx, DbSession, require_perm
-from app.collection.models import CollectionEvent, CollectionPoint, CollectionSchedule
+from app.collection.models import CollectionPoint, CollectionSchedule
 from app.collection.service import complete_event, create_point, create_schedule, list_events
-from app.core.errors import NotFoundError, ValidationApiError
 from app.core.gis import MAX_LAT, MAX_LNG, MIN_LAT, MIN_LNG
 
 router = APIRouter(prefix="/collection", tags=["collection"])

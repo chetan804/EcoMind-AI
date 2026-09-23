@@ -8,8 +8,6 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.core.gis import MAX_LAT, MAX_LNG, MIN_LAT, MIN_LNG
-
 
 class OrganizationCreate(BaseModel):
     name: str = Field(min_length=2, max_length=160)

@@ -9,12 +9,6 @@ from sqlalchemy import func, select
 
 from app.ai.service import analyze_complaint_text
 from app.audit.service import record as audit
-from app.core.db import AsyncSession, utcnow
-from app.core.errors import NotFoundError, ValidationApiError
-from app.core.logging import get_logger
-from app.notifications.service import notify_user
-from app.rewards.models import RewardLedger, RewardReason
-
 from app.complaints.models import (
     Complaint,
     ComplaintCategory,
@@ -22,6 +16,11 @@ from app.complaints.models import (
     ComplaintPriority,
     ComplaintStatus,
 )
+from app.core.db import AsyncSession, utcnow
+from app.core.errors import NotFoundError, ValidationApiError
+from app.core.logging import get_logger
+from app.notifications.service import notify_user
+from app.rewards.models import RewardLedger, RewardReason
 
 log = get_logger("complaints")
 
@@ -86,7 +85,6 @@ async def create_complaint(
     await session.flush()
 
     priority_value = priority
-    ai_inference_id = None
     if run_ai:
         inference = await analyze_complaint_text(
             session,
@@ -95,7 +93,6 @@ async def create_complaint(
             description=description,
             input_ref=complaint.id,
         )
-        ai_inference_id = inference.id
         if inference.status.value == "succeeded" and inference.output:
             suggested = inference.output.get("suggested_category")
             suggested_priority = inference.output.get("suggested_priority")
@@ -136,7 +133,11 @@ async def update_complaint(
     resolution_summary: str | None = None, note: str | None = None,
 ) -> Complaint:
     c = await get_complaint(session, organization_id, complaint_id)
-    before = {"status": c.status.value, "priority": c.priority.value, "assigned_to": str(c.assigned_to) if c.assigned_to else None}
+    before = {
+        "status": c.status.value,
+        "priority": c.priority.value,
+        "assigned_to": str(c.assigned_to) if c.assigned_to else None,
+    }
     changed = False
 
     if new_status:

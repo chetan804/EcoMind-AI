@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
-
 from conftest import add_member, api, make_org_with_admin, register_user
 
 

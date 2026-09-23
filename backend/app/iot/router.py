@@ -11,15 +11,15 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Header, Request, status
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from fastapi import APIRouter, Depends, Header, Request
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 
 from app.auth.deps import AuthCtx, DbSession, require_perm
-from app.core.db import AsyncSession, utcnow
-from app.core.errors import AuthError, NotFoundError, ValidationApiError
+from app.core.db import utcnow
+from app.core.errors import NotFoundError, ValidationApiError
 from app.core.rate_limit import rate_limit
-from app.iot.models import Alert, AlertRule, AlertSeverity, Device, TelemetryReading, TelemetrySource
+from app.iot.models import Alert, AlertRule, AlertSeverity, Device, TelemetrySource
 from app.iot.service import (
     authenticate_device,
     device_telemetry,

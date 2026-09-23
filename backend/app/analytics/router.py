@@ -8,12 +8,11 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import case, func, select
+from sqlalchemy import select
 
 from app.analytics.service import citizen_dashboard, executive_dashboard, operations_dashboard
 from app.auth.deps import AuthCtx, DbSession, require_perm
-from app.collection.models import CollectionEvent, EventStatus
-from app.complaints.models import Complaint
+from app.collection.models import CollectionEvent
 from app.waste.models import WasteReport
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])

@@ -63,7 +63,8 @@ async def seed_emission_factors(session: AsyncSession) -> int:
     factors = [
         ("fuel_diesel_l", "Diesel combustion (fleet)", "fuel", "EPA GHG Emission Factors Hub 2024",
          "global", 2024, "kg_co2e_per_litre", 2.689,
-         "Diesel consumption converted from EPA per-gallon factor (10.21 kg CO2e/gal incl. CH4 and N2O for heavy-duty vehicles).", "1", 5.0),
+         "Diesel consumption converted from EPA per-gallon factor (10.21 kg CO2e/gal incl. CH4 and N2O "
+         "for heavy-duty vehicles).", "1", 5.0),
         ("fuel_petrol_l", "Petrol combustion (fleet)", "fuel", "EPA GHG Emission Factors Hub 2024",
          "global", 2024, "kg_co2e_per_litre", 2.322,
          "Gasoline converted from EPA per-gallon factor (8.78 kg CO2e/gal incl. CH4 and N2O).", "1", 5.0),
@@ -72,10 +73,12 @@ async def seed_emission_factors(session: AsyncSession) -> int:
          "CNG stationary/mobile combustion factor incl. CH4 and N2O (per kg).", "1", 8.0),
         ("waste_landfill_t", "Mixed MSW to landfill", "waste_treatment", "EPA WARM v15",
          "global", 2024, "kg_co2e_per_tonne", 580.0,
-         "Net life-cycle GHG factor for mixed MSW landfilled (WARM, converted from short tons; excludes biogenic CO2, includes CH4 collection assumptions).", "1", 25.0),
+         "Net life-cycle GHG factor for mixed MSW landfilled (WARM, converted from short tons; "
+         "excludes biogenic CO2, includes CH4 collection assumptions).", "1", 25.0),
         ("waste_recycling_t", "Mixed recyclables to recycling", "waste_treatment", "EPA WARM v15",
          "global", 2024, "kg_co2e_per_tonne", 80.0,
-         "Net life-cycle factor for mixed recyclables processing (transport + processing, credit for material substitution excluded to stay conservative).", "1", 30.0),
+         "Net life-cycle factor for mixed recyclables processing (transport + processing, credit for "
+         "material substitution excluded to stay conservative).", "1", 30.0),
         ("waste_composting_t", "Organics to composting", "waste_treatment", "EPA WARM v15",
          "global", 2024, "kg_co2e_per_tonne", 100.0,
          "Net life-cycle factor for windrow composting of organics.", "1", 30.0),
@@ -247,7 +250,13 @@ async def recompute_period(
             )
             continue
         l_per_km = FUEL_L_PER_KM.get(fuel, 0.3)
-        code = {"diesel": "fuel_diesel_l", "petrol": "fuel_petrol_l", "cng": "fuel_cng_kg", "hybrid": "fuel_petrol_l"}[fuel]
+        fuel_codes = {
+            "diesel": "fuel_diesel_l",
+            "petrol": "fuel_petrol_l",
+            "cng": "fuel_cng_kg",
+            "hybrid": "fuel_petrol_l",
+        }
+        code = fuel_codes[fuel]
         f = factor_cache.get(code)
         if f is None:
             continue

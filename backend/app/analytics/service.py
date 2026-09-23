@@ -13,7 +13,7 @@ from datetime import date, timedelta
 from sqlalchemy import case, func, select
 
 from app.collection.models import CollectionEvent, CollectionPoint, EventStatus
-from app.complaints.models import Complaint, ComplaintPriority, ComplaintStatus
+from app.complaints.models import Complaint, ComplaintStatus
 from app.core.db import AsyncSession
 from app.fleet.models import Vehicle, VehicleStatus
 from app.iot.models import Alert, AlertStatus, Device, DeviceStatus
@@ -30,7 +30,9 @@ async def operations_dashboard(session: AsyncSession, *, organization_id: uuid.U
         func.sum(case((CollectionEvent.status == EventStatus.completed, 1), else_=0)).label("completed"),
         func.sum(case((CollectionEvent.status == EventStatus.missed, 1), else_=0)).label("missed"),
         func.sum(case((CollectionEvent.status == EventStatus.skipped, 1), else_=0)).label("skipped"),
-        func.coalesce(func.sum(case((CollectionEvent.status == EventStatus.completed, CollectionEvent.weight_kg))), 0).label("weight"),
+        func.coalesce(
+            func.sum(case((CollectionEvent.status == EventStatus.completed, CollectionEvent.weight_kg))), 0
+        ).label("weight"),
     ).where(
         CollectionEvent.organization_id == organization_id,
         CollectionEvent.scheduled_date >= since,
@@ -140,7 +142,9 @@ async def operations_dashboard(session: AsyncSession, *, organization_id: uuid.U
     }
 
 
-async def citizen_dashboard(session: AsyncSession, *, organization_id: uuid.UUID, user_id: uuid.UUID, days: int = 30) -> dict:
+async def citizen_dashboard(
+    session: AsyncSession, *, organization_id: uuid.UUID, user_id: uuid.UUID, days: int = 30
+) -> dict:
     since = date.today() - timedelta(days=days - 1)
     from app.sustainability.models import WasteTreatment
 

@@ -15,13 +15,15 @@ from sqlalchemy import (
     JSON,
     Boolean,
     DateTime,
-    Enum as SAEnum,
     Float,
     ForeignKey,
     Index,
     Integer,
     String,
     Text,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

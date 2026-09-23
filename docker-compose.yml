@@ -1,0 +1,51 @@
+# EcoMind-AI reference deployment.
+#   docker compose up --build
+#   frontend:  http://localhost:8080
+#   API docs:  http://localhost:8080/docs
+#
+# Secrets: copy backend/.env.example to backend/.env and set at minimum
+# ECOMIND_SECRET_KEY and ECOMIND_DATABASE_URL. Never commit real secrets.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ecomind
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ecomind
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecomind"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    env_file:
+      # Optional: copy backend/.env.example → backend/.env to customize.
+      - path: ./backend/.env
+        required: false
+    environment:
+      # Overrides for the container network; .env values still apply for the rest.
+      ECOMIND_DATABASE_URL: postgresql+asyncpg://ecomind:${POSTGRES_PASSWORD:-change-me}@db:5432/ecomind
+      ECOMIND_CORS_ORIGINS: ${ECOMIND_CORS_ORIGINS:-http://localhost:8080}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/srv/app/data
+    # If you scale to a dedicated worker, set ECOMIND_RUN_EMBEDDED_WORKER=false
+    # here and run: docker compose run --scale api=2 … (see docs/OPERATIONS.md).
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  uploads:

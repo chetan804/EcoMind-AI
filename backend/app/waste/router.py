@@ -11,7 +11,7 @@ from sqlalchemy import select
 from app.ai.service import classify_waste_report
 from app.auth.deps import AuthCtx, DbSession, require_perm
 from app.core.errors import NotFoundError, ValidationApiError
-from app.core.pagination import Page, page_params
+from app.core.pagination import page_params
 from app.core.rate_limit import client_ip, rate_limit
 from app.media.service import store_upload
 from app.waste.models import WasteCategory
@@ -24,6 +24,8 @@ from app.waste.schemas import (
 )
 from app.waste.service import (
     assign as assign_report,
+)
+from app.waste.service import (
     attach_inference,
     create_report,
     get_report,

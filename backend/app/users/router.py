@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.auth.deps import AuthCtx, CurrentUser, DbSession
-from app.core.security import hash_password, verify_password
+from app.auth.deps import CurrentUser, DbSession
 from app.core.errors import ValidationApiError
+from app.core.security import hash_password, verify_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 

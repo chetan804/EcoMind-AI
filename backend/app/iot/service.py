@@ -93,7 +93,9 @@ async def register_device(
     return device, api_key
 
 
-async def rotate_device_key(session: AsyncSession, *, organization_id: uuid.UUID, device_id: uuid.UUID) -> tuple[Device, str]:
+async def rotate_device_key(
+    session: AsyncSession, *, organization_id: uuid.UUID, device_id: uuid.UUID
+) -> tuple[Device, str]:
     device = await get_device(session, organization_id, device_id)
     api_key = new_opaque_token("emd")
     device.api_key_hash = hash_token(api_key)

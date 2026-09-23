@@ -21,7 +21,6 @@ os.environ.setdefault("ECOMIND_RATE_LIMIT_TELEMETRY", "100000")
 os.environ.setdefault("ECOMIND_RATE_LIMIT_READ", "100000")
 
 import asyncio  # noqa: E402
-import contextlib  # noqa: E402
 
 _PG_HANDLE = None
 _TEST_DB = None
@@ -45,8 +44,9 @@ os.environ["ECOMIND_DATABASE_URL"] = DATABASE_URL
 
 
 def _run_migrations() -> None:
-    from alembic import command
     from alembic.config import Config
+
+    from alembic import command
 
     cfg = Config("/home/user/EcoMind-AI/backend/alembic.ini")
     cfg.set_main_option("script_location", "/home/user/EcoMind-AI/backend/alembic")
@@ -71,11 +71,10 @@ def event_loop_policy():
 
 @pytest.fixture(scope="session")
 async def app():
-    from app.main import app as fastapi_app
-
     # Seed RBAC once for the session.
     from app.auth.rbac import seed_rbac
     from app.core.db import SessionLocal
+    from app.main import app as fastapi_app
 
     async with SessionLocal() as session:
         await seed_rbac(session)

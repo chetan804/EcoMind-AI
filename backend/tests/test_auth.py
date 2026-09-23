@@ -84,12 +84,13 @@ async def test_password_reset_flow(client):
     )
     assert r.status_code == 200
     # Token is not exposed via API (logged server-side); test the reset path via service
-    from app.core.db import SessionLocal
-    from app.core.security import hash_token, new_opaque_token
-    from app.auth.models import PasswordResetToken, User
-    from sqlalchemy import select
     from datetime import timedelta
-    from app.core.db import utcnow
+
+    from sqlalchemy import select
+
+    from app.auth.models import PasswordResetToken, User
+    from app.core.db import SessionLocal, utcnow
+    from app.core.security import hash_token, new_opaque_token
 
     token = new_opaque_token("empr")
     async with SessionLocal() as session:
@@ -162,3 +163,14 @@ async def test_deactivated_member_loses_access(client):
     assert r.status_code == 200
     r2 = await api(client, "GET", "/api/v1/fleet/vehicles", member_token, org["id"])
     assert r2.status_code == 403
+
+
+async def test_my_organizations_lists_memberships(client):
+    """Regression: /organizations/mine referenced an undefined name and 500'd."""
+    org, admin_token = await make_org_with_admin(client)
+
+    r = await api(client, "GET", "/api/v1/organizations/mine", admin_token, org["id"])
+    assert r.status_code == 200
+    orgs = r.json()
+    assert isinstance(orgs, list)
+    assert any(o["id"] == org["id"] for o in orgs)

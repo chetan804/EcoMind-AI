@@ -16,16 +16,18 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     DateTime,
-    Enum as SAEnum,
     Float,
     ForeignKey,
-    func,
     Identity,
     Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    func,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

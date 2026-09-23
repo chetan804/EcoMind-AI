@@ -16,7 +16,6 @@ from sqlalchemy import func, select
 from app.ai.models import AiInference, AiStatus, AiTask
 from app.ai.providers import AiProvider, AiProviderError, get_provider
 from app.ai.schemas import (
-    ComplaintAnalysisOut,
     WasteClass,
     WasteClassificationOut,
 )

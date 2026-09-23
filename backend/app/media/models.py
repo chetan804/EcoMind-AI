@@ -13,9 +13,11 @@ from datetime import datetime
 
 from sqlalchemy import (
     DateTime,
-    Enum as SAEnum,
     Integer,
     String,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 
 from app.audit.service import list_events

@@ -6,7 +6,8 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Enum as SAEnum, ForeignKey, Index, String
+from sqlalchemy import JSON, DateTime, ForeignKey, Index, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base, TimestampMixin, UUIDMixin

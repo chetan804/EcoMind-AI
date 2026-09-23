@@ -13,10 +13,10 @@ from app.core.logging import get_logger
 from app.core.security import hash_token, new_opaque_token
 from app.orgs.models import (
     OperationalUnit,
+    Organization,
     OrgInvitation,
     OrgMembership,
     OrgUsageCounters,
-    Organization,
     Zone,
 )
 from app.waste.models import WasteCategory
@@ -27,7 +27,13 @@ DEFAULT_CATEGORIES = [
     ("mixed", "Mixed Waste", "#64748b", "trash-2", "General household waste collected together."),
     ("recyclable", "Recyclables", "#3b82f6", "rotate-ccw", "Paper, plastics, glass and metals suitable for recycling."),
     ("organic", "Organic / Wet Waste", "#22c55e", "leaf", "Food and garden waste suitable for composting."),
-    ("hazardous", "Hazardous", "#ef4444", "alert-triangle", "Batteries, chemicals, medical waste requiring special handling."),
+    (
+        "hazardous",
+        "Hazardous",
+        "#ef4444",
+        "alert-triangle",
+        "Batteries, chemicals, medical waste requiring special handling.",
+    ),
     ("e_waste", "E-Waste", "#a855f7", "cpu", "Electronic equipment and components."),
     ("construction", "Construction Debris", "#d97706", "hard-hat", "Inert construction and demolition material."),
 ]
@@ -188,7 +194,6 @@ async def create_invitation(
 ) -> tuple[OrgInvitation, str]:
     from datetime import timedelta
 
-    from app.core.config import settings
 
     token = new_opaque_token("emi")
     invite = OrgInvitation(

@@ -38,12 +38,17 @@ build-backend = "setuptools.build_meta"
 include = ["app*"]
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "ASYNC"]
-ignore = ["B008"]  # FastAPI dependency defaults
+ignore = [
+    "B008",   # FastAPI dependency defaults
+    # (str, Enum) mixin is deliberate: StrEnum changes str()/serialization semantics
+    # used by SQLAlchemy column values and Pydantic response enums. Migrate separately.
+    "UP042",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

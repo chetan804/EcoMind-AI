@@ -24,7 +24,7 @@ from app.core.db import AsyncSession, get_session, tenant_context
 from app.core.errors import AuthError, ForbiddenError
 from app.core.logging import get_logger
 from app.core.security import decode_access_token
-from app.orgs.models import OrgMembership, Organization
+from app.orgs.models import Organization, OrgMembership
 
 log = get_logger("auth")
 bearer = HTTPBearer(auto_error=False)

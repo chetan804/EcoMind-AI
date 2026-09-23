@@ -24,7 +24,7 @@ async def test_route_generation_assigns_all_points_with_geometry(client):
 
     random.seed(42)
     points = []
-    for i in range(12):
+    for _ in range(12):
         lat = 12.94 + random.uniform(-0.02, 0.02)
         lng = 77.60 + random.uniform(-0.02, 0.02)
         points.append(await create_point(client, admin_token, org["id"], lat, lng))
@@ -98,8 +98,8 @@ async def test_field_stop_execution_updates_collection_event(client):
 
     today = date.today()
     # Create today's scheduled event for the point
-    from app.core.db import SessionLocal, tenant_context
     from app.collection.models import CollectionEvent, EventStatus
+    from app.core.db import SessionLocal, tenant_context
 
     async with SessionLocal() as session:
         with tenant_context(session, uuid.UUID(org["id"])):

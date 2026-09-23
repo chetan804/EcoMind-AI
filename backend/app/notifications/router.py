@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 
@@ -28,7 +28,9 @@ class NotificationOut(BaseModel):
 
 
 @router.get("")
-async def list_notifications(ctx: AuthCtx, session: DbSession, unread_only: bool = False, page: int = 1, page_size: int = 20):
+async def list_notifications(
+    ctx: AuthCtx, session: DbSession, unread_only: bool = False, page: int = 1, page_size: int = 20
+):
     q = select(Notification).where(Notification.recipient_user_id == ctx.user.id)
     if unread_only:
         q = q.where(Notification.read_at.is_(None))

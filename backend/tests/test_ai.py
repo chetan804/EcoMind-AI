@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
-
 from conftest import add_member, api, make_org_with_admin
 
 
@@ -14,7 +12,6 @@ async def test_classification_low_confidence_routes_to_review(client):
         json={"description": "plastic and glass waste", "latitude": 12.94, "longitude": 77.60},
     )
     assert r.status_code == 201
-    report = r.json()
 
     inferences = await api(client, "GET", "/api/v1/ai/inferences", admin_token, org["id"])
     items = inferences.json()["items"]

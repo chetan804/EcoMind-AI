@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from app.audit.service import record as audit
 from app.auth.deps import AuthCtx, DbSession, require_perm
 from app.core.errors import ForbiddenError, NotFoundError
-from app.core.pagination import Page, page_params
+from app.core.pagination import Page
 from app.orgs.schemas import (
     InviteAccept,
     InviteCreate,
@@ -75,8 +75,7 @@ async def create_organization_endpoint(body: OrganizationCreate, ctx: AuthCtx, s
 @router.get("/mine", response_model=list[OrganizationOut])
 async def my_organizations(ctx: AuthCtx, session: DbSession):
     from app.core.db import unscoped
-
-    from app.orgs.models import OrgMembership
+    from app.orgs.models import Organization, OrgMembership
 
     with unscoped(session):
         orgs = (

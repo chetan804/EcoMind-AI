@@ -19,7 +19,6 @@ from sqlalchemy import (
     String,
     Table,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

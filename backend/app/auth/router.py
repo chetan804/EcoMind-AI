@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy import select
 
-from app.auth.deps import AuthCtx, CurrentUser, DbSession
+from app.auth.deps import CurrentUser, DbSession
 from app.auth.schemas import (
     AuthResponse,
     ForgotPasswordIn,
@@ -18,7 +16,6 @@ from app.auth.schemas import (
     RegisterIn,
     ResetPasswordIn,
     TokenPair,
-    UserPublic,
 )
 from app.auth.service import (
     authenticate,
@@ -31,9 +28,7 @@ from app.auth.service import (
     rotate_refresh_token,
 )
 from app.core.config import settings
-from app.core.errors import AuthError
 from app.core.rate_limit import client_ip, rate_limit
-from app.notifications.service import notify_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -155,8 +150,6 @@ async def reset_password_endpoint(body: ResetPasswordIn, session: DbSession):
 @router.get("/public/organizations")
 async def public_organizations(session: DbSession):
     """Organizations open for citizen signup (used by the registration flow)."""
-    from sqlalchemy import select
-
     from app.orgs.models import Organization
 
     orgs = (

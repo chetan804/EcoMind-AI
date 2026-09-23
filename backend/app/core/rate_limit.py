@@ -9,9 +9,8 @@ see docs/adr/0007-background-jobs-and-limits.md for the Redis upgrade path.
 from __future__ import annotations
 
 import time
-from collections import defaultdict
 
-from fastapi import Depends, Request
+from fastapi import Request
 
 from app.core.config import settings
 from app.core.errors import RateLimitError
