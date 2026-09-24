@@ -1,145 +1,96 @@
-from datetime import datetime, timedelta, timezone
+"""Password hashing and token utilities.
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from sqlalchemy.orm import Session
+- Passwords: Argon2id (argon2-cffi) with per-hash random salt.
+- Access tokens: short-lived JWT (HS256) carrying the user id + platform flag.
+  The JWT authenticates the *user*, never the *organization*: organization
+  context is resolved per-request from the active membership so tokens stay
+  valid when the user switches or is removed from an organization.
+- Refresh tokens: opaque 256-bit secrets stored only as SHA-256 hashes,
+  rotated on every use; compromise of the store does not yield usable tokens.
+"""
 
-from app.core.config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    JWT_ALGORITHM,
-    SECRET_KEY,
-)
-from app.core.roles import RoleID, RoleName, role_name_for_id
-from app.db.database import get_db
-from app.models.user import User
+from __future__ import annotations
 
+import hashlib
+import hmac
+import secrets
+import uuid
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-)
+import jwt
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+from app.core.config import settings
+from app.core.errors import AuthError
+
+_password_hasher = PasswordHasher()  # argon2id, 64 MiB, t=3
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return _password_hasher.hash(password)
 
 
-def verify_password(
-    plain_password: str,
-    hashed_password: str,
-) -> bool:
-    return pwd_context.verify(
-        plain_password,
-        hashed_password,
-    )
+def verify_password(password_hash: str, password: str) -> bool:
+    try:
+        return _password_hasher.verify(password_hash, password)
+    except VerifyMismatchError:
+        return False
+    except Exception:
+        return False
 
 
-def create_access_token(
-    data: dict,
-    expires_minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES,
-) -> str:
-    payload = data.copy()
-
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=expires_minutes
-    )
-
-    payload.update({"exp": expire})
-
-    return jwt.encode(
-        payload,
-        SECRET_KEY,
-        algorithm=JWT_ALGORITHM,
-    )
+def needs_rehash(password_hash: str) -> bool:
+    return _password_hasher.check_needs_rehash(password_hash)
 
 
-oauth2_scheme = HTTPBearer()
+# --- Access tokens ---------------------------------------------------------
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def create_access_token(user_id: uuid.UUID, is_platform_admin: bool = False) -> str:
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "sub": str(user_id),
+        "pa": is_platform_admin,
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(minutes=settings.access_token_minutes)).timestamp()),
+        "jti": secrets.token_hex(8),
+        "typ": "access",
+    }
+    return jwt.encode(payload, settings.effective_secret_key(), algorithm="HS256")
 
-    token = credentials.credentials
 
+def decode_access_token(token: str) -> dict[str, Any]:
     try:
         payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[JWT_ALGORITHM],
+            token, settings.effective_secret_key(), algorithms=["HS256"]
         )
-
-        user_id = payload.get("sub")
-
-        if user_id is None:
-            raise credentials_exception
-
-        user_id = int(user_id)
-
-    except (JWTError, ValueError):
-        raise credentials_exception
-
-    user = (
-        db.query(User)
-        .filter(
-            User.id == user_id,
-            User.is_active.is_(True),
-        )
-        .first()
-    )
-
-    if user is None:
-        raise credentials_exception
-
-    return user
+    except jwt.ExpiredSignatureError as e:
+        raise AuthError("Access token expired.") from e
+    except jwt.InvalidTokenError as e:
+        raise AuthError("Invalid access token.") from e
+    if payload.get("typ") != "access":
+        raise AuthError("Invalid token type.")
+    return payload
 
 
-def require_role(required_role: int | RoleID | str | RoleName):
-    required_role_name = (
-        role_name_for_id(int(required_role))
-        if isinstance(required_role, (int, RoleID))
-        else RoleName(required_role)
-    )
-
-    def role_checker(
-        current_user: User = Depends(get_current_user),
-    ) -> User:
-        if current_user.role is None or current_user.role.name != required_role_name:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions",
-            )
-
-        return current_user
-
-    return role_checker
+# --- Opaque secrets (refresh tokens, device keys, invite tokens) ------------
 
 
-def require_roles(*required_roles: int | RoleID | str | RoleName):
-    allowed_roles = {
-        role_name_for_id(int(role))
-        if isinstance(role, (int, RoleID))
-        else RoleName(role)
-        for role in required_roles
-    }
+def new_opaque_token(prefix: str = "emr") -> str:
+    return f"{prefix}_{secrets.token_urlsafe(32)}"
 
-    def role_checker(
-        current_user: User = Depends(get_current_user),
-    ) -> User:
-        if current_user.role is None or current_user.role.name not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions",
-            )
 
-        return current_user
+def hash_token(token: str) -> str:
+    """SHA-256 for at-rest storage of opaque high-entropy tokens."""
+    return hashlib.sha256(token.encode()).hexdigest()
 
-    return role_checker
+
+def token_fingerprint(token: str) -> str:
+    """Non-reversible display prefix for UIs and logs."""
+    return token[:8] + "…"
+
+
+def constant_time_eq(a: str, b: str) -> bool:
+    return hmac.compare_digest(a.encode(), b)
