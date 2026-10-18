@@ -52,6 +52,9 @@ def empty_database_url() -> Iterator[URL]:
     """URL of a new, empty, isolated database (dropped after the test)."""
     admin = _admin_url()
     if admin is None:
+        if os.environ.get("CI"):
+            # On CI a missing database must fail loudly instead of silently skipping coverage.
+            pytest.fail("TEST_DATABASE_URL must be set when CI is set")
         pytest.skip("TEST_DATABASE_URL is not set; integration tests need a PostgreSQL server")
     name = f"{DB_PREFIX}{uuid.uuid4().hex[:12]}"
     admin_engine = create_engine(admin, isolation_level="AUTOCOMMIT")

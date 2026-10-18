@@ -19,7 +19,7 @@ Principles: test behaviour at the cheapest layer that can prove it; no empty or 
 | Repository | `scripts/quality` | Python | canonical structure, no secrets in templates, data dictionary current | `make check` | quality-gates |
 
 ## Database test isolation
-`backend/tests/fixtures/database.py` takes `TEST_DATABASE_URL` (a PostgreSQL server where the role may `CREATE DATABASE`), creates `ecomind_test_<random>` per test, migrates with Alembic, and drops it afterwards with `WITH (FORCE)`. The database named in the URL is only used for CREATE/DROP and is never modified. Without `TEST_DATABASE_URL`, integration tests are **skipped with an explicit reason**; CI always provides it, and the CI log must show 0 skipped.
+`backend/tests/fixtures/database.py` takes `TEST_DATABASE_URL` (a PostgreSQL server where the role may `CREATE DATABASE`), creates `ecomind_test_<random>` per test, migrates with Alembic, and drops it afterwards with `WITH (FORCE)`. The database named in the URL is only used for CREATE/DROP and is never modified. Without `TEST_DATABASE_URL`, integration tests are **skipped with an explicit reason**; CI always provides it, and when the `CI` environment variable is set a missing `TEST_DATABASE_URL` makes those tests **fail** instead of skip, so CI cannot pass with the database layer silently uncovered.
 
 ## Conventions for new features
 1. Service rules: unit tests with an isolated database where persistence matters.
