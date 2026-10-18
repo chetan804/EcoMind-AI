@@ -9,6 +9,7 @@ to the lists below.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -25,6 +26,7 @@ FRONTEND_FEATURES = [
     "facilities", "fleet", "circular-economy", "analytics", "forecasting", "anomaly-alerts",
     "community-incidents", "sorting-guide", "material-passports", "rewards", "notifications",
     "users", "audit", "settings",
+    "landing",  # public marketing page: not a backend domain, added by the UI milestone (docs/ui/design-system.md)
 ]  # fmt: skip
 INTEGRATIONS = ["file_storage", "mapping", "email", "sensors"]
 ML_CAPABILITIES = ["waste_classification", "forecasting", "anomaly_detection"]
@@ -95,12 +97,20 @@ ALLOWED_TOP_LEVEL = {
 }  # fmt: skip
 
 
+# Design reference screenshots and their manifest were committed to the repository root on `main`
+# (docs/ui/design-system.md, "Reference material"). They are allowed by exact pattern only, so any
+# other new root entry still fails. Moving them under docs/ui/ would let this exception be removed.
+REFERENCE_ASSET = re.compile(r"^\d{2}_[A-Za-z0-9_]+\.png$")
+REFERENCE_MANIFEST = "manifest.json"
+
+
 def main() -> int:
     problems: list[str] = []
     problems += [f"missing directory: {d}" for d in REQUIRED_DIRS if not (ROOT / d).is_dir()]
     problems += [f"missing file: {f}" for f in REQUIRED_FILES if not (ROOT / f).is_file()]
     for entry in sorted(ROOT.iterdir()):
-        if entry.name not in ALLOWED_TOP_LEVEL:
+        is_reference = bool(REFERENCE_ASSET.match(entry.name)) or entry.name == REFERENCE_MANIFEST
+        if entry.name not in ALLOWED_TOP_LEVEL and not is_reference:
             problems.append(f"unexpected top-level entry: {entry.name} (see docs/decisions)")
     for module in BACKEND_MODULES:
         if not (ROOT / "backend/app/modules" / module / "README.md").is_file():

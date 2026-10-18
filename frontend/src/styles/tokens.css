@@ -1,0 +1,181 @@
+/*
+ * EcoMind design tokens: the single source of truth for the visual language.
+ * Values were measured from the supplied references (region medians; see docs/ui/design-system.md).
+ * Components must use these variables rather than literal values.
+ *
+ * Breakpoints cannot be CSS variables; the project uses three, documented in the design system:
+ *   <= 1023px  sidebar becomes a drawer      <= 767px  single-column page layouts      <= 479px  compact
+ */
+
+:root {
+  /* ---- Typography ---- */
+  --font-sans: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --text-xs: 0.75rem; /* 12 */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-base: 0.875rem; /* 14: default UI text */
+  --text-md: 1rem; /* 16 */
+  --text-lg: 1.125rem; /* 18 */
+  --text-xl: 1.25rem; /* 20 */
+  --text-2xl: 1.5rem; /* 24 */
+  --text-3xl: 2rem; /* 32: page titles */
+  --text-title: 1.375rem; /* 22: card titles (measured against the reference) */
+  --text-stat: 1.75rem; /* 28: headline numbers in metric tiles */
+  --text-display: clamp(2.5rem, 1.4rem + 3.6vw, 4rem); /* 64 at desktop: landing hero */
+
+  --leading-tight: 1.1;
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.02em;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ---- Radii ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px; /* inputs, buttons */
+  --radius-lg: 16px; /* cards */
+  --radius-xl: 24px; /* auth card, large panels */
+  --radius-pill: 999px;
+
+  /* ---- Layout ---- */
+  --sidebar-width: 256px;
+  --topbar-height: 72px;
+  --content-padding: 2.25rem; /* 36 */
+  --content-max-width: 1440px;
+  --control-height: 44px;
+  --control-height-lg: 56px;
+  --touch-target: 44px;
+
+  /* ---- Icons ---- */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-stroke: 1.75;
+
+  /* ---- Motion ---- */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---- Elevation / layers ---- */
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-dialog: 50;
+  --z-toast: 60;
+
+  /* ---- Brand and semantic colors, theme independent ---- */
+  --color-primary: #7af794; /* primary button fill (sampled: #76fa93, #80f98f, #71f7a4) */
+  --color-primary-hover: #94fbaa;
+  --color-primary-active: #62e07c;
+  --color-on-primary: #04281a;
+  --color-teal: #2fe3b0; /* progress fill, positive accents (sampled: #35f7c9, #2bdfa2) */
+  --color-success: #34d399;
+  --color-warning: #f5b83d;
+  --color-danger: #f24d54; /* sampled: #f24d54 */
+  --color-info: #38a8f5;
+}
+
+/* ---- Dark theme (default): Landing, Sign in, Command Center, Classification references ---- */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #061a27; /* page background (#071a26, #041e2d, #03131e) */
+  --color-sidebar: #05141b; /* sidebar (#05141b, #05161c) */
+  --color-surface: #0c202b; /* cards (#0a1c26, #0d212c, #091f29, #0d202b) */
+  --color-surface-raised: #112631; /* nested surfaces, tiles (#10212a, #142934) */
+  --color-field: #14293a; /* inputs (#1a2b3b, #102838) */
+  --color-auth-panel: #1f3045; /* sign-in form panel (#1f3045) */
+  --color-overlay: rgba(2, 10, 15, 0.72);
+
+  --color-border: #17313b;
+  --color-border-strong: #26485a;
+  --color-divider: rgba(255, 255, 255, 0.07);
+
+  --color-text: #f2f7f8;
+  --color-text-secondary: #b4c3ca;
+  --color-text-muted: #86a0ab; /* contrast 4.9-6.4:1 on all dark surfaces (computed) */
+
+  --color-nav-active: #047a56; /* active sidebar item; reference #027c50-#02976e, darkened to reach 4.5:1 with white text */
+  --color-nav-hover: rgba(255, 255, 255, 0.06);
+  --color-focus: #7af794;
+
+  --color-success-bg: rgba(52, 211, 153, 0.14);
+  --color-warning-bg: rgba(245, 184, 61, 0.14);
+  --color-danger-bg: rgba(242, 77, 84, 0.16);
+  --color-info-bg: rgba(56, 168, 245, 0.16);
+  --color-neutral-bg: rgba(255, 255, 255, 0.08);
+  --color-success-text: #5fe9b4;
+  --color-warning-text: #f8c868;
+  --color-danger-text: #ff8d92;
+  --color-info-text: #7cc4f8;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+/*
+ * ---- Light theme: content areas of the Forecasting, Anomaly, Route Optimization references ----
+ * Values are estimates from those three references and are NOT yet verified against screens
+ * (the light screens belong to Stage 2).
+ */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --color-bg: #f2f6f9;
+  --color-sidebar: #05141b;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f6f9fb;
+  --color-field: #ffffff;
+  --color-auth-panel: #ffffff;
+  --color-overlay: rgba(6, 20, 30, 0.5);
+
+  --color-border: #e0e8ee;
+  --color-border-strong: #c7d3dc;
+  --color-divider: rgba(6, 25, 38, 0.08);
+
+  --color-text: #0b1f2e;
+  --color-text-secondary: #34495a;
+  --color-text-muted: #566a79;
+
+  --color-nav-active: #026741;
+  --color-nav-hover: rgba(6, 25, 38, 0.05);
+  --color-focus: #0a7d54;
+
+  --color-success-bg: #dcf6ea;
+  --color-warning-bg: #fdf0d0;
+  --color-danger-bg: #fde2e3;
+  --color-info-bg: #dcecfb;
+  --color-neutral-bg: #e8eef2;
+  --color-success-text: #0b6b46;
+  --color-warning-text: #8a5a00;
+  --color-danger-text: #b3262d;
+  --color-info-text: #145a9e;
+
+  --shadow-sm: 0 1px 2px rgba(11, 31, 46, 0.08);
+  --shadow-md: 0 8px 24px rgba(11, 31, 46, 0.1);
+  --shadow-dialog: 0 24px 64px rgba(11, 31, 46, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0.01ms;
+    --duration-base: 0.01ms;
+  }
+}

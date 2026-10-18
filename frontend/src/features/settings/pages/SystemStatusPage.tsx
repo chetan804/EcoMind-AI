@@ -1,5 +1,8 @@
 import { config } from '@/app/config';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { getErrorMessage } from '@/services/error-handler';
 import { useSystemStatus } from '../hooks/useSystemStatus';
 
@@ -8,16 +11,19 @@ export function SystemStatusPage() {
   const { liveness, readiness, refetch } = useSystemStatus();
 
   return (
-    <section aria-labelledby="system-status-title">
-      <h1 id="system-status-title">System status</h1>
-      <p className="muted">
-        API: {config.apiBaseUrl || 'same origin'} &middot;{' '}
-        <button type="button" onClick={() => void refetch()}>
-          Refresh
-        </button>
-      </p>
+    <section aria-labelledby="system-status-title" className="status-stack">
+      <PageHeader
+        title="System status"
+        titleId="system-status-title"
+        subtitle={`API: ${config.apiBaseUrl || 'same origin'}`}
+        actions={
+          <Button variant="secondary" onClick={() => void refetch()}>
+            Refresh
+          </Button>
+        }
+      />
 
-      <div className="card">
+      <Card>
         <h2>API (liveness)</h2>
         {liveness.isPending && <p>Checking&hellip;</p>}
         {liveness.isError && (
@@ -26,9 +32,9 @@ export function SystemStatusPage() {
           </p>
         )}
         {liveness.isSuccess && <Badge tone="success">Running</Badge>}
-      </div>
+      </Card>
 
-      <div className="card">
+      <Card>
         <h2>Dependencies (readiness)</h2>
         {readiness.isPending && <p>Checking&hellip;</p>}
         {readiness.isError && (
@@ -49,13 +55,13 @@ export function SystemStatusPage() {
               {Object.entries(readiness.data.checks).map(([name, check]) => (
                 <li key={name}>
                   <strong>{name}</strong>: {check.status === 'ok' ? 'ok' : 'failed'}
-                  {check.detail ? <span className="muted"> &mdash; {check.detail}</span> : null}
+                  {check.detail ? <span className="text-muted"> &mdash; {check.detail}</span> : null}
                 </li>
               ))}
             </ul>
           </>
         )}
-      </div>
+      </Card>
     </section>
   );
 }

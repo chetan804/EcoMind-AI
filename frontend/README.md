@@ -2,7 +2,7 @@
 
 React + TypeScript + Vite single-page app. Boundaries and rules: `docs/architecture/component-boundaries.md`, UI rules: `docs/ui/design-system.md`.
 
-**State:** application shell, routing, shared API client, query client, and one real screen: **System status** (`/settings/system-status`), which displays the backend's `/health` and `/ready` responses. All other feature folders are reserved boundaries (see each `README.md`).
+**State:** design system (tokens and shared components), application shell, routing, shared API client and query client. One screen talks to the backend: **System status** (`/settings/system-status`), which displays `/health` and `/ready`. Four screens are UI only, with **no backend behind them**: Landing (`/`), Sign in / Sign up (`/sign-in`, `/sign-up`), Dashboard (`/dashboard`, labelled demonstration data) and AI waste classification (`/classify`, local image preview, no model). Sidebar entries for unbuilt screens route to a "planned, not built" page. All other feature folders are reserved boundaries (see each `README.md`; design rules and deviations in `docs/ui/design-system.md`).
 
 ## Layout (`src/`)
 | Path | Responsibility |

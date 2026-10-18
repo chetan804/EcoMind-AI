@@ -25,6 +25,7 @@ frontend/coverage/
 npm-debug.log*
 tests/e2e/test-results/
 tests/e2e/playwright-report/
+tests/e2e/visual/out/
 
 # --- Local runtime files ---
 backend/var/
