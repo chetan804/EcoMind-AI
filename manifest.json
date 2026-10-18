@@ -1,0 +1,342 @@
+{
+  "source": "EcoMind-AI Dashboard Showcase.png",
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "format": "PNG",
+  "processing": "Native-resolution crops; no resizing, sharpening, interpolation, or lossy compression.",
+  "note": "The bottom-row screenshots retain the original source image's bottom cutoff.",
+  "screens": [
+    {
+      "filename": "01_Landing_Page.png",
+      "box_xyxy": [
+        11,
+        28,
+        448,
+        289
+      ],
+      "dimensions": [
+        437,
+        261
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "8f35d948eec7617e964c397e094167442e864d31d0ea6441154da055dbdf0559"
+    },
+    {
+      "filename": "02_Login_Sign_Up.png",
+      "box_xyxy": [
+        455,
+        28,
+        736,
+        289
+      ],
+      "dimensions": [
+        281,
+        261
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "651420f3175326fec2ee73e8c897191d7cf771746049f59de12bc748e3fb5a34"
+    },
+    {
+      "filename": "03_Operational_Command_Center.png",
+      "box_xyxy": [
+        743,
+        28,
+        1188,
+        289
+      ],
+      "dimensions": [
+        445,
+        261
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "6307341e740c072016447b47075dd375e8a83679fe4bcb08aa0c73b85cafc057"
+    },
+    {
+      "filename": "04_AI_Waste_Classification.png",
+      "box_xyxy": [
+        1192,
+        28,
+        1527,
+        289
+      ],
+      "dimensions": [
+        335,
+        261
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "c3f2c8ac1920af7c2100fb01f9629f71d88a2ada8a266e79ba67e6a8f4d4ef9a"
+    },
+    {
+      "filename": "05_Fill_Level_Forecasting.png",
+      "box_xyxy": [
+        11,
+        307,
+        356,
+        510
+      ],
+      "dimensions": [
+        345,
+        203
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "966be88f20356dfc8258cab8fa37c182b5e3a31f3b74067781eef826b08fa2a8"
+    },
+    {
+      "filename": "06_Anomaly_Detection.png",
+      "box_xyxy": [
+        363,
+        307,
+        684,
+        510
+      ],
+      "dimensions": [
+        321,
+        203
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "2580f90ba38f5068e626fa4ccdb87ee9d49200ce226698d70c8ce2a649df17ef"
+    },
+    {
+      "filename": "07_Route_Optimization.png",
+      "box_xyxy": [
+        690,
+        307,
+        1003,
+        510
+      ],
+      "dimensions": [
+        313,
+        203
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "1961b18180346c422b8e73de0dd3f0d1b37f6acee61fb3c94c5cd2a0f4655fe7"
+    },
+    {
+      "filename": "08_Circular_Surplus_Marketplace.png",
+      "box_xyxy": [
+        1008,
+        307,
+        1261,
+        510
+      ],
+      "dimensions": [
+        253,
+        203
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "01231975986eab61f037cd3019d6dd1edfcfc8e87a5b7d73efe8e377cc3b0f0e"
+    },
+    {
+      "filename": "09_Community_Incident_Triage.png",
+      "box_xyxy": [
+        1268,
+        307,
+        1527,
+        510
+      ],
+      "dimensions": [
+        259,
+        203
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "ce2a6bdb9d034db660a8f3fc21b2272ad582c0678322ae7d33506df8fc628869"
+    },
+    {
+      "filename": "10_Material_Sorting_Guide.png",
+      "box_xyxy": [
+        11,
+        529,
+        251,
+        842
+      ],
+      "dimensions": [
+        240,
+        313
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "c138601a573b73f6c5d520de6456d1be69bdee4478499f23d601f3b20269f2ba"
+    },
+    {
+      "filename": "11_Chain_of_Custody_Passports.png",
+      "box_xyxy": [
+        256,
+        529,
+        505,
+        842
+      ],
+      "dimensions": [
+        249,
+        313
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "c8e05ed085fb85f289b7d47c6d92c4d48ce4a5f953c7c8f643edff652d33f3d2"
+    },
+    {
+      "filename": "12_Rewards_and_Impact_Ledger.png",
+      "box_xyxy": [
+        510,
+        529,
+        728,
+        842
+      ],
+      "dimensions": [
+        218,
+        313
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "4eae7f0f9e2b33f13083b1c01d474ea601dddf95b5162b42ed362556e0abbbd0"
+    },
+    {
+      "filename": "13_Waste_Intake_Records.png",
+      "box_xyxy": [
+        732,
+        529,
+        961,
+        842
+      ],
+      "dimensions": [
+        229,
+        313
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "1a41c11a078481c233e15ed8962cdb583f79c54c07c5aaa5c2f28f5e4bb1e14e"
+    },
+    {
+      "filename": "14_Locations_and_Zones.png",
+      "box_xyxy": [
+        968,
+        529,
+        1161,
+        842
+      ],
+      "dimensions": [
+        193,
+        313
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "ba03684bca71e6cbde84d512fa718acc33c06aa541910a678f60f15a48623e3c"
+    },
+    {
+      "filename": "15_Processing_Facilities_and_Depots.png",
+      "box_xyxy": [
+        1168,
+        529,
+        1355,
+        842
+      ],
+      "dimensions": [
+        187,
+        313
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "0175279027ee780a6c10a0d38a6c53c839e0f0eb9db66406713d1bd2f67802b3"
+    },
+    {
+      "filename": "16_Collection_Fleet_Vehicles.png",
+      "box_xyxy": [
+        1356,
+        529,
+        1527,
+        842
+      ],
+      "dimensions": [
+        171,
+        313
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "81a754f089c01f85ad80aca3c1c8ae93cfe469d1b229898c8d0e644a08adbdbf"
+    },
+    {
+      "filename": "17_Smart_Bins_and_Sensor_Telemetry.png",
+      "box_xyxy": [
+        11,
+        855,
+        295,
+        1024
+      ],
+      "dimensions": [
+        284,
+        169
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "8b363b2b709cc6e1b1982511e90e429155f3ef852efd0a72a57229644c91b792"
+    },
+    {
+      "filename": "18_Collections_and_Impact.png",
+      "box_xyxy": [
+        300,
+        855,
+        560,
+        1024
+      ],
+      "dimensions": [
+        260,
+        169
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "80e5ece03016dcd216e1d5ffc21cb3b7b9c56e9ba9bee2c09702d175d7c67dbf"
+    },
+    {
+      "filename": "19_Waste_Intake_Fleet_Vehicles.png",
+      "box_xyxy": [
+        565,
+        855,
+        725,
+        1024
+      ],
+      "dimensions": [
+        160,
+        169
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "10fa4622ea96d266fc94f9173bbd212bbc824ce3d2cd06f8055b66536e3bae99"
+    },
+    {
+      "filename": "20_Executive_Analytics_and_Reporting.png",
+      "box_xyxy": [
+        732,
+        855,
+        998,
+        1024
+      ],
+      "dimensions": [
+        266,
+        169
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "8b8158a2113f7147ab4da21c0f7562a80d58b6dade8035c0f8611c9df8c2eee6"
+    },
+    {
+      "filename": "21_Operational_System_Alerts.png",
+      "box_xyxy": [
+        1004,
+        855,
+        1279,
+        1024
+      ],
+      "dimensions": [
+        275,
+        169
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "3964f692884583d702001e7087fdc4191a3ba557180f294af33689ea4c8e4ed8"
+    },
+    {
+      "filename": "22_Security_and_MFA.png",
+      "box_xyxy": [
+        1284,
+        855,
+        1527,
+        1024
+      ],
+      "dimensions": [
+        243,
+        169
+      ],
+      "pixel_match_to_source_crop": true,
+      "sha256": "27a5b31da7b13ace36d0203b90a822c5a4852f482b38520dc185758fe3e9427b"
+    }
+  ]
+}

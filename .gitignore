@@ -1,0 +1,62 @@
+# --- Secrets and local environment (templates named .env.example are tracked) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+frontend/coverage/
+*.tsbuildinfo
+npm-debug.log*
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+
+# --- Local runtime files ---
+backend/var/
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- Datasets: only README, .gitkeep and manifests are tracked ---
+datasets/raw/*
+datasets/interim/*
+datasets/processed/*
+datasets/external/*
+!datasets/*/.gitkeep
+datasets/manifests/*
+!datasets/manifests/.gitkeep
+!datasets/manifests/*.yaml
+!datasets/manifests/*.yml
+!datasets/manifests/*.md
+
+# --- ML: generated artifacts and local data never enter Git ---
+ml/artifacts/*
+!ml/artifacts/.gitkeep
+ml/*/data/*
+!ml/*/data/.gitkeep
+!ml/*/data/*.md
+ml/**/.ipynb_checkpoints/
+ml/notebooks/**/*.csv
+ml/notebooks/**/*.parquet
+*.pt
+*.pth
+*.onnx
+*.joblib
+*.pkl
