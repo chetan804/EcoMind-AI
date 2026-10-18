@@ -1,0 +1,2 @@
+# Runtime dependencies actually imported by ml/ code today.
+pillow>=10.3
