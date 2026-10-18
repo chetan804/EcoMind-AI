@@ -27,8 +27,8 @@ function renderAt(path: string) {
 }
 
 describe('application routing', () => {
-  it('redirects / to the system status page inside the app layout', async () => {
-    renderAt('/');
+  it('renders the system status page inside the app shell', async () => {
+    renderAt('/settings/system-status');
     expect(await screen.findByRole('heading', { name: 'System status' })).toBeInTheDocument();
     expect(screen.getByText('EcoMind AI')).toBeInTheDocument();
   });

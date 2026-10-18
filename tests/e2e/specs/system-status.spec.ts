@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-test('the start page shows a running API and a ready database', async ({ page }) => {
-  await page.goto('/');
+test('the system status page shows a running API and a ready database', async ({ page }) => {
+  await page.goto('/settings/system-status');
 
   await expect(page).toHaveURL(/\/settings\/system-status$/);
   await expect(page.getByRole('heading', { name: 'System status' })).toBeVisible();

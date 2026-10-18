@@ -1,0 +1,291 @@
+{
+  "_note": "Landmark boxes [x0,y0,x1,y1] are in reference-PNG pixels, read by eye from 3x views of blurry AI-generated crops. Expect about +/-1.5 reference px (roughly +/-5 design px) of reading error. They support iteration; they are not exact specifications.",
+  "frameInset": 3,
+  "targets": [
+    {
+      "id": "landing",
+      "reference": "01_Landing_Page.png",
+      "path": "/",
+      "width": 1440,
+      "theme": "dark",
+      "landmarks": [
+        {
+          "name": "Get started button",
+          "selector": ".public-header__cta",
+          "ref": [
+            366,
+            5.7,
+            421,
+            21.7
+          ]
+        },
+        {
+          "name": "H1 left edge / top",
+          "selector": ".hero__title",
+          "ref": [
+            18.3,
+            44,
+            120,
+            78
+          ],
+          "edges": [
+            "left"
+          ]
+        },
+        {
+          "name": "Explore platform CTA",
+          "selector": ".hero__actions > :first-child",
+          "ref": [
+            17.3,
+            160,
+            98.7,
+            180
+          ]
+        },
+        {
+          "name": "Feature card 1",
+          "selector": ".features > li:first-child",
+          "ref": [
+            17.3,
+            233.3,
+            111.7,
+            255
+          ],
+          "edges": [
+            "left",
+            "top",
+            "width"
+          ]
+        }
+      ],
+      "refSize": [
+        437,
+        261
+      ]
+    },
+    {
+      "id": "sign-in",
+      "reference": "02_Login_Sign_Up.png",
+      "path": "/sign-in",
+      "width": 910,
+      "clipSelector": ".auth-card",
+      "theme": "dark",
+      "landmarks": [
+        {
+          "name": "Illustration panel",
+          "selector": ".auth-card__brand",
+          "ref": [
+            0,
+            0,
+            113.3,
+            255
+          ],
+          "edges": [
+            "right"
+          ]
+        },
+        {
+          "name": "Email input",
+          "selector": ".auth-card input[type=email]",
+          "ref": [
+            131.7,
+            106,
+            263.3,
+            126.7
+          ]
+        },
+        {
+          "name": "Password input",
+          "selector": ".auth-card input[autocomplete='current-password']",
+          "ref": [
+            131.7,
+            146.7,
+            263.3,
+            167.7
+          ]
+        },
+        {
+          "name": "Sign in button",
+          "selector": ".auth-card form button[type=submit]",
+          "ref": [
+            131.7,
+            188.7,
+            263.3,
+            208.7
+          ]
+        }
+      ],
+      "refSize": [
+        281,
+        261
+      ]
+    },
+    {
+      "id": "dashboard",
+      "reference": "03_Operational_Command_Center.png",
+      "path": "/dashboard",
+      "width": 1440,
+      "theme": "dark",
+      "landmarks": [
+        {
+          "name": "Sidebar",
+          "selector": ".sidebar",
+          "ref": [
+            0,
+            0,
+            80,
+            255
+          ],
+          "edges": [
+            "right"
+          ]
+        },
+        {
+          "name": "KPI row (first card)",
+          "selector": ".dash__kpis > li:first-child",
+          "ref": [
+            90.7,
+            63.3,
+            164,
+            103.3
+          ]
+        },
+        {
+          "name": "Trend card",
+          "selector": ".dash__chart-card",
+          "ref": [
+            90.7,
+            112.3,
+            275,
+            206.7
+          ]
+        },
+        {
+          "name": "Map card",
+          "selector": ".dash__map-card",
+          "ref": [
+            281.7,
+            112.3,
+            433.3,
+            206.7
+          ]
+        },
+        {
+          "name": "Alerts card",
+          "selector": ".dash__row--summary > :nth-child(1)",
+          "ref": [
+            90.7,
+            216,
+            230,
+            255
+          ],
+          "edges": [
+            "left",
+            "top",
+            "right"
+          ]
+        },
+        {
+          "name": "Composition card",
+          "selector": ".dash__row--summary > :nth-child(2)",
+          "ref": [
+            237,
+            216,
+            356,
+            255
+          ],
+          "edges": [
+            "left",
+            "top",
+            "right"
+          ]
+        },
+        {
+          "name": "Impact card",
+          "selector": ".dash__row--summary > :nth-child(3)",
+          "ref": [
+            363,
+            216,
+            433.3,
+            255
+          ],
+          "edges": [
+            "left",
+            "top",
+            "right"
+          ]
+        }
+      ],
+      "refSize": [
+        445,
+        261
+      ]
+    },
+    {
+      "id": "classification",
+      "reference": "04_AI_Waste_Classification.png",
+      "path": "/classify",
+      "width": 1200,
+      "theme": "dark",
+      "actions": [
+        {
+          "click": "role=switch"
+        }
+      ],
+      "landmarks": [
+        {
+          "name": "Sidebar",
+          "selector": ".sidebar",
+          "ref": [
+            0,
+            0,
+            71.7,
+            255
+          ],
+          "edges": [
+            "right"
+          ]
+        },
+        {
+          "name": "Upload card",
+          "selector": ".dropzone",
+          "ref": [
+            82.3,
+            40.7,
+            196.7,
+            190
+          ]
+        },
+        {
+          "name": "Result card",
+          "selector": ".result",
+          "ref": [
+            204,
+            40.7,
+            326,
+            162.7
+          ]
+        },
+        {
+          "name": "Classes card",
+          "selector": ".classes",
+          "ref": [
+            82.3,
+            200,
+            326,
+            251.7
+          ],
+          "edges": [
+            "left",
+            "top",
+            "right"
+          ]
+        }
+      ],
+      "refSize": [
+        335,
+        261
+      ]
+    }
+  ]
+}

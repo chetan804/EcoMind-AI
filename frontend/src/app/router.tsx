@@ -1,18 +1,36 @@
-import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router';
-import { AppLayout } from '@/components/layout/AppLayout';
+import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router';
 import { NotFound } from '@/components/feedback/NotFound';
+import { PlannedFeaturePage } from '@/components/feedback/PlannedFeaturePage';
 import { RouteErrorFallback } from '@/components/feedback/RouteErrorFallback';
+import { AppShell } from '@/components/layout/AppShell';
+import { primaryNav } from '@/components/navigation/nav-items';
+import { SignInPage, SignUpPage } from '@/features/auth';
+import { DashboardPage } from '@/features/dashboard';
+import { LandingPage } from '@/features/landing';
 import { SystemStatusPage } from '@/features/settings';
+import { ClassificationPage } from '@/features/waste-classification';
 
-/** The single route table. Feature routes are added here as features are implemented. */
+/** Navigation entries whose feature is not built get a page that says so (see PlannedFeaturePage). */
+const plannedRoutes: RouteObject[] = primaryNav
+  .filter((item) => item.status === 'planned')
+  .map((item) => ({ path: item.to.slice(1), element: <PlannedFeaturePage /> }));
+
+/**
+ * The single route table. Public pages (landing, sign-in, sign-up) render without the app shell;
+ * everything else lives inside it. Feature routes are added here as features are implemented.
+ */
 export const routes: RouteObject[] = [
+  { path: '/', element: <LandingPage />, errorElement: <RouteErrorFallback /> },
+  { path: '/sign-in', element: <SignInPage />, errorElement: <RouteErrorFallback /> },
+  { path: '/sign-up', element: <SignUpPage />, errorElement: <RouteErrorFallback /> },
   {
-    path: '/',
-    element: <AppLayout />,
+    element: <AppShell />,
     errorElement: <RouteErrorFallback />,
     children: [
-      { index: true, element: <Navigate to="/settings/system-status" replace /> },
+      { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'classify', element: <ClassificationPage /> },
       { path: 'settings/system-status', element: <SystemStatusPage /> },
+      ...plannedRoutes,
       { path: '*', element: <NotFound /> },
     ],
   },

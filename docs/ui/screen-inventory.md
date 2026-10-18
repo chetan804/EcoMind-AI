@@ -1,14 +1,16 @@
 # Screen inventory
 
-Reference list of screens the product needs, mapped to features and API areas. **Only the first row exists.** Screens are built in feature milestones (see `docs/project-roadmap.md`); no placeholder pages are created in advance. Roles are provisional until the authorization milestone.
+Reference list of screens the product needs, mapped to features and API areas. **Six screens have a UI** (System status, Not found, Landing, Sign in / Sign up, Dashboard, Classify), and only System status talks to a backend. The Landing, Sign-in/Sign-up, Dashboard and Classify UIs are the Stage 1 UI milestone: they render labelled demonstration content or an honest "not available yet" state (see `design-system.md`). Everything else is **Not started**: sidebar entries for those screens route to a "planned, not built" page and are tagged "Soon". Roles are provisional until the authorization milestone.
 
 | Screen | Route (proposed) | Feature | Backend | Primary roles | Status |
 |---|---|---|---|---|---|
 | System status | `/settings/system-status` | settings | `/health`, `/ready` | operators | **Implemented** |
 | Not found / error | `*` | components/feedback | — | all | **Implemented** |
-| Sign in / sign out | `/sign-in` | auth | auth | all | Not started |
-| Dashboard | `/dashboard` | dashboard | analytics | managers | Not started |
-| Classify an item (upload, object + material + confidence + guidance) | `/classify` | waste-classification | classification, sorting_guide | citizens, staff | Not started |
+| Landing | `/` | landing | — | public | **UI only** (static content; stats are repository facts, not product metrics) |
+| Sign in / Sign up | `/sign-in`, `/sign-up` | auth | auth | all | **UI only** (validates; submit sends nothing; no auth backend) |
+| Dashboard (Operational Command Center) | `/dashboard` | dashboard | analytics | managers | **UI only** (labelled demonstration data; no analytics API) |
+| Classify an item (upload, object + material + confidence + guidance) | `/classify` | waste-classification | classification, sorting_guide | citizens, staff | **UI only** (local preview and validation; no model, no result) |
+| Sign out | n/a | auth | auth | all | Not started |
 | Prediction review queue | `/classification/review` | waste-classification | classification | staff | Not started |
 | Waste reports list / detail / create | `/reports`, `/reports/:id`, `/reports/new` | waste-reports | waste_reports | citizens, staff | Not started |
 | Collection tasks list / detail | `/collection`, `/collection/:id` | collection | collection | managers, collectors | Not started |

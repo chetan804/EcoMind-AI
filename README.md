@@ -33,7 +33,7 @@ cd EcoMind-AI
 make env     # creates .env files from the templates and generates local secrets (never overwrites)
 make up      # db -> migrations -> backend -> frontend, waits until healthy
 ```
-- App: http://localhost:5173 (shows the *System status* page)
+- App: http://localhost:5173 (the landing page; the backend-backed *System status* page is at `/settings/system-status`)
 - API docs: http://localhost:8000/api/v1/docs · liveness `GET /health` · readiness `GET /ready`
 - Stop: `make down` (keeps the database volume) · Logs: `make logs`
 

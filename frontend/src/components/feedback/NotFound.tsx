@@ -1,11 +1,14 @@
-import { Link } from 'react-router';
+import { ButtonLink } from '@/components/ui/Button';
+import './feedback.css';
 
 export function NotFound() {
   return (
-    <section>
-      <h1>Page not found</h1>
-      <p>The page you requested does not exist.</p>
-      <Link to="/">Go to the start page</Link>
+    <section className="status-page">
+      <h1 className="status-page__title">Page not found</h1>
+      <p className="status-page__text">The page you requested does not exist.</p>
+      <ButtonLink to="/" variant="secondary">
+        Go to the start page
+      </ButtonLink>
     </section>
   );
 }

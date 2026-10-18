@@ -10,7 +10,7 @@ make env      # creates .env, backend/.env, frontend/.env from templates; genera
 make up       # builds images; starts db -> migrations -> backend -> frontend; waits until healthy
 python3 tests/smoke/smoke.py --api http://localhost:8000 --web http://localhost:5173
 ```
-Open http://localhost:5173 (System status page) and http://localhost:8000/api/v1/docs. Stop with `make down` (keeps data). Logs: `make logs`.
+Open http://localhost:5173/settings/system-status (System status page) and http://localhost:8000/api/v1/docs. Stop with `make down` (keeps data). Logs: `make logs`.
 
 **Startup sequence (enforced by `compose.yaml`):** `db` healthy (`pg_isready`) → `migrate` runs `alembic upgrade head` and exits 0 → `backend` starts and becomes healthy when `/ready` answers 200 → `frontend` starts.
 
