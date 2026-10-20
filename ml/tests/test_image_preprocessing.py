@@ -60,3 +60,14 @@ def test_oversized_pixel_count_rejected(monkeypatch: pytest.MonkeyPatch) -> None
 def test_resize_rejects_invalid_size() -> None:
     with pytest.raises(ValueError):
         resize_to_square(Image.new("RGB", (4, 4)), 0)
+
+
+@pytest.mark.parametrize("fmt", ["PNG", "WEBP"])
+def test_damaged_exif_block_is_ignored_not_fatal(fmt: str) -> None:
+    """Regression: a PNG/WebP whose EXIF block is not a TIFF structure made Pillow raise
+    SyntaxError from exif_transpose. Orientation is then unknown; pixels are used as stored."""
+    buffer = io.BytesIO()
+    Image.new("RGB", (30, 20), (9, 9, 9)).save(
+        buffer, fmt, exif=b"\x00\x08\x00\x04\x01\x1a\x00\x05"
+    )
+    assert load_rgb_image(buffer.getvalue()).size == (30, 20)

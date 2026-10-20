@@ -57,7 +57,11 @@ def decode_image(data: bytes) -> Image.Image:
             if image.size[0] * image.size[1] > MAX_PIXELS:
                 raise InvalidImageError("Image has too many pixels")
             image.load()
-            return ImageOps.exif_transpose(image).convert("RGB")
+            try:
+                oriented = ImageOps.exif_transpose(image)
+            except (SyntaxError, ValueError, TypeError, KeyError, OSError):
+                oriented = image  # damaged EXIF: orientation unknown, use the pixels as stored
+            return oriented.convert("RGB")
     except (UnidentifiedImageError, OSError) as exc:
         raise InvalidImageError("Data is not a readable image") from exc
 

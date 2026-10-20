@@ -365,6 +365,46 @@ Constraints:
 - `ck_forecast_results_period_ordered`: `period_end > period_start`
 - Allowed values: `unit` in (kg, t, m3, l, item); `granularity` in (day, week, month)
 
+### `reference_series`
+
+A *public* time series imported from a documented external source.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `key` | varchar(40) | NN |  | UQ |
+| `name` | varchar(120) | NN |  |  |
+| `country` | varchar(80) | null |  |  |
+| `unit` | varchar(12) | NN |  |  |
+| `granularity` | varchar(13) | NN |  |  |
+| `source_url` | text | NN |  |  |
+| `source_commit` | varchar(64) | NN |  |  |
+| `licence_note` | text | NN |  |  |
+| `processing_note` | text | NN |  |  |
+| `first_period` | date | NN |  |  |
+| `last_period` | date | NN |  |  |
+| `point_count` | integer | NN |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- Allowed values: `unit` in (kg, t, m3, l, item); `granularity` in (day, week, month)
+
+### `reference_series_points`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `series_id` | uuid | NN |  | FK -> `reference_series.id` ON DELETE CASCADE |
+| `period_start` | date | NN |  |  |
+| `value` | numeric(18, 3) | NN |  |  |
+| `is_interpolated` | boolean | NN |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+
+Constraints:
+
+- `ck_reference_series_points_value_non_negative`: `value >= 0`
+- `series_period`: unique (series_id, period_start)
+
 ## Module `material_passports`
 
 ### `custody_events`

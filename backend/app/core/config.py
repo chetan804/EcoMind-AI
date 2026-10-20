@@ -42,6 +42,10 @@ class Settings(BaseSettings):
 
     model_artifacts_dir: Path = Path("../ml/artifacts")
 
+    # Rewards policy: points awarded per verified kilogram collected for a reporter. This is a
+    # programme policy parameter chosen by the operator, not a scientific constant.
+    reward_points_per_kg: int = Field(default=10, ge=0, le=1000)
+
     @field_validator("cors_allowed_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

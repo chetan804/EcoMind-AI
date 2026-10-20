@@ -3,6 +3,7 @@
     python -m app.cli create-admin --email admin@example.org --name "Site Admin"
     python -m app.cli register-model --version 1.0.0     # verify + register a trained artifact
     python -m app.cli activate-model --version 1.0.0     # make it the model that answers
+    python -m app.cli import-reference-series --key austin   # public series for forecasting demos
 
 The password is read from the ECOMIND_ADMIN_PASSWORD environment variable or, when that is unset,
 prompted for without echo. It is never accepted as a command-line argument (it would leak into
@@ -27,6 +28,7 @@ from app.modules.auth.errors import EmailAlreadyRegisteredError, WeakPasswordErr
 from app.modules.auth.policy import password_problems
 from app.modules.classification import repository as classification_repository
 from app.modules.classification import service as classification_service
+from app.modules.forecasting import importer as forecasting_importer
 from app.modules.users import repository as users
 
 ADMIN_ROLE = "administrator"
@@ -87,6 +89,15 @@ def activate_model(*, version: str) -> str:
         return f"{out.name} {out.version} is now {out.status.value}"
 
 
+def import_reference(*, key: str) -> str:
+    with get_session_factory()() as db:
+        row = forecasting_importer.import_reference_series(db, key, context=RequestContext())
+        return (
+            f"reference series {row.key}: {row.point_count} weeks, "
+            f"{row.first_period} to {row.last_period}"
+        )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m app.cli",
@@ -103,7 +114,19 @@ def main(argv: list[str] | None = None) -> int:
     ):
         model = sub.add_parser(name, help=help_text)
         model.add_argument("--version", required=True)
+    reference = sub.add_parser(
+        "import-reference-series", help="import a public series (with provenance) for demos"
+    )
+    reference.add_argument("--key", required=True)
     args = parser.parse_args(argv)
+
+    if args.command == "import-reference-series":
+        try:
+            print(import_reference(key=args.key))
+        except AppError as exc:
+            print(f"error: {exc.message}", file=sys.stderr)
+            return 1
+        return 0
 
     if args.command in ("register-model", "activate-model"):
         action = register_model if args.command == "register-model" else activate_model

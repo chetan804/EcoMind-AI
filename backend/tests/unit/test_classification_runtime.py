@@ -63,6 +63,15 @@ def test_decode_honours_exif_orientation() -> None:
     assert decode_image(buffer.getvalue()).size == (30, 40)
 
 
+@pytest.mark.parametrize("fmt", ["PNG", "WEBP"])
+def test_decode_ignores_a_damaged_exif_block(fmt: str) -> None:
+    buffer = io.BytesIO()
+    Image.new("RGB", (30, 20), (9, 9, 9)).save(
+        buffer, fmt, exif=b"\x00\x08\x00\x04\x01\x1a\x00\x05"
+    )
+    assert decode_image(buffer.getvalue()).size == (30, 20)
+
+
 class FakeEmbedder:
     """The mean red value selects which feature is large, so the head's answer is predictable."""
 
