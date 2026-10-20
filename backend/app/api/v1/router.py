@@ -17,6 +17,7 @@ from app.modules.collection.router import router as collection_router
 from app.modules.facilities.router import router as facilities_router
 from app.modules.fleet.router import router as fleet_router
 from app.modules.forecasting.router import router as forecasting_router
+from app.modules.route_planning.router import router as route_planning_router
 from app.modules.waste_reports.router import router as waste_reports_router
 
 api_v1_router = APIRouter()
@@ -30,3 +31,6 @@ api_v1_router.include_router(fleet_router, prefix="/fleet", tags=["fleet"])
 api_v1_router.include_router(collection_router, prefix="/collection", tags=["collection"])
 api_v1_router.include_router(forecasting_router, prefix="/forecasting", tags=["forecasting"])
 api_v1_router.include_router(anomaly_router, prefix="/anomalies", tags=["anomalies"])
+api_v1_router.include_router(
+    route_planning_router, prefix="/route-planning", tags=["route-planning"]
+)

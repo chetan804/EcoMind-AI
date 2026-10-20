@@ -2,18 +2,18 @@
 
 Route plans and ordered stops for a vehicle/driver, including optimizer output.
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** implemented (optimizer, schemas, repository, service, router, tests). See `docs/api/route-planning-api.md`.
 
 ## Ownership
 - **Tables owned:** `route_plans`, `route_stops`
-- **Files present:** `models.py`, `constants.py`. Add `router.py`, `schemas.py`, `repository.py`, `service.py` and the other files of the module contract only when they are needed (docs/architecture/component-boundaries.md).
+- **Files present:** the full module contract plus `optimizer.py` (pure computation).
 
 ## Relationships
 - **Depends on (via services / foreign keys):** `users`, `facilities`, `fleet`, `collection`
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
-## API (planned, not implemented)
-`/api/v1/routes`, `/api/v1/routes/optimize`, registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
+## API
+`/api/v1/route-planning`, registered in `app/api/v1/router.py`; documented in `docs/api/route-planning-api.md`.
 
 ## Notes
 A stop targets exactly one of a collection task or a facility (database CHECK).

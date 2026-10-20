@@ -59,9 +59,8 @@ def seed_reference(
                 "point_count": len(values),
             },
             points=[
-                (w, decimal.Decimal(repr(round(v, 3))), i in (interpolated or set()))
-                for i, (w, v) in enumerate(zip(range(len(values)), values, strict=True))
-                for w in [weeks[i]]
+                (weeks[i], decimal.Decimal(repr(round(v, 3))), i in (interpolated or set()))
+                for i, v in enumerate(values)
             ],
         )
         db.commit()
