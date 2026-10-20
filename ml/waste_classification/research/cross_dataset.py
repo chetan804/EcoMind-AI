@@ -83,7 +83,11 @@ def expected_calibration_error(
     for lo, hi in pairwise(edges):
         mask = (conf > lo) & (conf <= hi) if lo > 0 else (conf >= lo) & (conf <= hi)
         if mask.any():
-            err += mask.sum() / total * abs(float(correct[mask].mean()) - float(conf[mask].mean()))
+            err += (
+                float(mask.sum())
+                / total
+                * abs(float(correct[mask].mean()) - float(conf[mask].mean()))
+            )
     return float(err)
 
 

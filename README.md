@@ -2,7 +2,7 @@
 
 An AI-powered waste-intelligence, waste-management-operations and circular-economy platform.
 
-> **Project state.** The backend (19 modules under `/api/v1`), the web app (every reference screen except the planned Marketplace, Locations and Zones, and the excluded smart-bin telemetry) and the CI are built and tested. The only trained model is a **candidate** waste classifier (TrashNet, six classes, held-out accuracy 0.867) and **no model is active by default**: classification says so instead of guessing. Forecasts and anomaly flags use classical statistical methods with a naive baseline, and label public reference data as such. Rewards and impact figures come from recorded collections only. Exact status, evidence, losses and open work: [`docs/project-completion/IMPLEMENTATION_STATUS.md`](docs/project-completion/IMPLEMENTATION_STATUS.md); screens: [`docs/ui/screen-inventory.md`](docs/ui/screen-inventory.md).
+> **Project state.** The backend (19 modules under `/api/v1`), the web app (every reference screen except the planned Marketplace and the excluded smart-bin telemetry; Locations and Zones exists as named zones without map boundaries) and the CI are built and tested. The only trained model is a **candidate** waste classifier (TrashNet, six classes, held-out accuracy 0.867 on its own benchmark and only 0.454 on real facility photos) and **no model is active by default**: classification says so instead of guessing. Forecasts and anomaly flags use classical statistical methods with a naive baseline, and label public reference data as such. Rewards and impact figures come from recorded collections only. Exact status, evidence, losses and open work: [`docs/project-completion/IMPLEMENTATION_STATUS.md`](docs/project-completion/IMPLEMENTATION_STATUS.md); screens: [`docs/ui/screen-inventory.md`](docs/ui/screen-inventory.md).
 
 ## What it does
 Citizens report waste with a photo and get sorting guidance; managers review reports, plan and assign collections (vehicles, deterministic route ordering), record collected weights; facility operators record material recovery and chain-of-custody passports; rewards and executive analytics are computed from the database; community incidents are triaged; administrators manage users, roles and MFA and read the audit log.
@@ -20,7 +20,7 @@ React 19 + TypeScript + Vite (React Router, TanStack Query, React Hook Form + Zo
 | [`deployment/`](deployment/README.md) | Dockerfiles for independent frontend/backend deployment. |
 | [`tests/`](tests/README.md) | Cross-application tests: end-to-end, API contract, smoke. |
 | [`scripts/`](scripts/README.md) | Setup and quality helper scripts. |
-| [`docs/`](docs/) | Architecture, decisions, requirements, API, database, ML, security, testing, UI, operations, roadmap. |
+| [`docs/`](docs/) | Architecture, decisions, requirements, API, database (ER diagram, data dictionary), ML, security (review, route matrix), testing, UI, operations (runbook, backup and rollback), [known limitations](docs/project-completion/LIMITATIONS.md), [academic deliverables](docs/academic/README.md), roadmap. |
 | `.github/workflows/` | CI: `backend-ci`, `frontend-ci`, `quality-gates`. |
 
 Start with [`docs/architecture/system-overview.md`](docs/architecture/system-overview.md) and [`docs/architecture/component-boundaries.md`](docs/architecture/component-boundaries.md).

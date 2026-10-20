@@ -262,11 +262,11 @@ def main() -> None:
         }
 
     audit = {
-        "realwaste_groups": int(rw_group.max()) + 1,
+        "realwaste_groups": int(np.max(rw_group)) + 1,
         "realwaste_images_in_multi_image_groups": round(
             float((np.bincount(rw_group)[rw_group] > 1).mean()), 4
         ),
-        "realwaste_largest_group": int(np.bincount(rw_group).max()),
+        "realwaste_largest_group": int(np.max(np.bincount(rw_group))),
         "split_sizes": {k: {s: len(v) for s, v in d.items()} for k, d in ds.items()},
         "realwaste_class_counts": {c: int((rw_y == i).sum()) for i, c in enumerate(CLASSES8)},
         "no_group_straddles_splits": True,
