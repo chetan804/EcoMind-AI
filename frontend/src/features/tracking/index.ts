@@ -1,6 +1,7 @@
 /** Public interface of the tracking feature (vehicle positions, freshness labels, simulator). */
 export { FleetMap } from './components/FleetMap';
 export { CollectionTrackMap } from './components/CollectionTrackMap';
+export { LocationSharing } from './components/LocationSharing';
 export { SimulationControls } from './components/SimulationControls';
 export { VehicleStatusBadge } from './components/VehicleStatusBadge';
 export { useLatestPositions, useRouteTracking, useTrackingConfig, pollingInterval } from './hooks/useTracking';

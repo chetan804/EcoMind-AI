@@ -40,8 +40,31 @@ So with the same road matrix the heuristic found the optimum on every day; plann
 
 ## What is *not* modelled
 
-Distances are great-circle (haversine) distances, **not** road distances: they are usually shorter than the road distance but not always (9 of 253 pairs in the benchmark were longer). No road network, one-way streets, traffic, time windows, driver hours, multiple trips or per-stop service time are modelled, and **no travel time or ETA is estimated** (`estimated_duration_min` stays null): the platform has no sourced speed data. The response `basis` field repeats this.
+Stop order and the `distance_*` figures use great-circle (haversine) distances, **not** road distances (see "Road route" below for the provider-based road geometry): they are usually shorter than the road distance but not always (9 of 253 pairs in the benchmark were longer). No road network, one-way streets, traffic, time windows, driver hours, multiple trips or per-stop service time are modelled, and **no travel time or ETA is estimated** (`estimated_duration_min` stays null): the platform has no sourced speed data. The response `basis` field repeats this.
 
 ## Audit events
 
 `route_plan.created`, `route_plan.published`, `route_plan.cancelled`.
+
+## Road route (provider geometry, optional)
+
+`GET /api/v1/route-planning/plans/{id}/road-route` (`routes:read`). Asks the routing provider (Google Routes API,
+driving, **without live traffic**) for road geometry, distance and duration of the plan's stops in the stored order.
+The platform does not re-optimise the order for road distance. Nothing is stored or cached server side, and each call can
+be billed by the provider (one request per 10 stops), so clients call it on demand.
+
+Always answers `200`:
+
+| Field | Meaning |
+|---|---|
+| `available` | `true` only with real provider geometry |
+| `provider` | `google_routes` when available |
+| `encoded_polylines` | one encoded polyline per request chunk (decode with the Google polyline algorithm) |
+| `distance_m`, `duration_s` | provider estimates (free-flow; not a promised arrival time) |
+| `request_count` | provider requests made |
+| `reason`, `detail` | when `available` is false: `not_configured`, `too_few_points`, `access_denied`, `quota_exceeded`, `provider_error`, `timeout`, `network_error`, `bad_response`, `no_route` |
+| `basis` | plain-language statement of what the numbers are |
+
+When `available` is false the UI draws straight lines labelled "not roads". Configuration: `GOOGLE_MAPS_SERVER_API_KEY`, see
+`docs/maps/GOOGLE_MAPS_INTEGRATION.md`. Not yet verified against the live service.
+

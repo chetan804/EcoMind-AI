@@ -290,3 +290,97 @@ describe('collection tracking', () => {
     expect(api.calls.some((c) => c.key.includes('/tracking/'))).toBe(false);
   });
 });
+
+describe('collector location sharing', () => {
+  const me = userWith(['collection:read', 'collection:execute', 'fleet:track']);
+  const assigned = (assigneeId: string, status = 'in_progress') => ({
+    id: id(3), waste_report_id: null, destination_facility_id: null, title: 'Collect skip', status, priority: 'high', address_text: 'Market Road', latitude: '17.4', longitude: '78.4',
+    due_at: null, notes: null, created_by_id: id(9), collected_weight_kg: null, created_at: '2026-10-19T08:00:00Z', updated_at: '2026-10-19T08:00:00Z', history: [], events: [],
+    assignment: { id: id(7), assignee_id: assigneeId, assignee_name: 'Asha', vehicle_id: id(8), vehicle_registration: 'TS09-0008', assigned_at: '2026-10-19T09:00:00Z', unassigned_at: null },
+  });
+  type Watch = { ok: (p: unknown) => void; fail: (e: unknown) => void };
+  let watch: Watch | null = null;
+  const clearWatch = vi.fn();
+  const watchPosition = vi.fn((ok: Watch['ok'], fail: Watch['fail']) => {
+    watch = { ok, fail };
+    return 7;
+  });
+  const fix = (over: Record<string, unknown> = {}) => ({ timestamp: Date.parse('2026-10-21T08:00:00Z'), coords: { latitude: 17.38512345, longitude: 78.48671234, accuracy: 9.4, speed: null, heading: null, ...over } });
+  const setup = (taskReply: unknown, post: unknown = { duplicate: false, event: { id: id(9) } }) => {
+    watch = null;
+    clearWatch.mockClear();
+    watchPosition.mockClear();
+    Object.defineProperty(navigator, 'geolocation', { value: { watchPosition, clearWatch }, configurable: true });
+    return routeApi(
+      fetchSpy,
+      {
+        'GET /api/v1/collection/tasks': page([{ ...(taskReply as object), history: undefined, events: undefined }]),
+        [`GET /api/v1/collection/tasks/${id(3)}`]: taskReply as never,
+        [`GET /api/v1/tracking/collections/${id(3)}`]: { task_id: id(3), title: 'x', status: 'in_progress', latitude: '17.4', longitude: '78.4', destination_facility_id: null, vehicle_id: id(8), vehicle: null, path: [], path_truncated: false, basis: 'b' },
+        [`POST /api/v1/tracking/vehicles/${id(8)}/locations`]: post as never,
+      },
+      me,
+    );
+  };
+  const openTask = async () => {
+    renderAt('/collection');
+    await userEvent.click(await screen.findByRole('button', { name: 'Open task: Collect skip' }));
+    return screen.findByRole('dialog', { name: 'Collection task' });
+  };
+
+  it('asks the browser for a position only after the button is pressed, then reports it as a mobile-client position', async () => {
+    const api = setup(assigned(me.id));
+    const dialog = await openTask();
+    const share = await within(dialog).findByRole('button', { name: 'Share my position' });
+    expect(watchPosition).not.toHaveBeenCalled();
+    await userEvent.click(share);
+    expect(watchPosition).toHaveBeenCalledTimes(1);
+    act(() => watch!.ok(fix()));
+    await vi.waitFor(() => expect(api.calls.some((c) => c.key === `POST /api/v1/tracking/vehicles/${id(8)}/locations`)).toBe(true));
+    const body = api.calls.find((c) => c.key.startsWith('POST /api/v1/tracking/vehicles'))!.body as Record<string, unknown>;
+    expect(body).toMatchObject({ latitude: '17.385123', longitude: '78.486712', source: 'mobile_client', accuracy_m: '9.40', collection_task_id: id(3), recorded_at: '2026-10-21T08:00:00.000Z' });
+    // The device measured no speed or heading, so none is invented.
+    expect(body).not.toHaveProperty('speed_kph');
+    expect(body).not.toHaveProperty('heading_deg');
+    expect(await within(dialog).findByText(/1 report sent/)).toBeInTheDocument();
+    // A second fix within the interval is not sent.
+    act(() => watch!.ok(fix({ latitude: 17.39 })));
+    expect(api.calls.filter((c) => c.key.startsWith('POST /api/v1/tracking/vehicles'))).toHaveLength(1);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Stop sharing' }));
+    expect(clearWatch).toHaveBeenCalledWith(7);
+  });
+
+  it('converts measured speed from m/s to km/h and passes heading through', async () => {
+    const api = setup(assigned(me.id));
+    const dialog = await openTask();
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Share my position' }));
+    act(() => watch!.ok(fix({ speed: 10, heading: 450 })));
+    await vi.waitFor(() => expect(api.calls.some((c) => c.key.startsWith('POST /api/v1/tracking/vehicles'))).toBe(true));
+    expect(api.calls.find((c) => c.key.startsWith('POST /api/v1/tracking/vehicles'))!.body).toMatchObject({ speed_kph: '36.00', heading_deg: '90.00' });
+  });
+
+  it('explains a denied permission and sends nothing', async () => {
+    const api = setup(assigned(me.id));
+    const dialog = await openTask();
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Share my position' }));
+    act(() => watch!.fail({ code: 1, PERMISSION_DENIED: 1 }));
+    expect(await within(dialog).findByText(/Location permission was denied/)).toBeInTheDocument();
+    expect(api.calls.some((c) => c.key.startsWith('POST /api/v1/tracking/vehicles'))).toBe(false);
+    expect(within(dialog).getByRole('button', { name: 'Share my position' })).toBeEnabled();
+  });
+
+  it('shows the server reason when a report is rejected', async () => {
+    setup(assigned(me.id), errorReply(429, 'rate_limited', 'Too many position reports'));
+    const dialog = await openTask();
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Share my position' }));
+    act(() => watch!.ok(fix()));
+    expect(await within(dialog).findByText('Too many position reports')).toBeInTheDocument();
+  });
+
+  it('is offered only to the assignee while the task is in progress', async () => {
+    setup(assigned(id(2)));
+    const dialog = await openTask();
+    await within(dialog).findByRole('heading', { name: 'Collect skip' });
+    expect(within(dialog).queryByRole('button', { name: 'Share my position' })).not.toBeInTheDocument();
+  });
+});

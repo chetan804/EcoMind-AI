@@ -114,3 +114,7 @@ export const postSimulatedLocation = (vehicleId: string, body: Record<string, un
   sendJson('POST', `/tracking/simulation/vehicles/${vehicleId}/locations`, ingestSchema, body);
 export const resetSimulation = (vehicleId: string) =>
   apiRequest<{ removed: number }>(`/tracking/simulation/vehicles/${vehicleId}/locations`, { method: 'DELETE' });
+
+/** A real position from the collector's own device (source `mobile_client`). */
+export const reportLocation = (vehicleId: string, body: Record<string, unknown>) =>
+  sendJson('POST', `/tracking/vehicles/${vehicleId}/locations`, ingestSchema, body);

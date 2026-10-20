@@ -9,7 +9,7 @@ import { Input, Select, Textarea } from '@/components/ui/Input';
 import { ReasonDialog } from '@/components/ui/ReasonDialog';
 import { useFacilityOptions } from '@/features/facilities';
 import { useVehicleOptions } from '@/features/fleet';
-import { CollectionTrackMap } from '@/features/tracking';
+import { CollectionTrackMap, LocationSharing } from '@/features/tracking';
 import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatDateTime, formatKg, humanize } from '@/utils/format';
@@ -66,6 +66,7 @@ function TaskBody({ task }: { task: TaskDetail }) {
           <CollectionTrackMap taskId={task.id} />
         </section>
       )}
+      {task.status === 'in_progress' && isMine && assignee?.vehicle_id && <LocationSharing vehicleId={assignee.vehicle_id} taskId={task.id} />}
 
       {action.isError && mode === null && <Alert tone="danger">{getErrorMessage(action.error)}</Alert>}
 

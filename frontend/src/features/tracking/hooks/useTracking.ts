@@ -6,6 +6,7 @@ import {
   fetchRouteTracking,
   fetchTrackingConfig,
   postSimulatedLocation,
+  reportLocation,
   resetSimulation,
 } from '../api/tracking-api';
 
@@ -86,4 +87,12 @@ export function useSimulation() {
     }),
     reset: useMutation({ mutationFn: (vehicleId: string) => resetSimulation(vehicleId), onSuccess: refresh }),
   };
+}
+
+export function useReportLocation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { vehicleId: string; body: Record<string, unknown> }) => reportLocation(v.vehicleId, v.body),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['tracking'] }),
+  });
 }
