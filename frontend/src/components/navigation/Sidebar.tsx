@@ -4,7 +4,8 @@ import { X } from 'lucide-react';
 import { cx } from '@/utils/cx';
 import { Brand } from '@/components/layout/BrandMark';
 import { IconButton } from '@/components/ui/IconButton';
-import { primaryNav, secondaryNav, type NavItem } from './nav-items';
+import { useAuth } from '@/services/session';
+import { primaryNav, secondaryNav, visibleNav, type NavItem } from './nav-items';
 import '@/components/layout/layout.css';
 
 function NavEntry({ item }: { item: NavItem }) {
@@ -28,6 +29,7 @@ function NavEntry({ item }: { item: NavItem }) {
  * (`open`/`onClose`); while closed it is `visibility: hidden`, so it is not focusable.
  */
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { can } = useAuth();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         </span>
       </div>
       <nav className="sidebar__nav" aria-label="Main">
-        {primaryNav.map((item) => (
+        {visibleNav(primaryNav, can).map((item) => (
           <NavEntry key={item.id} item={item} />
         ))}
       </nav>

@@ -13,9 +13,9 @@ import { Pagination, Table } from '@/components/ui/Table';
 import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatDateTime, humanize } from '@/utils/format';
-import type { AdminUser, UserAction } from '../api/admin-api';
-import { SettingsNav } from '../components/SettingsNav';
-import { useRoles, useUserChange, useUsers } from '../hooks/useAdmin';
+import type { AdminUser, UserAction } from '../api/users-api';
+import { SettingsNav } from '@/features/settings';
+import { useRoles, useUserChange, useUsers } from '../hooks/useUsers';
 
 type Pending = { user: AdminUser; kind: 'roles' } | { user: AdminUser; kind: UserAction };
 

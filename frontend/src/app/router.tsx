@@ -35,6 +35,24 @@ function guardedPage<K extends string>(
   };
 }
 
+/** Like `guardedPage`, but the person needs only one of the permissions. */
+function guardedAnyPage<K extends string>(
+  anyOf: string[],
+  load: () => Promise<Record<K, ComponentType>>,
+  name: K,
+): RouteObject['lazy'] {
+  return async () => {
+    const Page: ComponentType = (await load())[name];
+    return {
+      Component: () => (
+        <RequirePermission anyOf={anyOf}>
+          <Page />
+        </RequirePermission>
+      ),
+    };
+  };
+}
+
 /** Navigation entries whose feature is not built get a page that says so (see PlannedFeaturePage). */
 const plannedRoutes: RouteObject[] = primaryNav
   .filter((item) => item.status === 'planned')
@@ -61,15 +79,21 @@ export const routes: RouteObject[] = [
           { path: 'dashboard', lazy: lazyPage(() => import('@/features/dashboard'), 'DashboardPage') },
           { path: 'analytics', lazy: guardedPage(['analytics:read'], () => import('@/features/analytics'), 'AnalyticsPage') },
           { path: 'forecasts', lazy: guardedPage(['forecasting:read'], () => import('@/features/forecasting'), 'ForecastingPage') },
-          { path: 'anomalies', lazy: guardedPage(['anomalies:read'], () => import('@/features/anomalies'), 'AnomaliesPage') },
+          { path: 'anomalies', lazy: guardedPage(['anomalies:read'], () => import('@/features/anomaly-alerts'), 'AnomaliesPage') },
           {
             path: 'notifications',
             lazy: guardedPage(['notifications:read_own'], () => import('@/features/notifications'), 'NotificationsPage'),
           },
+          { path: 'reports', lazy: guardedAnyPage(['waste_reports:read_own', 'waste_reports:read_all', 'waste_reports:create'], () => import('@/features/waste-reports'), 'ReportsPage') },
+          { path: 'collection', lazy: guardedPage(['collection:read'], () => import('@/features/collection'), 'CollectionsPage') },
+          { path: 'routes', lazy: guardedPage(['routes:read'], () => import('@/features/route-planning'), 'RoutesPage') },
+          { path: 'fleet', lazy: guardedPage(['fleet:read'], () => import('@/features/fleet'), 'FleetPage') },
+          { path: 'facilities', lazy: guardedPage(['facilities:read'], () => import('@/features/facilities'), 'FacilitiesPage') },
+          { path: 'incidents', lazy: guardedAnyPage(['incidents:create', 'incidents:read_own', 'incidents:triage'], () => import('@/features/community-incidents'), 'IncidentsPage') },
           { path: 'classify', lazy: lazyPage(() => import('@/features/waste-classification'), 'ClassificationPage') },
           { path: 'settings/security', lazy: lazyPage(() => import('@/features/settings'), 'SecurityPage') },
-          { path: 'settings/users', lazy: guardedPage(['users:read'], () => import('@/features/settings'), 'UsersPage') },
-          { path: 'settings/audit', lazy: guardedPage(['audit:read'], () => import('@/features/settings'), 'AuditPage') },
+          { path: 'settings/users', lazy: guardedPage(['users:read'], () => import('@/features/users'), 'UsersPage') },
+          { path: 'settings/audit', lazy: guardedPage(['audit:read'], () => import('@/features/audit'), 'AuditPage') },
           { path: 'settings/system-status', lazy: lazyPage(() => import('@/features/settings'), 'SystemStatusPage') },
           ...plannedRoutes,
           { path: '*', element: <NotFound /> },

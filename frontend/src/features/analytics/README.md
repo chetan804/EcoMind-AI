@@ -2,7 +2,7 @@
 
 Trends and reports.
 
-**Status:** not implemented (directory reserves the feature boundary only).
+**Status:** implemented (see `docs/ui/screen-inventory.md` for the screen and its API calls).
 
 - **Backend module:** `analytics`
 - **Layout when implemented:** `api/`, `components/`, `hooks/`, `pages/`, `schemas/`, `types/`, `utils/` (only those needed) and an `index.ts` that is the feature's only public interface. Other code imports `@/features/analytics`, never its internals (enforced by ESLint).

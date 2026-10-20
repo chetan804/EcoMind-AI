@@ -6,8 +6,8 @@ import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { Pagination, Table } from '@/components/ui/Table';
 import { formatDateTime } from '@/utils/format';
-import { SettingsNav } from '../components/SettingsNav';
-import { useAudit } from '../hooks/useAdmin';
+import { SettingsNav } from '@/features/settings';
+import { useAudit } from '../hooks/useAudit';
 
 /** Read-only, append-only record of security- and data-relevant actions. */
 export function AuditPage() {

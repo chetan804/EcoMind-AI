@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { SystemStatusPage } from '@/features/settings';
 
 function mockApi(handlers: Record<string, () => Response | Error>) {
@@ -16,7 +17,9 @@ function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <SystemStatusPage />
+      <MemoryRouter>
+        <SystemStatusPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }

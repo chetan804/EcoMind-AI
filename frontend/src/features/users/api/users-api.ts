@@ -23,37 +23,16 @@ const roleSchema = z.object({
 });
 export type Role = z.infer<typeof roleSchema>;
 
-export const auditSchema = z.object({
-  id: uuid,
-  occurred_at: z.string(),
-  action: z.string(),
-  entity_type: z.string(),
-  entity_id: uuid.nullable(),
-  actor_id: uuid.nullable(),
-  actor_email: z.string().nullable(),
-  request_id: z.string().nullable(),
-  ip_address: z.string().nullable(),
-  changes: z.record(z.string(), z.unknown()).nullable(),
-});
-export type AuditEntry = z.infer<typeof auditSchema>;
-
 export interface UserFilters {
   page: number;
   q: string;
   role: string;
   is_active: string;
 }
-export interface AuditFilters {
-  page: number;
-  action: string;
-  entity_type: string;
-}
 
 export const fetchUsers = (f: UserFilters, signal?: AbortSignal) =>
   getJson('/admin/users', pageOf(userSchema), { ...f, page_size: 20 }, signal);
 export const fetchRoles = (signal?: AbortSignal) => getJson('/admin/roles', z.array(roleSchema), undefined, signal);
-export const fetchAudit = (f: AuditFilters, signal?: AbortSignal) =>
-  getJson('/admin/audit-logs', pageOf(auditSchema), { ...f, page_size: 25 }, signal);
 
 export const setRoles = (id: string, roles: string[], reason: string) =>
   sendJson('PUT', `/admin/users/${id}/roles`, userSchema, { roles, reason });

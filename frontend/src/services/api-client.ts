@@ -128,16 +128,31 @@ async function send(path: string, options: RequestOptions, token: string | null)
   }
 }
 
-/** The single HTTP entry point for the app. Resolves with parsed JSON or rejects with ApiError. */
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+/** Sends the request, attaches the token and retries once after a refresh on 401. */
+async function perform(path: string, options: RequestOptions): Promise<Response> {
   const useAuth = options.authenticated !== false && authHooks !== null;
   let response = await send(path, options, useAuth ? (authHooks?.getAccessToken() ?? null) : null);
 
   if (response.status === 401 && useAuth && authHooks && (await authHooks.refreshAccessToken())) {
     response = await send(path, options, authHooks.getAccessToken());
   }
+  return response;
+}
 
+/** The single HTTP entry point for the app. Resolves with parsed JSON or rejects with ApiError. */
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await perform(path, options);
   const parsed = await readJson(response);
   if (!response.ok) throw toApiError(response, parsed);
   return parsed as T;
+}
+
+/**
+ * Same entry point for binary responses (a stored photo). Images need the bearer token, so they
+ * cannot be a plain `<img src>`; callers turn the blob into an object URL and revoke it.
+ */
+export async function apiBlob(path: string, options: RequestOptions = {}): Promise<Blob> {
+  const response = await perform(path, options);
+  if (!response.ok) throw toApiError(response, await readJson(response));
+  return response.blob();
 }
