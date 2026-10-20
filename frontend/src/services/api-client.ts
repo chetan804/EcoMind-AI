@@ -8,6 +8,8 @@ export class ApiError extends Error {
   readonly requestId: string | null;
   /** Parsed JSON body when the response had one (for example the 503 readiness report). */
   readonly body: unknown;
+  /** Seconds from a `Retry-After` header (429 responses), when present. */
+  readonly retryAfterSeconds: number | null;
 
   constructor(init: {
     status: number;
@@ -16,6 +18,7 @@ export class ApiError extends Error {
     details?: unknown;
     requestId?: string | null;
     body?: unknown;
+    retryAfterSeconds?: number | null;
   }) {
     super(init.message);
     this.name = 'ApiError';
@@ -24,6 +27,7 @@ export class ApiError extends Error {
     this.details = init.details ?? null;
     this.requestId = init.requestId ?? null;
     this.body = init.body ?? null;
+    this.retryAfterSeconds = init.retryAfterSeconds ?? null;
   }
 }
 
@@ -36,6 +40,28 @@ export interface RequestOptions {
    * false: path is relative to the API origin (operational endpoints such as /health, /ready).
    */
   versioned?: boolean;
+  /** Extra request headers (for example the CSRF header on cookie-authenticated endpoints). */
+  headers?: Record<string, string>;
+  /**
+   * true (default): attach the access token when there is one, and on a 401 refresh the session
+   * once and retry. false: send as-is (sign-in, sign-up, refresh and other public calls).
+   */
+  authenticated?: boolean;
+}
+
+/**
+ * Hooks installed by the auth feature, so this module needs no knowledge of sessions.
+ * `refreshAccessToken` must resolve true only when a new access token is now available.
+ */
+export interface AuthHooks {
+  getAccessToken: () => string | null;
+  refreshAccessToken: () => Promise<boolean>;
+}
+
+let authHooks: AuthHooks | null = null;
+
+export function configureAuthHooks(hooks: AuthHooks | null): void {
+  authHooks = hooks;
 }
 
 export function buildUrl(path: string, versioned = true): string {
@@ -53,6 +79,12 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
+function parseRetryAfter(response: Response): number | null {
+  const raw = response.headers.get('Retry-After');
+  const seconds = raw === null ? Number.NaN : Number.parseInt(raw, 10);
+  return Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
+}
+
 function toApiError(response: Response, body: unknown): ApiError {
   const envelope = (body as { error?: Record<string, unknown> } | null)?.error;
   return new ApiError({
@@ -62,26 +94,40 @@ function toApiError(response: Response, body: unknown): ApiError {
     details: envelope?.details,
     requestId: typeof envelope?.request_id === 'string' ? envelope.request_id : null,
     body,
+    retryAfterSeconds: parseRetryAfter(response),
   });
 }
 
-/** The single HTTP entry point for the app. Resolves with parsed JSON or rejects with ApiError. */
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, signal, versioned = true } = options;
-  let response: Response;
+async function send(path: string, options: RequestOptions, token: string | null): Promise<Response> {
+  const { method = 'GET', body, signal, versioned = true, headers = {} } = options;
   try {
-    response = await fetch(buildUrl(path, versioned), {
+    return await fetch(buildUrl(path, versioned), {
       method,
       signal,
+      // Needed so the HttpOnly refresh cookie is sent when the API is on another origin; for the
+      // default same-origin deployment it changes nothing.
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
     throw new ApiError({ status: 0, code: 'network_error', message: 'Network request failed' });
+  }
+}
+
+/** The single HTTP entry point for the app. Resolves with parsed JSON or rejects with ApiError. */
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const useAuth = options.authenticated !== false && authHooks !== null;
+  let response = await send(path, options, useAuth ? (authHooks?.getAccessToken() ?? null) : null);
+
+  if (response.status === 401 && useAuth && authHooks && (await authHooks.refreshAccessToken())) {
+    response = await send(path, options, authHooks.getAccessToken());
   }
 
   const parsed = await readJson(response);

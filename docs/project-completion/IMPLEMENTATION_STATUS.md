@@ -44,8 +44,9 @@ no dataset, no training code, no model.
 
 | Module | Schema | Endpoints | Status |
 |---|---|---|---|
-| auth | models + migration | none | Missing (primitives exist: Argon2id, JWT, refresh hashing) |
-| users / roles / permissions | models | none | Missing (no seed data) |
+| auth | models + migration | register, login, refresh, logout, change-password, me | **Verified** (48 backend tests incl. concurrency + mutation checks; e2e) |
+| users / roles / permissions | models + seed migration `0002` | none (no user-management API yet) | **Partial**: RBAC seeded and enforced (38 permissions, 5 roles, drift-guard test); first admin via CLI; no user-admin endpoints |
+| audit | models | written by auth events; **no read endpoint yet** | **Partial** |
 | waste_reports + media | models | none | Missing |
 | classification | models | none | Missing (no model artifact exists) |
 | collection | models | none | Missing |
@@ -60,14 +61,13 @@ no dataset, no training code, no model.
 | notifications | models | none | Missing |
 | forecasting | models | none | Missing (no trained model) |
 | anomaly_detection | models | none | Missing |
-| audit | models | none | Missing |
 | analytics | none | none | Missing (no models by design; to be query-based) |
 | administration | none | none | Missing |
 | health / ready | n/a | yes | Verified |
 
 ### Frontend screens (22 reference screens)
 
-Only screens 01–04 exist. See `docs/ui/screen-inventory.md`. Screens 05–22: Missing.
+Screens 01–04 exist; **02 (sign-in/up) is now wired to real authentication and sign-out exists**. 01 landing is static; 03 dashboard still shows labelled demonstration data; 04 classification still shows "not connected". Screens 05–22: Missing. See `docs/ui/screen-inventory.md`.
 
 ### ML
 
@@ -89,4 +89,33 @@ Only screens 01–04 exist. See `docs/ui/screen-inventory.md`. Screens 05–22: 
 
 ## 4. Verification log
 
-(Appended per phase with exact commands and counts.)
+### Phase B — authentication, RBAC, protected routes (this branch)
+
+Commits: `df0938f` (backend) + the frontend/e2e/docs commit that follows it on this branch.
+
+Migration: `0002_seed_roles_permissions` (data only; no schema change). Verified: `alembic upgrade head` from empty, downgrade to `0001` and re-upgrade, and `alembic check` reports no drift.
+
+| Check | Command (from the directory shown) | Result |
+|---|---|---|
+| Backend lint/format/types | `cd backend && ruff check . && ruff format --check . && mypy` | clean (115 source files) |
+| Backend tests, real PostgreSQL 16.2 | `cd backend && pytest` | **114 passed** (66 baseline + 48 new) |
+| Mutation checks (deliberate regressions) | edit code, run `pytest tests/api tests/security -x` | 5/5 detected: reuse-revocation removed, lockout disabled, active-user check removed, CSRF guard disabled, distinguishable login error |
+| Frontend lint / types | `cd frontend && npm run lint && npx tsc -b` | clean |
+| Frontend unit + integration | `cd frontend && npx vitest run` | **127 passed** (78 baseline + 49 new), 15 files |
+| Frontend production build | `cd frontend && npm run build` | succeeds; entry chunk 254.74 kB (was 253.49) |
+| E2E against live backend + PostgreSQL + Vite | `cd tests/e2e && npx playwright test --workers=4` | **18 passed** (11 baseline-equivalent + 5 new auth journeys + 2 system-status); audit trail showed exactly 1 registration despite 4 parallel workers |
+
+Defects found by testing during this phase (all fixed, none hidden):
+1. Failed-refresh cookie clearing was lost because FastAPI discards headers set on the injected `Response` when an exception propagates (caught by `test_unknown_refresh_token_is_rejected_and_cookie_cleared`). The router now builds the error response itself.
+2. Clearing the cookie on a benign refresh race would have signed the user out (tabs share one cookie jar); the race case is now a distinct error that leaves the cookie alone.
+3. `mypy` as CI runs it (bare `mypy`, includes tests) found 5 typing errors my narrower local run missed.
+4. e2e used the reserved domain `@example.test`, which the email validator correctly rejects; switched to `example.org`.
+5. The e2e fixture logged in before registering, which on a fresh DB recorded failed logins and tripped the brute-force lockout (429); it now registers first.
+
+Known limitations of this phase (also in `docs/security/security-baseline.md`):
+- No MFA, password reset, email verification, or social sign-in (buttons stay disabled, labelled unavailable).
+- Registration reveals whether an email is registered (409).
+- Per-address limits use the direct peer address; behind a proxy they are shared until the ASGI server is configured to trust the proxy.
+- Password policy is a length rule plus a small denylist, not a breached-password corpus check.
+- Docker/Compose could not be run in this sandbox; Compose cookie configuration was checked statically only.
+- CI results for this branch are not yet known (see the final report).

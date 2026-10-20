@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('the system status page shows a running API and a ready database', async ({ page }) => {
   await page.goto('/settings/system-status');

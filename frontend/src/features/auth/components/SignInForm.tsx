@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -6,26 +6,28 @@ import { Alert } from '@/components/feedback/Alert';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input, PasswordInput } from '@/components/ui/Input';
+import { signIn } from '@/services/session/session-store';
 import { signInSchema, type SignInValues } from '../schemas/auth-forms';
+import { describeAuthError } from '../utils/auth-errors';
 import { SocialButtons } from './SocialButtons';
 
 /**
- * Validates the sign-in fields. Authentication is not implemented: a valid submission is NOT sent
- * anywhere and the form says so rather than pretending to sign in.
+ * Signs in through the backend. On success the session store flips to authenticated and
+ * `RedirectIfSignedIn` (wrapping the page) navigates to the originally requested page.
  */
 export function SignInForm() {
-  const [submitted, setSubmitted] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<SignInValues>({ resolver: zodResolver(signInSchema), defaultValues: { email: '', password: '' } });
+  const mutation = useMutation({ mutationFn: (values: SignInValues) => signIn(values.email, values.password) });
 
   return (
     <>
       <h1 className="auth-title">Welcome back</h1>
       <p className="auth-subtitle">Sign in to your EcoMind AI workspace.</p>
-      <form className="auth-form" noValidate onSubmit={handleSubmit(() => setSubmitted(true))}>
+      <form className="auth-form" noValidate onSubmit={handleSubmit((values) => mutation.mutate(values))}>
         <Field label="Email address" error={errors.email?.message}>
           {(control) => (
             <Input {...control} size="lg" type="email" autoComplete="email" placeholder="you@example.com" {...register('email')} />
@@ -39,12 +41,12 @@ export function SignInForm() {
             Forgot password?
           </Button>
         </div>
-        {submitted && (
-          <Alert tone="warning" title="Sign-in is not available yet">
-            Authentication has not been implemented, so nothing was sent and no session was created.
+        {mutation.isError && (
+          <Alert tone="danger" title="Could not sign in">
+            {describeAuthError(mutation.error)}
           </Alert>
         )}
-        <Button type="submit" size="lg" fullWidth>
+        <Button type="submit" size="lg" fullWidth loading={mutation.isPending}>
           Sign in
         </Button>
       </form>

@@ -3,10 +3,12 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RouterProvider } from 'react-router/dom';
 import { createTestRouter } from '@/app/router';
+import { authResponse, dataCalls, resetSession, signInViaRefresh, testUser } from '../helpers/session';
 
 const fetchSpy = vi.fn();
 
 beforeEach(() => {
+  resetSession();
   fetchSpy.mockReset();
   vi.stubGlobal('fetch', fetchSpy);
   vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:preview'), revokeObjectURL: vi.fn() }));
@@ -53,6 +55,8 @@ describe('landing page', () => {
 });
 
 describe('application navigation', () => {
+  beforeEach(() => signInViaRefresh(fetchSpy));
+
   it('lists the primary destinations and never includes Smart Bins & Telemetry', async () => {
     renderAt('/dashboard');
     const nav = await screen.findByRole('navigation', { name: 'Main' });
@@ -107,22 +111,41 @@ describe('application navigation', () => {
     expect(screen.getByRole('status')).toHaveTextContent('No page matches');
   });
 
-  it('the account menu offers only what exists and shows no invented user', async () => {
+  it('the account menu shows the real signed-in user and offers only what exists', async () => {
+    renderAt('/classify');
+    const trigger = await screen.findByRole('button', { name: 'Account menu' });
+    expect(trigger).toHaveTextContent('Asha Verma');
+    expect(trigger).toHaveTextContent('Citizen');
+    expect(trigger).not.toHaveTextContent('Guest');
+    await userEvent.click(trigger);
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['System status', 'Sign out']);
+  });
+
+  it('signing out ends the session, calls the server and returns to sign-in', async () => {
+    signInViaRefresh(fetchSpy, testUser, (url) =>
+      url.endsWith('/auth/logout') ? new Response(null, { status: 204 }) : new Response('{}', { status: 404 }),
+    );
     renderAt('/classify');
     await userEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
-    const menu = screen.getByRole('menu');
-    expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Sign in', 'System status']);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    const logout = fetchSpy.mock.calls.find(([url]) => String(url).endsWith('/auth/logout'));
+    expect(logout?.[1]).toMatchObject({ method: 'POST', headers: { 'X-CSRF-Protection': '1' } });
+    expect(window.localStorage.getItem('ecomind.session-hint')).toBeNull();
   });
 });
 
 describe('dashboard', () => {
-  it('labels all content as demonstration data and makes no network request', async () => {
+  beforeEach(() => signInViaRefresh(fetchSpy));
+
+  it('labels all content as demonstration data and makes no data request (only the session restore)', async () => {
     renderAt('/dashboard');
     expect(await screen.findByText(/Demonstration data, not live/)).toBeInTheDocument();
     expect(screen.getByRole('list', { name: /Key metrics \(demonstration data\)/ })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Waste generation trend.*demonstration data.*\(kg per day\)/i })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Not live data/ })).toBeInTheDocument();
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(dataCalls(fetchSpy)).toEqual([]);
   });
 });
 
@@ -135,13 +158,95 @@ describe('sign-in', () => {
     expect(screen.getByLabelText(/Email address/)).toHaveAttribute('aria-invalid', 'true');
   });
 
-  it('a valid submission is NOT sent anywhere and says sign-in is unavailable', async () => {
-    renderAt('/sign-in');
-    await userEvent.type(await screen.findByLabelText(/Email address/), 'a@b.co');
-    await userEvent.type(screen.getByLabelText(/^Password/), 'secret');
+  const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
+    Response.json(body, { status, headers });
+  const apiError = (code: string, message = 'x', details: unknown = null) => ({
+    error: { code, message, details, request_id: 'req-test' },
+  });
+
+  async function submitSignIn(email = 'asha@example.org', password = 'a long passphrase 1') {
+    await userEvent.type(await screen.findByLabelText(/Email address/), email);
+    await userEvent.type(screen.getByLabelText(/^Password/), password);
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByText('Sign-in is not available yet')).toBeInTheDocument();
-    expect(fetchSpy).not.toHaveBeenCalled();
+  }
+
+  it('signs in through the API, keeps no token in storage and lands on the dashboard', async () => {
+    fetchSpy.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('/auth/login') ? json(authResponse()) : new Response('{}', { status: 404 })),
+    );
+    renderAt('/sign-in');
+    await submitSignIn();
+    expect(await screen.findByText(/Demonstration data, not live/)).toBeInTheDocument();
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/v1/auth/login');
+    expect(JSON.parse(String(init.body))).toEqual({ email: 'asha@example.org', password: 'a long passphrase 1' });
+    expect(init.credentials).toBe('include');
+    // Only the non-secret hint is persisted; the access token is memory-only.
+    const stored = JSON.stringify({ ...window.localStorage });
+    expect(stored).not.toContain('test-access-token');
+    expect(window.localStorage.getItem('ecomind.session-hint')).toBe('1');
+    expect(JSON.stringify({ ...window.sessionStorage })).not.toContain('test-access-token');
+  });
+
+  it('shows a generic message for wrong credentials and stays on the form', async () => {
+    fetchSpy.mockResolvedValue(json(apiError('invalid_credentials'), 401));
+    renderAt('/sign-in');
+    await submitSignIn();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Incorrect email or password.');
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();
+    expect(window.localStorage.getItem('ecomind.session-hint')).toBeNull();
+  });
+
+  it('tells the user how long to wait when rate limited', async () => {
+    fetchSpy.mockResolvedValue(json(apiError('rate_limited'), 429, { 'Retry-After': '600' }));
+    renderAt('/sign-in');
+    await submitSignIn();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many attempts. Try again in 10 minutes.');
+  });
+
+  it('reports an unreachable server without claiming the password was wrong', async () => {
+    fetchSpy.mockRejectedValue(new TypeError('Failed to fetch'));
+    renderAt('/sign-in');
+    await submitSignIn();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('could not reach the server');
+    expect(alert).not.toHaveTextContent('Incorrect');
+  });
+
+  it('prevents a double submit while the request is in flight', async () => {
+    let release: (r: Response) => void = () => undefined;
+    fetchSpy.mockImplementation(() => new Promise<Response>((resolve) => (release = resolve)));
+    renderAt('/sign-in');
+    await submitSignIn();
+    const button = await screen.findByRole('button', { name: 'Sign in' });
+    await vi.waitFor(() => expect(button).toHaveAttribute('aria-busy', 'true'));
+    await userEvent.click(button);
+    await userEvent.click(button);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    release(json(apiError('invalid_credentials'), 401));
+  });
+
+  it('returns a signed-in user to the page they originally asked for', async () => {
+    fetchSpy.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('/auth/login') ? json(authResponse()) : new Response('{}', { status: 404 })),
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const router = createTestRouter(['/classify']);
+    render(
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    await submitSignIn();
+    expect(await screen.findByRole('heading', { level: 1, name: 'AI waste classification' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/classify');
+  });
+
+  it('a signed-in user visiting sign-in is sent to the dashboard', async () => {
+    signInViaRefresh(fetchSpy);
+    renderAt('/sign-in');
+    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Welcome back' })).not.toBeInTheDocument();
   });
 
   it('social sign-in and password reset are visibly unavailable', async () => {
@@ -165,7 +270,62 @@ describe('sign-in', () => {
   });
 });
 
+describe('sign-up', () => {
+  const apiError = (code: string, message = 'x', details: unknown = null) => ({
+    error: { code, message, details, request_id: 'req-test' },
+  });
+
+  async function fillAndSubmit(password = 'a long passphrase 1') {
+    await userEvent.type(await screen.findByLabelText(/Full name/), 'Asha Verma');
+    await userEvent.type(screen.getByLabelText(/Email address/), 'asha@example.org');
+    await userEvent.type(screen.getByLabelText(/^Password/), password);
+    await userEvent.type(screen.getByLabelText(/Confirm password/), password);
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+  }
+
+  it('creates the account, sends no role, and signs the user in', async () => {
+    fetchSpy.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('/auth/register') ? Response.json(authResponse(), { status: 201 }) : new Response('{}', { status: 404 })),
+    );
+    renderAt('/sign-up');
+    await fillAndSubmit();
+    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/v1/auth/register');
+    expect(JSON.parse(String(init.body))).toEqual({
+      email: 'asha@example.org',
+      password: 'a long passphrase 1',
+      full_name: 'Asha Verma',
+    });
+  });
+
+  it('shows a duplicate email on the email field', async () => {
+    fetchSpy.mockResolvedValue(Response.json(apiError('email_already_registered'), { status: 409 }));
+    renderAt('/sign-up');
+    await fillAndSubmit();
+    expect(await screen.findByText(/An account with this email already exists/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Email address/)).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it("shows the server's password-policy message on the password field", async () => {
+    fetchSpy.mockResolvedValue(
+      Response.json(
+        apiError('weak_password', 'Password does not meet the password policy', [
+          { location: ['body', 'password'], message: 'This password is too common or too repetitive.', type: 'policy' },
+        ]),
+        { status: 422 },
+      ),
+    );
+    renderAt('/sign-up');
+    await fillAndSubmit('password123456');
+    expect(await screen.findByText('This password is too common or too repetitive.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Password/)).toHaveAttribute('aria-invalid', 'true');
+  });
+});
+
 describe('classification', () => {
+  beforeEach(() => signInViaRefresh(fetchSpy));
+
   const png = () => new File(['x'], 'bottle.png', { type: 'image/png' });
 
   async function pick(file: File) {
@@ -196,7 +356,7 @@ describe('classification', () => {
     expect(screen.getByText('Classification is not available yet')).toBeInTheDocument();
     expect(screen.getByText(/Nothing was uploaded/)).toBeInTheDocument();
     expect(screen.queryByText('Plastic', { selector: 'p' })).not.toBeInTheDocument();
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(dataCalls(fetchSpy)).toEqual([]);
     await userEvent.click(screen.getByRole('button', { name: 'Try another image' }));
     expect(screen.getByText('No image yet')).toBeInTheDocument();
   });
