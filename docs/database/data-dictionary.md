@@ -130,6 +130,7 @@ Constraints:
 Constraints:
 
 - `uq_classification_model_versions_name_version`: unique (name, version)
+- `uq_classification_model_versions_one_active`: unique index WHERE `status = 'active'`
 - Allowed values: `status` in (candidate, active, retired)
 
 ### `classification_predictions`
@@ -142,6 +143,11 @@ Constraints:
 | `object_confidence` | numeric(5, 4) | null |  |  |
 | `material_category_id` | uuid | NN |  | FK -> `material_categories.id` |
 | `material_confidence` | numeric(5, 4) | NN |  |  |
+| `needs_review` | boolean | NN | `false` |  |
+| `review_reasons` | jsonb | NN | `'[]'::jsonb` |  |
+| `class_probabilities` | jsonb | NN | `'{}'::jsonb` |  |
+| `novelty_similarity` | numeric(5, 4) | null |  |  |
+| `inference_ms` | numeric(8, 1) | null |  |  |
 | `review_status` | varchar(18) | NN | `unreviewed` |  |
 | `reviewed_material_category_id` | uuid | null |  | FK -> `material_categories.id` |
 | `reviewed_by_id` | uuid | null |  | FK -> `users.id` |

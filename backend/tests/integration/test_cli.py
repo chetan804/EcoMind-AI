@@ -48,3 +48,63 @@ def test_create_admin_enforces_policy_and_uniqueness(
     assert cli.main(["create-admin", "--email", "a@example.org", "--name", "Admin User"]) == 0
     assert cli.main(["create-admin", "--email", "A@example.org", "--name", "Admin User"]) == 1
     assert "already exists" in capsys.readouterr().err
+
+
+# -- model registry commands --------------------------------------------------------------------
+@pytest.fixture
+def model_cli(
+    cli_env: Engine, monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
+) -> Engine:
+    from pathlib import Path
+
+    from app.core.config import Settings
+
+    artifacts = Path(str(tmp_path)) / "artifacts"
+    settings = Settings(
+        _env_file=None,
+        environment="test",
+        database_url="postgresql+psycopg://test:test@127.0.0.1:1/unused",
+        secret_key="x" * 40,
+        model_artifacts_dir=artifacts,
+    )
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    return cli_env
+
+
+def test_register_then_activate_a_model_from_the_command_line(
+    model_cli: Engine, tmp_path: pytest.TempPathFactory, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from pathlib import Path
+
+    from tests.fixtures.classification import write_artifact
+
+    write_artifact(Path(str(tmp_path)) / "artifacts", "1.0.0")
+    assert cli.main(["register-model", "--version", "1.0.0"]) == 0
+    assert "registered (candidate)" in capsys.readouterr().out
+    assert cli.main(["register-model", "--version", "1.0.0"]) == 0  # idempotent
+    assert cli.main(["activate-model", "--version", "1.0.0"]) == 0
+    assert "is now active" in capsys.readouterr().out
+    with model_cli.connect() as connection:
+        assert (
+            connection.execute(
+                text("SELECT status FROM classification_model_versions")
+            ).scalar_one()
+            == "active"
+        )
+        assert (
+            connection.execute(
+                text(
+                    "SELECT count(*) FROM audit_logs WHERE action = 'classification.model_activated'"
+                )
+            ).scalar_one()
+            == 1
+        )
+
+
+def test_model_commands_fail_clearly_when_there_is_nothing_to_use(
+    model_cli: Engine, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.main(["register-model", "--version", "9.9.9"]) == 1
+    assert "No artifact" in capsys.readouterr().err
+    assert cli.main(["activate-model", "--version", "9.9.9"]) == 1
+    assert "Expected exactly one registered model" in capsys.readouterr().err

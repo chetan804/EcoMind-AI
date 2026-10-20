@@ -13,7 +13,17 @@ import decimal
 import uuid
 from typing import Any
 
-from sqlalchemy import CheckConstraint, DateTime, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Index,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,6 +35,13 @@ class ClassificationModelVersion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "classification_model_versions"
     __table_args__ = (
         UniqueConstraint("name", "version", name="uq_classification_model_versions_name_version"),
+        # At most one active version at any time.
+        Index(
+            "uq_classification_model_versions_one_active",
+            "status",
+            unique=True,
+            postgresql_where=text("status = 'active'"),
+        ),
     )
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -35,7 +52,8 @@ class ClassificationModelVersion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         server_default=ModelVersionStatus.CANDIDATE.value,
     )
     framework: Mapped[str | None] = mapped_column(String(50))
-    # SHA-256 of the artifact manifest in ml/model_registry; ties a row to exact artifacts.
+    # SHA-256 of the artifact's model.json (which lists the hashes of every other file); the same
+    # value is recorded in ml/model_registry/<capability>/<version>.yaml.
     artifact_manifest_sha256: Mapped[str | None] = mapped_column(String(64))
     # Evaluation summary copied from the model card; the evidence lives in docs/ml/model-cards.
     evaluation_metrics: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
@@ -69,6 +87,19 @@ class ClassificationPrediction(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     object_confidence: Mapped[decimal.Decimal | None] = mapped_column(Numeric(5, 4))
     material_category_id: Mapped[uuid.UUID] = fk_uuid("material_categories.id")
     material_confidence: Mapped[decimal.Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+
+    # What the model decided about its own reliability (see the model card for the rule).
+    needs_review: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    review_reasons: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    class_probabilities: Mapped[dict[str, float]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    novelty_similarity: Mapped[decimal.Decimal | None] = mapped_column(Numeric(5, 4))
+    inference_ms: Mapped[decimal.Decimal | None] = mapped_column(Numeric(8, 1))
 
     review_status: Mapped[ReviewStatus] = mapped_column(
         enum_column(ReviewStatus),
