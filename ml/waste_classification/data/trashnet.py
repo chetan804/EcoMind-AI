@@ -99,7 +99,7 @@ def build_groups(
                 distance_threshold=1.0 - min_cosine_similarity,
             ).fit_predict(unit[members])
         groups[members] = found + offset
-        offset += int(found.max()) + 1
+        offset += int(np.max(found)) + 1
     return groups
 
 

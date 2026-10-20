@@ -145,7 +145,7 @@ def main() -> int:
             raise RuntimeError("a duplicate group straddles two splits")
     report["split"] = {
         "n_images": len(samples),
-        "n_groups": int(groups.max() + 1),
+        "n_groups": int(np.max(groups)) + 1,
         "largest_group": int(np.bincount(groups).max()),
         "images_in_multi_image_groups": float((np.bincount(groups)[groups] > 1).mean()),
         "sizes": {"train": len(train_idx), "validation": len(val_idx), "test": len(test_idx)},
