@@ -1,6 +1,6 @@
 # Visual iteration tooling
 
-Developer tooling for comparing the built screens with the design references. It is **not** part of the product, not run in CI, and does not gate merges. The reference PNGs in the repository root are crops of one blurry AI-generated composite, so these numbers guide iteration; they are not an acceptance test and nothing here claims pixel accuracy.
+Developer tooling for comparing the built screens with the design references. It is **not** part of the product, not run in CI, and does not gate merges. The reference PNGs in `docs/ui/reference/` (with their `manifest.json`) are crops of one blurry AI-generated composite, so these numbers guide iteration; they are not an acceptance test and nothing here claims pixel accuracy.
 
 ## How it works
 

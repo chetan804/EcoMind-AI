@@ -57,7 +57,7 @@ Behaviours worth knowing:
 
 ## Reference material and how fidelity was checked
 
-The 22 reference PNGs in the repository root are crops of **one blurry, AI-generated 1536 x 1024 composite**, and their text is partly illegible. They guide layout, proportion and tone; they are not specifications, and nothing here is "pixel-perfect". References 01 to 04 are dark; 05 to 07 have a dark sidebar with light content; 08 to 22 are Stage 2.
+The 22 reference PNGs in `docs/ui/reference/` (with `manifest.json`, which records each file's SHA-256) are crops of **one blurry, AI-generated 1536 x 1024 composite**, and their text is partly illegible. They guide layout, proportion and tone; they are not specifications, and nothing here is "pixel-perfect". References 01 to 04 are dark; 05 to 07 have a dark sidebar with light content; 08 to 22 are Stage 2.
 
 - A generative super-resolution pass (Real-ESRGAN, 4x) was produced as a **viewing aid only**. It sharpens edges but **invents detail and text**, so it was never used as a source for copy, numbers or colours (colours were sampled from the original pixels). The 22 MB of outputs are generated artefacts and are deliberately **not committed**.
 - No reference crop is used as an asset. All illustrations (landing scene, sign-in art, sample bottle, map) are original inline SVG/CSS.

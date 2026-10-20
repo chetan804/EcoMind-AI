@@ -75,7 +75,7 @@ hooks/ lib/ utils/ types/ styles/   shared, feature-agnostic
 ```
 `features/landing` is the one feature with no backend module (the public page at `/`); it is listed as a known feature in `scripts/quality/check_structure.py`. `features/dashboard`, `waste-classification` and `auth` currently contain UI only: see their READMEs and `docs/ui/design-system.md` for what is demonstration content and what is unavailable.
 
-The design-reference PNGs and `manifest.json` at the repository root (committed on `main`) are tolerated by exact filename pattern in `check_structure.py`; moving them under `docs/ui/` would remove that exception.
+The design-reference PNGs and their `manifest.json` live in `docs/ui/reference/`. They are immutable originals: `scripts/quality/check_structure.py` fails if any is missing or its SHA-256 differs from the manifest.
 
 Rules: features do not import other features' internals; shared components never import from features; there is one API client, one modal/table/button system, one authentication implementation (in `features/auth` + `app/guards`); API origin only from `app/config.ts`; no mock arrays as production data.
 
