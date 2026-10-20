@@ -36,7 +36,7 @@ export function LocationsPage() {
         actions={manage ? <Button onClick={() => setEditing('new')}>Add zone</Button> : undefined}
       />
       <Alert tone="info">
-        Zones are named areas. They have no map boundaries because the platform holds no verified map data, so no coverage is shown.
+        Zones are named areas. They have no map boundaries because the platform holds no boundary data, so no coverage is shown.
       </Alert>
       <div className="filter-bar">
         <Field label="Search">{(c) => <SearchInput {...c} placeholder="Name or code" value={filters.q} onChange={(e) => set({ q: e.target.value })} />}</Field>

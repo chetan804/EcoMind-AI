@@ -13,21 +13,28 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Where the project stands (branch `arena/39c812ff-ecomind-ai`, PR #9 against `main`)
+## 1. Where the project stands (branch `arena/483a088d-ecomind-ai`, started from `main` at `aa117c3`)
 
-`main` is at `4474bfb` (PR #7). PR #9 adds community incidents, analytics, administration, MFA and every
-remaining frontend screen. Alembic head is `0010` (marketplace; 0009 added zones).
+`main` is at `aa117c3` (PR #9 merged: incidents, analytics, administration, MFA, marketplace, all screens). This branch
+adds **Google Maps integration and vehicle tracking** (master prompt section 27). Alembic head is `0011`
+(`vehicle_location_events`); 42 permissions (new: `fleet:track`, `fleet:simulate`); about 125 API operations.
 
-Latest local results on this branch (run in this sandbox; CI results are listed in the verification log):
+**Baseline at the start of this branch (before any change, same sandbox):** backend 524 passed / 1 skipped, vitest 220 passed, `tsc` clean.
+
+Latest local results on this branch (run in this sandbox; remote CI is reported separately in the verification log):
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 525 passed, 0 skipped (`cd backend && pytest`, full run) |
+| Backend pytest (real PostgreSQL 16.2) | 595 passed, 1 skipped (the classification parity test needs the git-ignored model artifact) |
 | Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
-| Frontend vitest | 27 files, 220 tests passed |
-| Playwright e2e (local, real stack) | 21 passed, 1 skipped (the skip is the no-model classification test, which does not apply while a model is active) |
-| Frontend `tsc -b`, ESLint, production build | clean |
+| Frontend vitest | 282 tests passed |
+| Playwright e2e (local, real stack, fresh database) | 22 passed, 1 skipped (the no-model classification test, which does not apply while a model is active) |
+| Frontend `tsc -b`, ESLint, production build | clean; no `AIza` key material in the bundle |
+| Generated docs (data dictionary, ER diagram, route matrix) `--check` | up to date at `5542389` |
 | `scripts/quality/check_structure.py` | passes |
+
+**Not verified (needs credentials or network the sandbox lacks):** rendering with a real Google Maps key, the live Routes API, the CSP with Google
+loaded, any real GPS source. See `docs/maps/GOOGLE_MAPS_INTEGRATION.md` ("Pending live verification").
 
 ## 2. Capability matrix
 
@@ -36,13 +43,15 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 | Module | Status | Notes |
 |---|---|---|
 | auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
-| users / roles / permissions | **Verified** | 40 permissions, 5 roles, drift-guard test. |
+| users / roles / permissions | **Verified** | 42 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
 | classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
 | collection | **Verified** | Lifecycle with transitions, weights, events, reschedule. |
 | facilities, fleet | **Verified** | |
-| route_planning | **Verified** | Deterministic ordering (`route-order 1.0.0`), no ETA, no live traffic. Mutation checks 5/5. |
+| tracking (vehicle positions) | **Verified with mocks; no live GPS source** | Migration 0011, append-only `vehicle_location_events`, ingestion with validation/authorisation/rate limit, out-of-order and duplicate handling, derived LIVE/DELAYED/STALE/HISTORICAL/SIMULATED status, labelled simulator, retention CLI; 42 API tests plus road-route tests; `docs/api/tracking-api.md`. Real source shipped: browser sharing by the assigned collector (e2e-verified with emulated geolocation). Not a connected GPS fleet. |
+| mapping integration (Google Routes) | **Implemented, mocked, not live-verified** | `backend/app/integrations/mapping`, `GET /route-planning/plans/{id}/road-route`; no key was available. |
+| route_planning | **Verified** | Deterministic ordering (`route-order 1.0.0`), no stored ETA, no live traffic. Mutation checks 5/5. Optional on-demand road route from the provider (not stored). |
 | forecasting, anomaly_detection | **Verified** | `ts-1.0.0`; honest labels for platform vs public reference data. Mutation checks 5/5. |
 | sorting_guide | **Verified** | Ships no rules; entries are created by managers. |
 | circular_economy (material recovery) | **Verified** | Verification needs a different person than the recorder. |
@@ -52,7 +61,7 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 | community_incidents | **Verified** | 9 tests; 6 mutations (2 equivalent survivors). |
 | analytics | **Verified** | Query-based; `recovery_rate` is null without verified input. |
 | marketplace | **Verified** (matching board only) | Listings, requests, accept/decline/withdraw, notifications, audit; migration 0010, 4 permissions, 22 API tests, 5 of 6 mutations caught (the survivor is an unreachable defence-in-depth branch for e-mail visibility), 7 vitest tests, 1 e2e journey. No price, payment, delivery, photos or chat. |
-| locations and zones | **Verified** (named zones only) | Zones live in the facilities module (`/api/v1/zones`, migration 0009, 13 tests, 4/4 mutations caught). No geometry: no verified map data. Collection tasks are not linked to zones (future). |
+| locations and zones | **Verified** (named zones only) | Zones live in the facilities module (`/api/v1/zones`, migration 0009, 13 tests, 4/4 mutations caught). No boundary geometry (no verified boundary data); the screen maps the zone's facilities. Collection tasks are not linked to zones (future). |
 
 ### Frontend screens (see `docs/ui/screen-inventory.md` for routes and permissions)
 
@@ -234,4 +243,21 @@ incident as a false positive in the GitGuardian dashboard.
 - **Backend CI had been red since `c4a62cb`**: `tests/api/test_security_headers.py` (`/auth/me` case) asked for a database session built from the process environment, which CI does not set (it only sets `TEST_DATABASE_URL`). It passed locally only because the shell exported `DATABASE_URL`. Reproduced in a clean `git worktree` with `env -i`, fixed by overriding `get_db` with a lazy, never-connecting session in the test, then re-ran the whole suite in the stripped environment: 524 passed, 1 skipped (the classification parity test needs the git-ignored model artifact; locally, where the artifact exists, it runs: 525 passed, 0 skipped).
 - **GitHub CI on `137e9fa`** (checked with `gh pr checks 9`): Tests (Python 3.11) pass, Tests (Python 3.12) pass, ML tests, Lint and type-check, Lint/type-check/test/build (frontend), Contract tests and generated docs, Structure/templates/Compose, Docker images build and End-to-end (Compose + Playwright) pass. **GitGuardian fails** on one finding: the reviewed false positive in `backend/tests/api/test_administration.py` (a test-only password literal in history).
 - Local final counts: backend 525 passed; vitest 220 (27 files); ML 57; Playwright 21 passed, 1 skipped; route matrix 123 operations; Alembic head 0010.
+
+### Phase H: Google Maps and vehicle tracking (this branch, section 27)
+
+Commits on `arena/483a088d-ecomind-ai`: `5542389` (integration), then collector location sharing, the tracking e2e spec, map screenshots and docs.
+
+| Area | What exists | Evidence |
+|---|---|---|
+| Ingestion and history | `modules/tracking`, migration 0011 (round trip and `alembic check` clean), DB trigger forbidding UPDATE, indexed latest query | `backend/tests/api/test_tracking.py` (42) |
+| Road routing | `integrations/mapping/google_routes.py` (header key, field mask, chunking, timeout, quota/denied/network handling) with mocked transport; endpoint always answers 200 with `available` and `reason` | `test_google_routes.py`, `test_road_route.py` (8) |
+| Frontend maps | `features/maps` (loader with timeout and `gm_authFailure`, `MapPanel`, `LocationPicker`, fallback), `features/tracking` (fleet map, collection map, sharing, simulator controls) | `frontend/tests/integration/tracking.test.tsx` (20), `tests/unit/{google-loader,maps-geo,tracking}.test.ts` |
+| End to end | `tests/e2e/specs/tracking.spec.ts`: collector shares position (emulated geolocation), manager and citizen views, simulated rows labelled and separate, access control | local full suite 22 passed / 1 skipped |
+| Screenshots | `docs/ui/evidence/maps/` (five screens, synthetic data, fallback view) | README there |
+| Docs | `docs/maps/GOOGLE_MAPS_INTEGRATION.md`, `docs/api/tracking-api.md`, runbook, security review, LIMITATIONS, `SCREEN_TRACEABILITY.md` | |
+
+Defects found and fixed along the way: the e2e Playwright registration budget (10 per IP per hour) is shared by every spec, so the tracking spec registers one account and acts through the seeded administrator and the shared fixtures account; the screenshot script used a non-existent facility type, found by running it.
+
+CI for this branch: **not yet confirmed**; see the pull request checks.
 
