@@ -57,13 +57,14 @@ Each module owns the tables listed; "Depends on" lists tables/services it refere
 | 15 | `forecasting` | forecast_results | facilities, sorting_guide |
 | 16 | `anomaly_detection` | anomaly_alerts | users, facilities, sorting_guide |
 | 17 | `audit` | audit_logs | users |
+| 18 | `marketplace` | marketplace_listings, marketplace_requests | users, facilities, notifications, audit |
 | — | `analytics` | none (read-only) | collection, waste_reports, circular_economy, facilities |
 | — | `administration` | none | users, audit |
 
 Polymorphic references without foreign keys (documented trade-off): `reward_ledger_entries.source_id`, `notifications.entity_id`, `audit_logs.entity_id`.
 
 ## Domain ownership (specification section 6)
-1 Authentication → `auth`; 2 User/role administration → `users` (+ `administration`); 3 Reports and media → `waste_reports`; 4 Recognition and material classification → `classification` (+ `sorting_guide` for categories); 5 Collection → `collection`; 6 Routes → `route_planning`; 7 Facilities → `facilities`; 8 Fleet → `fleet`; 9 Circular economy → `circular_economy`; 10 Analytics → `analytics`; 11 Forecasting → `forecasting`; 12 Anomalies → `anomaly_detection`; 13 Community incidents → `community_incidents`; 14 Sorting guidance → `sorting_guide`; 15 Passports and custody → `material_passports`; 16 Rewards and impact → `rewards`; 17 Notifications → `notifications`; 18 Audit and administration → `audit`, `administration`.
+1 Authentication → `auth`; 2 User/role administration → `users` (+ `administration`); 3 Reports and media → `waste_reports`; 4 Recognition and material classification → `classification` (+ `sorting_guide` for categories); 5 Collection → `collection`; 6 Routes → `route_planning`; 7 Facilities → `facilities`; 8 Fleet → `fleet`; 9 Circular economy → `circular_economy`; 10 Analytics → `analytics`; 11 Forecasting → `forecasting`; 12 Anomalies → `anomaly_detection`; 13 Community incidents → `community_incidents`; 14 Sorting guidance → `sorting_guide`; 15 Passports and custody → `material_passports`; 16 Rewards and impact → `rewards`; 17 Notifications → `notifications`; 18 Audit and administration → `audit`, `administration`; 19 Surplus marketplace → `marketplace`.
 
 ## Frontend boundaries
 ```
