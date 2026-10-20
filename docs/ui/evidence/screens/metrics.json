@@ -1,0 +1,104 @@
+{
+  "forecasting": {
+    "reference": "05_Fill_Level_Forecasting.png",
+    "ssim": 0.334,
+    "mean_abs_colour_error": 70.1,
+    "theme": "light"
+  },
+  "anomalies": {
+    "reference": "06_Anomaly_Detection.png",
+    "ssim": 0.334,
+    "mean_abs_colour_error": 71.9,
+    "theme": "light"
+  },
+  "routes": {
+    "reference": "07_Route_Optimization.png",
+    "ssim": 0.362,
+    "mean_abs_colour_error": 74.6,
+    "theme": "light"
+  },
+  "incidents": {
+    "reference": "09_Community_Incident_Triage.png",
+    "ssim": 0.261,
+    "mean_abs_colour_error": 88.9,
+    "theme": "light"
+  },
+  "sorting-guide": {
+    "reference": "10_Material_Sorting_Guide.png",
+    "ssim": 0.388,
+    "mean_abs_colour_error": 54.6,
+    "theme": "light"
+  },
+  "passports": {
+    "reference": "11_Chain_of_Custody_Passports.png",
+    "ssim": 0.353,
+    "mean_abs_colour_error": 70.9,
+    "theme": "light"
+  },
+  "rewards": {
+    "reference": "12_Rewards_and_Impact_Ledger.png",
+    "ssim": 0.427,
+    "mean_abs_colour_error": 57.4,
+    "theme": "light"
+  },
+  "reports": {
+    "reference": "13_Waste_Intake_Records.png",
+    "ssim": 0.424,
+    "mean_abs_colour_error": 45.3,
+    "theme": "light"
+  },
+  "facilities": {
+    "reference": "15_Processing_Facilities_and_Depots.png",
+    "ssim": 0.264,
+    "mean_abs_colour_error": 87.0,
+    "theme": "light"
+  },
+  "fleet": {
+    "reference": "16_Collection_Fleet_Vehicles.png",
+    "ssim": 0.44,
+    "mean_abs_colour_error": 51.4,
+    "theme": "light"
+  },
+  "collection": {
+    "reference": "18_Collections_and_Impact.png",
+    "ssim": 0.336,
+    "mean_abs_colour_error": 64.3,
+    "theme": "light"
+  },
+  "analytics": {
+    "reference": "20_Executive_Analytics_and_Reporting.png",
+    "ssim": 0.359,
+    "mean_abs_colour_error": 30.8,
+    "theme": "light"
+  },
+  "notifications": {
+    "reference": "21_Operational_System_Alerts.png",
+    "ssim": 0.491,
+    "mean_abs_colour_error": 26.4,
+    "theme": "light"
+  },
+  "security": {
+    "reference": "22_Security_and_MFA.png",
+    "ssim": 0.397,
+    "mean_abs_colour_error": 35.9,
+    "theme": "light"
+  },
+  "dashboard-data": {
+    "reference": "03_Operational_Command_Center.png",
+    "ssim": 0.578,
+    "mean_abs_colour_error": 14.8,
+    "theme": "dark"
+  },
+  "locations": {
+    "reference": "14_Locations_and_Zones.png",
+    "ssim": 0.297,
+    "mean_abs_colour_error": 80.7,
+    "theme": "light"
+  },
+  "marketplace": {
+    "reference": "08_Circular_Surplus_Marketplace.png",
+    "ssim": 0.238,
+    "mean_abs_colour_error": 86.5,
+    "theme": "light"
+  }
+}

@@ -1,6 +1,6 @@
 # Database schema overview
 
-PostgreSQL is the only authoritative store. The schema is defined by SQLAlchemy models **inside the module that owns each table** and evolved only through Alembic migrations (`backend/migrations/versions`). Column-level detail is in the generated [data-dictionary.md](data-dictionary.md).
+PostgreSQL is the only authoritative store. The schema is defined by SQLAlchemy models **inside the module that owns each table** and evolved only through Alembic migrations (`backend/migrations/versions`). Column-level detail is in the generated [data-dictionary.md](data-dictionary.md); the relationships are drawn in the generated [er-diagram.md](er-diagram.md).
 
 ## Conventions
 - Table names: plural snake_case. Primary key `id UUID DEFAULT gen_random_uuid()` (join tables use composite keys).

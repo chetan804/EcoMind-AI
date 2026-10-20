@@ -1,0 +1,2 @@
+.forecast-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+.caveat-list { margin: var(--space-2) 0 0; padding-left: var(--space-5); color: var(--color-text-secondary); }

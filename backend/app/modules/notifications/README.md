@@ -2,7 +2,7 @@
 
 In-app notifications per user. Email delivery goes through `integrations/email`.
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** implemented (per-user list/read API; `notify()` for other modules). See `docs/api/notifications-api.md`.
 
 ## Ownership
 - **Tables owned:** `notifications`
@@ -12,8 +12,8 @@ In-app notifications per user. Email delivery goes through `integrations/email`.
 - **Depends on (via services / foreign keys):** `users`
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
-## API (planned, not implemented)
-`/api/v1/notifications`, registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
+## API
+`/api/v1/notifications`, registered in `app/api/v1/router.py`.
 
 ## Notes
 -

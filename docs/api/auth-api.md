@@ -29,12 +29,27 @@ Creates a `citizen` account and signs it in. Body: `{"email", "password", "full_
 | 429 | `rate_limited` | More than 10 registrations from one address in an hour (`Retry-After`) |
 
 ### `POST /login` → `200`
-Body: `{"email", "password"}`. Returns `AuthResponse` and sets the refresh cookie.
+Body: `{"email", "password"}`. Returns `AuthResponse` and sets the refresh cookie. For an account with two-factor authentication it returns an **`MfaChallenge`** instead (`{mfa_required: true, mfa_token, expires_in: 300}`), with no access token and no cookie; complete it with `POST /mfa/verify`. Clients tell the two apart by the `mfa_required` field.
 
 | Status | `error.code` | When |
 |---|---|---|
 | 401 | `invalid_credentials` | Unknown email, wrong password or deactivated account (indistinguishable) |
 | 429 | `rate_limited` | 5 failed attempts for this email, or 30 from this address, within 15 minutes (`Retry-After`) |
+
+### Two-factor authentication (TOTP)
+
+Details, threat model and limits: `docs/security/mfa.md`.
+
+| Endpoint | Auth | Purpose |
+|---|---|---|
+| `POST /mfa/verify` | `mfa_token` in the body | Second sign-in step. Body `{mfa_token, code}` (6-digit code or recovery code). Returns `AuthResponse` and sets the cookie |
+| `GET /mfa` | Bearer | `{enabled, pending_enrollment, enabled_at, recovery_codes_remaining}` |
+| `POST /mfa/enroll` | Bearer | New secret, shown once: `{secret, otpauth_uri, issuer, digits, period_seconds}`. Inactive until confirmed. `409 mfa_already_enabled` if on |
+| `POST /mfa/activate` | Bearer | Body `{code}`. Confirms enrolment; returns ten recovery codes once. `422 invalid_mfa_code`, `409 mfa_enrollment_not_started` |
+| `POST /mfa/disable` | Bearer | Body `{password, code}` (code may be a recovery code). `204`. `401 invalid_credentials`, `422 invalid_mfa_code`, `409 mfa_not_enabled` |
+| `POST /mfa/recovery-codes` | Bearer | Body `{password, code}`. Replaces all recovery codes; returns ten new ones once |
+
+Second-step errors: `401 invalid_mfa_code` (wrong code, replayed code, expired or invalid `mfa_token`, deactivated account; deliberately one code), `429 rate_limited` after five wrong codes in 15 minutes. An administrator can remove a locked-out user's authenticator with `POST /api/v1/admin/users/{id}/reset-mfa`.
 
 ### `POST /refresh` → `200`
 Cookie + CSRF header. Rotates the refresh token and returns a new `AuthResponse`.

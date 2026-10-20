@@ -78,6 +78,36 @@ Constraints:
 
 - `ck_auth_sessions_expiry_after_creation`: `expires_at > created_at`
 
+### `mfa_factors`
+
+A user's TOTP authenticator (RFC 6238). At most one per user.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `secret_encrypted` | text | NN |  |  |
+| `confirmed_at` | timestamptz | null |  |  |
+| `last_used_step` | bigint | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+### `mfa_recovery_codes`
+
+One single-use recovery code. Only a keyed hash of the code is stored.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `code_hash` | varchar(64) | NN |  |  |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `used_at` | timestamptz | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+
+Constraints:
+
+- `uq_mfa_recovery_codes_user_id_code_hash`: unique (user_id, code_hash)
+
 ## Module `circular_economy`
 
 ### `recovery_records`
@@ -303,6 +333,7 @@ Constraints:
 | `country_code` | varchar(2) | null |  |  |
 | `daily_capacity_kg` | numeric(14, 3) | null |  |  |
 | `contact_email` | varchar(320) | null |  |  |
+| `zone_id` | uuid | null |  | FK -> `zones.id` |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |
@@ -316,6 +347,25 @@ Constraints:
 - `ck_facilities_latitude_range`: `latitude BETWEEN -90 AND 90`
 - `ck_facilities_longitude_range`: `longitude BETWEEN -180 AND 180`
 - Allowed values: `facility_type` in (processing_center, depot, transfer_station, drop_off_point); `status` in (active, inactive, maintenance)
+
+### `zones`
+
+A named service area (no boundary geometry: the platform has no verified map data).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `code` | varchar(32) | NN |  |  |
+| `name` | varchar(200) | NN |  |  |
+| `zone_type` | varchar(21) | NN |  |  |
+| `description` | text | null |  |  |
+| `is_active` | boolean | NN | `true` |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- Allowed values: `zone_type` in (residential, commercial, industrial, mixed_use, institutional, other)
 
 ## Module `fleet`
 
@@ -404,6 +454,59 @@ Constraints:
 
 - `ck_reference_series_points_value_non_negative`: `value >= 0`
 - `series_period`: unique (series_id, period_start)
+
+## Module `marketplace`
+
+### `marketplace_listings`
+
+Surplus material or items offered for reuse. No price and no payment exist.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `created_by_id` | uuid | NN |  | FK -> `users.id` |
+| `facility_id` | uuid | null |  | FK -> `facilities.id` |
+| `title` | varchar(200) | NN |  |  |
+| `description` | text | null |  |  |
+| `category` | varchar(17) | NN |  |  |
+| `quantity` | numeric(12, 3) | NN |  |  |
+| `unit` | varchar(13) | NN |  |  |
+| `condition` | varchar(16) | NN |  |  |
+| `pickup_city` | varchar(120) | null |  |  |
+| `status` | varchar(17) | NN | `draft` |  |
+| `published_at` | timestamptz | null |  |  |
+| `closed_at` | timestamptz | null |  |  |
+| `close_reason` | varchar(500) | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_marketplace_listings_closed_timestamp_consistent`: `(status = 'closed') = (closed_at IS NOT NULL)`
+- `ck_marketplace_listings_published_timestamp_consistent`: `(status IN ('published', 'reserved', 'closed')) OR published_at IS NULL`
+- `ck_marketplace_listings_quantity_positive`: `quantity > 0`
+- Allowed values: `category` in (plastics, metals, paper, glass, e_waste, organics, textiles, wood, furniture, other); `unit` in (kg, units); `condition` in (like_new, good, fair, damaged); `status` in (draft, published, reserved, closed)
+
+### `marketplace_requests`
+
+One user's request for a listing (at most one per user and listing).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `listing_id` | uuid | NN |  | FK -> `marketplace_listings.id` ON DELETE CASCADE |
+| `requester_id` | uuid | NN |  | FK -> `users.id` |
+| `message` | text | null |  |  |
+| `status` | varchar(17) | NN | `pending` |  |
+| `decided_at` | timestamptz | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_marketplace_requests_decision_timestamp_consistent`: `(status IN ('pending')) = (decided_at IS NULL)`
+- `uq_marketplace_requests_listing_requester`: unique (listing_id, requester_id)
+- Allowed values: `status` in (pending, accepted, declined, withdrawn)
 
 ## Module `material_passports`
 

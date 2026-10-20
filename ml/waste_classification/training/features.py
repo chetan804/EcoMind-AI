@@ -27,9 +27,10 @@ CACHE = REPO / "ml" / "artifacts" / "_cache"
 
 
 def load_config(path: Path | None = None) -> dict:  # type: ignore[type-arg]
-    return yaml.safe_load(
+    loaded: dict = yaml.safe_load(  # type: ignore[type-arg]
         (path or REPO / "ml" / "configs" / "waste_classification.yaml").read_text()
     )
+    return loaded
 
 
 def embedder_for(config: dict, name: str, threads: int = 2) -> TFLiteEmbedder:  # type: ignore[type-arg]
@@ -81,7 +82,7 @@ def handcrafted_features(samples: list[Sample]) -> NDArray[np.float32]:
         stats = [gray.mean() / 255, gray.std() / 255, magnitude.mean() / 255]
         rows.append(
             np.concatenate(
-                [hist.ravel() / hist.sum(), orient / max(orient.sum(), 1e-9), stats]
+                [hist.ravel() / hist.sum(), orient / max(float(orient.sum()), 1e-9), stats]
             ).astype(np.float32)
         )
     return np.stack(rows)

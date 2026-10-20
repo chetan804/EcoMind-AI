@@ -48,6 +48,10 @@ PERMISSIONS: dict[str, str] = {
     "analytics:read": "View dashboards and analytics",
     "users:read": "View user accounts and roles",
     "users:manage": "Create, deactivate and change roles of users",
+    "marketplace:read": "Browse surplus-material listings",
+    "marketplace:request": "Ask for a surplus-material listing",
+    "marketplace:create": "Offer surplus material in the marketplace",
+    "marketplace:manage": "Moderate and act on any marketplace listing",
     "audit:read": "View the audit log",
     "settings:manage": "Change system and security settings",
 }
@@ -62,6 +66,8 @@ _CITIZEN = {
     "incidents:read_own",
     "rewards:read_own",
     "notifications:read_own",
+    "marketplace:read",
+    "marketplace:request",
 }
 
 _COLLECTOR = {
@@ -75,6 +81,8 @@ _COLLECTOR = {
     "sorting_guide:read",
     "incidents:create",
     "notifications:read_own",
+    "marketplace:read",
+    "marketplace:request",
 }
 
 _FACILITY_OPERATOR = {
@@ -89,6 +97,9 @@ _FACILITY_OPERATOR = {
     "passports:read",
     "passports:manage",
     "notifications:read_own",
+    "marketplace:read",
+    "marketplace:request",
+    "marketplace:create",
 }
 
 _MANAGER = _FACILITY_OPERATOR | {
@@ -109,6 +120,7 @@ _MANAGER = _FACILITY_OPERATOR | {
     "anomalies:manage",
     "analytics:read",
     "users:read",
+    "marketplace:manage",
 }
 
 ROLES: dict[str, tuple[str, frozenset[str]]] = {

@@ -1,0 +1,101 @@
+{
+  "_note": "Authenticated screens 05-22 compared with their reference crops. No landmarks: the references are small blurry AI-generated crops, so only whole-image SSIM and colour error are reported. Screens 05-22 are light in the references, so they are captured with the light theme; the dashboard (03) is dark.",
+  "frameInset": 3,
+  "width": 1440,
+  "targets": [
+    {
+      "id": "forecasting",
+      "reference": "05_Fill_Level_Forecasting.png",
+      "path": "/forecasts",
+      "pick": {
+        "select": 0,
+        "text": "Austin"
+      }
+    },
+    {
+      "id": "anomalies",
+      "reference": "06_Anomaly_Detection.png",
+      "path": "/anomalies",
+      "pick": {
+        "select": 2,
+        "text": "Public reference"
+      }
+    },
+    {
+      "id": "routes",
+      "reference": "07_Route_Optimization.png",
+      "path": "/routes"
+    },
+    {
+      "id": "marketplace",
+      "reference": "08_Circular_Surplus_Marketplace.png",
+      "path": "/marketplace"
+    },
+    {
+      "id": "incidents",
+      "reference": "09_Community_Incident_Triage.png",
+      "path": "/incidents"
+    },
+    {
+      "id": "sorting-guide",
+      "reference": "10_Material_Sorting_Guide.png",
+      "path": "/sorting-guide"
+    },
+    {
+      "id": "passports",
+      "reference": "11_Chain_of_Custody_Passports.png",
+      "path": "/passports"
+    },
+    {
+      "id": "rewards",
+      "reference": "12_Rewards_and_Impact_Ledger.png",
+      "path": "/rewards"
+    },
+    {
+      "id": "reports",
+      "reference": "13_Waste_Intake_Records.png",
+      "path": "/reports"
+    },
+    {
+      "id": "locations",
+      "reference": "14_Locations_and_Zones.png",
+      "path": "/locations"
+    },
+    {
+      "id": "facilities",
+      "reference": "15_Processing_Facilities_and_Depots.png",
+      "path": "/facilities"
+    },
+    {
+      "id": "fleet",
+      "reference": "16_Collection_Fleet_Vehicles.png",
+      "path": "/fleet"
+    },
+    {
+      "id": "collection",
+      "reference": "18_Collections_and_Impact.png",
+      "path": "/collection"
+    },
+    {
+      "id": "analytics",
+      "reference": "20_Executive_Analytics_and_Reporting.png",
+      "path": "/analytics"
+    },
+    {
+      "id": "notifications",
+      "reference": "21_Operational_System_Alerts.png",
+      "path": "/notifications"
+    },
+    {
+      "id": "security",
+      "reference": "22_Security_and_MFA.png",
+      "path": "/settings/security"
+    },
+    {
+      "id": "dashboard-data",
+      "reference": "03_Operational_Command_Center.png",
+      "path": "/dashboard",
+      "theme": "dark"
+    }
+  ]
+}

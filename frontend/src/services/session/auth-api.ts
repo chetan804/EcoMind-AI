@@ -16,12 +16,26 @@ export interface AuthResponse {
   user: SessionUser;
 }
 
+/** Sign-in step one for an account with two-factor authentication: no session exists yet. */
+export interface MfaChallenge {
+  mfa_required: true;
+  mfa_token: string;
+  /** Seconds the challenge stays valid. */
+  expires_in: number;
+}
+
+export const isMfaChallenge = (value: AuthResponse | MfaChallenge): value is MfaChallenge =>
+  'mfa_required' in value && value.mfa_required === true;
+
 /** The cookie-authenticated endpoints reject requests without this header (CSRF defence). */
 const CSRF_HEADERS = { 'X-CSRF-Protection': '1' } as const;
 
 // Sign-in, sign-up and refresh never carry a bearer token and must not trigger a refresh retry.
 export const login = (email: string, password: string) =>
-  apiRequest<AuthResponse>('/auth/login', { method: 'POST', body: { email, password }, authenticated: false });
+  apiRequest<AuthResponse | MfaChallenge>('/auth/login', { method: 'POST', body: { email, password }, authenticated: false });
+
+export const verifyMfa = (mfaToken: string, code: string) =>
+  apiRequest<AuthResponse>('/auth/mfa/verify', { method: 'POST', body: { mfa_token: mfaToken, code }, authenticated: false });
 
 export const register = (input: { email: string; password: string; full_name: string }) =>
   apiRequest<AuthResponse>('/auth/register', { method: 'POST', body: input, authenticated: false });

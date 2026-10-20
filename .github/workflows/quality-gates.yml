@@ -64,6 +64,10 @@ jobs:
       - run: pytest tests/contract
       - name: Data dictionary matches the models
         run: python scripts/database/generate_data_dictionary.py --check
+      - name: ER diagram matches the models
+        run: python scripts/database/generate_er_diagram.py --check
+      - name: Route permission matrix matches the app
+        run: python scripts/security/generate_route_matrix.py --check
 
   images:
     name: Docker images build
@@ -87,6 +91,14 @@ jobs:
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Smoke test
         run: python tests/smoke/smoke.py --api http://localhost:8000 --web http://localhost:5173 --wait 60
+      - name: Create a throw-away administrator for the core-workflow spec
+        run: |
+          password="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          echo "::add-mask::$password"
+          docker compose exec -T -e ECOMIND_ADMIN_PASSWORD="$password" backend \
+            python -m app.cli create-admin --email e2e.admin@example.org --name "E2E Administrator"
+          echo "E2E_ADMIN_EMAIL=e2e.admin@example.org" >> "$GITHUB_ENV"
+          echo "E2E_ADMIN_PASSWORD=$password" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v7
         with:
           node-version: "22"

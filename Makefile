@@ -9,7 +9,7 @@ TEST_DATABASE_URL ?= postgresql+psycopg://ecomind:$(shell grep -E '^POSTGRES_PAS
 .DEFAULT_GOAL := help
 .PHONY: help env setup install-backend install-frontend install-e2e db-up up down logs migrate \
         migration backend-dev frontend-dev lint typecheck test test-backend test-backend-unit \
-        test-frontend test-ml test-contract test-e2e check compose-config build-frontend data-dictionary
+        test-frontend test-ml test-contract test-e2e check compose-config build-frontend data-dictionary er-diagram
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "} {printf "  %-22s %s\n", $$1, $$2}'
@@ -96,3 +96,6 @@ build-frontend: ## Production build of the frontend
 
 data-dictionary: ## Regenerate docs/database/data-dictionary.md from the models
 	$(VENV_BIN)/python scripts/database/generate_data_dictionary.py
+
+er-diagram: ## Regenerate docs/database/er-diagram.md from the models
+	$(VENV_BIN)/python scripts/database/generate_er_diagram.py

@@ -19,6 +19,7 @@ from app.modules.community_incidents import models as community_incidents_models
 from app.modules.facilities import models as facilities_models
 from app.modules.fleet import models as fleet_models
 from app.modules.forecasting import models as forecasting_models
+from app.modules.marketplace import models as marketplace_models
 from app.modules.material_passports import models as material_passports_models
 from app.modules.notifications import models as notifications_models
 from app.modules.rewards import models as rewards_models
@@ -40,6 +41,7 @@ _REGISTERED_MODEL_MODULES = (
     circular_economy_models,
     material_passports_models,
     community_incidents_models,
+    marketplace_models,
     rewards_models,
     notifications_models,
     forecasting_models,

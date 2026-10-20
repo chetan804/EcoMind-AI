@@ -8,9 +8,9 @@ from fastapi import APIRouter, Cookie, Depends, Request, Response, status
 
 from app.api.deps import AppSettings, DbSession
 from app.core.config import Settings
-from app.core.exceptions import AppError, error_response
+from app.core.exceptions import AppError, UnauthenticatedError, error_response
 from app.modules.audit.service import RequestContext
-from app.modules.auth import service
+from app.modules.auth import mfa, service
 from app.modules.auth.dependencies import (
     CurrentPrincipal,
     require_csrf_header,
@@ -19,9 +19,18 @@ from app.modules.auth.schemas import (
     AuthResponse,
     ChangePasswordRequest,
     LoginRequest,
+    MfaChallenge,
+    MfaCodeRequest,
+    MfaEnrollOut,
+    MfaProofRequest,
+    MfaRecoveryCodesOut,
+    MfaStatusOut,
+    MfaVerifyRequest,
     RegisterRequest,
     UserOut,
 )
+from app.modules.users import repository as users
+from app.modules.users.models import User
 
 router = APIRouter()
 
@@ -93,14 +102,16 @@ def register(
     return _body(result)
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", response_model=AuthResponse | MfaChallenge)
 def login(
     payload: LoginRequest,
     request: Request,
     response: Response,
     db: DbSession,
     settings: AppSettings,
-) -> AuthResponse:
+) -> AuthResponse | MfaChallenge:
+    """Sign in. Accounts with two-factor authentication get an ``MfaChallenge`` (no session
+    yet); complete it with ``POST /auth/mfa/verify``."""
     result = service.login(
         db,
         settings,
@@ -108,6 +119,27 @@ def login(
         password=payload.password,
         context=RequestContext.from_request(request),
     )
+    _no_store(response)
+    if isinstance(result, service.MfaRequired):
+        return MfaChallenge(mfa_token=result.mfa_token, expires_in=result.expires_in)
+    _set_refresh_cookie(response, settings, result.refresh_token)
+    return _body(result)
+
+
+@router.post("/mfa/verify", response_model=AuthResponse)
+def mfa_verify(
+    payload: MfaVerifyRequest,
+    request: Request,
+    response: Response,
+    db: DbSession,
+    settings: AppSettings,
+) -> AuthResponse:
+    """Second sign-in step: a 6-digit authenticator code or a recovery code."""
+    context = RequestContext.from_request(request)
+    user = mfa.complete_login(
+        db, settings, mfa_token=payload.mfa_token, code=payload.code, context=context
+    )
+    result = service.finish_login(db, settings, user, context=context)
     _set_refresh_cookie(response, settings, result.refresh_token)
     _no_store(response)
     return _body(result)
@@ -197,3 +229,92 @@ def change_password(
     _set_refresh_cookie(response, settings, result.refresh_token)
     _no_store(response)
     return _body(result)
+
+
+def _account(db: DbSession, principal: CurrentPrincipal) -> User:
+    user = users.get_by_id(db, principal.user_id)
+    if user is None:  # pragma: no cover - the principal was just loaded from this row
+        raise UnauthenticatedError("Invalid or expired access token")
+    return user
+
+
+@router.get("/mfa", response_model=MfaStatusOut)
+def mfa_status(db: DbSession, principal: CurrentPrincipal) -> MfaStatusOut:
+    return mfa.status(db, principal.user_id)
+
+
+@router.post("/mfa/enroll", response_model=MfaEnrollOut)
+def mfa_enroll(
+    request: Request,
+    response: Response,
+    db: DbSession,
+    settings: AppSettings,
+    principal: CurrentPrincipal,
+) -> MfaEnrollOut:
+    """Issue a new authenticator secret (shown once). It is inactive until confirmed."""
+    _no_store(response)
+    return mfa.begin_enrollment(
+        db, settings, _account(db, principal), context=RequestContext.from_request(request)
+    )
+
+
+@router.post("/mfa/activate", response_model=MfaRecoveryCodesOut)
+def mfa_activate(
+    payload: MfaCodeRequest,
+    request: Request,
+    response: Response,
+    db: DbSession,
+    settings: AppSettings,
+    principal: CurrentPrincipal,
+) -> MfaRecoveryCodesOut:
+    """Confirm enrolment with a code from the app. Returns the recovery codes once."""
+    _no_store(response)
+    codes = mfa.activate(
+        db,
+        settings,
+        _account(db, principal),
+        payload.code,
+        context=RequestContext.from_request(request),
+    )
+    return MfaRecoveryCodesOut(recovery_codes=codes)
+
+
+@router.post("/mfa/disable", status_code=status.HTTP_204_NO_CONTENT)
+def mfa_disable(
+    payload: MfaProofRequest,
+    request: Request,
+    db: DbSession,
+    settings: AppSettings,
+    principal: CurrentPrincipal,
+) -> Response:
+    mfa.disable(
+        db,
+        settings,
+        _account(db, principal),
+        password=payload.password,
+        code=payload.code,
+        context=RequestContext.from_request(request),
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/mfa/recovery-codes", response_model=MfaRecoveryCodesOut)
+def mfa_recovery_codes(
+    payload: MfaProofRequest,
+    request: Request,
+    response: Response,
+    db: DbSession,
+    settings: AppSettings,
+    principal: CurrentPrincipal,
+) -> MfaRecoveryCodesOut:
+    """Replace every recovery code with ten new ones (the old ones stop working)."""
+    _no_store(response)
+    codes = mfa.regenerate_recovery_codes(
+        db,
+        settings,
+        _account(db, principal),
+        password=payload.password,
+        code=payload.code,
+        context=RequestContext.from_request(request),
+    )
+    return MfaRecoveryCodesOut(recovery_codes=codes)

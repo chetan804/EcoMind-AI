@@ -2,16 +2,19 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Dialog } from '@/components/ui/Dialog';
 import { SearchInput } from '@/components/ui/Input';
-import { allNav } from './nav-items';
+import { useAuth } from '@/services/session';
+import { allNav, visibleNav } from './nav-items';
 import '@/components/layout/layout.css';
 
 /** Search over the application's pages (titles only). It navigates; it does not search data. */
 export function PageSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { can } = useAuth();
   const [query, setQuery] = useState('');
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? allNav.filter((item) => item.label.toLowerCase().includes(q)) : allNav;
-  }, [query]);
+    const items = visibleNav(allNav, can);
+    return q ? items.filter((item) => item.label.toLowerCase().includes(q)) : items;
+  }, [query, can]);
 
   return (
     <Dialog open={open} onClose={onClose} title="Search pages" description="Jump to a page by name.">

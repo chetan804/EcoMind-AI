@@ -2,6 +2,7 @@ import { ApiError, apiRequest } from '@/services/api-client';
 import {
   SESSION_HINT_KEY,
   bootstrapSession,
+  completeMfaSignIn,
   getAccessToken,
   getSessionState,
   refreshSession,
@@ -48,6 +49,25 @@ describe('session store', () => {
     expect(getAccessToken()).toBe('super-secret-token');
     expect(JSON.stringify({ ...window.localStorage, ...window.sessionStorage })).not.toContain('super-secret');
     expect(document.cookie).not.toContain('super-secret');
+  });
+
+  it('a password step that needs a second factor creates no session and no hint', async () => {
+    fetchMock.mockResolvedValue(Response.json({ mfa_required: true, mfa_token: 'challenge', expires_in: 300 }));
+    const result = await signIn('a@b.co', 'pw');
+    expect(result).toEqual({ status: 'mfa_required', mfaToken: 'challenge' });
+    expect(getSessionState().status).not.toBe('authenticated');
+    expect(getAccessToken()).toBeNull();
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+  });
+
+  it('completing the second factor starts the session', async () => {
+    fetchMock.mockResolvedValue(Response.json(authResponse()));
+    const user = await completeMfaSignIn('challenge', '123456');
+    expect(user.email).toBe(testUser.email);
+    expect(getSessionState().status).toBe('authenticated');
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/v1/auth/mfa/verify');
+    expect(JSON.parse(String(init.body))).toEqual({ mfa_token: 'challenge', code: '123456' });
   });
 
   it('shares one in-flight refresh between concurrent callers (the server rotates on every use)', async () => {

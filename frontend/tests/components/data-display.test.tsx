@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { DonutChart } from '@/components/data-display/DonutChart';
 import { MetricTile } from '@/components/data-display/MetricTile';
+import { visibleLabelIndexes } from '@/components/data-display/chart-labels';
 import { TrendChart } from '@/components/data-display/TrendChart';
 
 describe('TrendChart', () => {
@@ -55,5 +56,22 @@ describe('MetricTile', () => {
     render(<MetricTile icon={<span />} label="Collected" value="12 kg" note="demo" />);
     expect(screen.getByText('12 kg')).toBeInTheDocument();
     expect(screen.getByText('Collected')).toBeInTheDocument();
+  });
+});
+
+describe('visibleLabelIndexes', () => {
+  const labels = (n: number) => Array.from({ length: n }, (_, i) => `W${i}`);
+
+  it('keeps every label when they fit', () => {
+    expect(visibleLabelIndexes(labels(5), 800)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('thins crowded labels evenly but always keeps the first and the last', () => {
+    const picked = visibleLabelIndexes(labels(60), 800);
+    expect(picked[0]).toBe(0);
+    expect(picked[picked.length - 1]).toBe(59);
+    expect(picked.length).toBeLessThanOrEqual(Math.floor(800 / 72) + 1);
+    const gaps = picked.slice(1).map((v, i) => v - (picked[i] ?? 0));
+    expect(Math.min(...gaps)).toBeGreaterThan(1);
   });
 });

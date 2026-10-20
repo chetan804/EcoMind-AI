@@ -18,6 +18,7 @@ Model evidence: `docs/ml/model-cards/waste-classification-1.0.0.md`.
 | `POST /models/{id}/activate` | `classification:manage_models` | 200 | Re-verifies every artifact hash; the previous active version becomes `retired`. Re-activating the active version is a no-op. |
 | `POST /predictions` | `classification:predict` | 201 / 200 | Body `{media_id}` (unknown fields rejected). 200 + `Idempotent-Replayed: true` when the image was already classified by the active model. |
 | `GET /predictions` | `classification:review` | 200 | Paginated; filters `needs_review`, `review_status`, `model_version_id`. |
+| `GET /predictions/{id}/image` | `classification:review` | 200 | The classified photo (image bytes, `nosniff`, sandbox CSP), so a reviewer can judge the suggestion; reviewers need no report-reading right. `404` for an unknown prediction. |
 | `GET /predictions/{id}` | `classification:predict` | 200 | Owner of the image, or a user with `waste_reports:read_all`; otherwise 404 (existence is not revealed). |
 | `POST /predictions/{id}/review` | `classification:review` | 200 | Body `{decision: confirmed|corrected|rejected, material_category_code?, notes?}`. |
 

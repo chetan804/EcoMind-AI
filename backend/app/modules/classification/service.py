@@ -284,6 +284,17 @@ def get_prediction(db: Session, principal: Principal, prediction_id: uuid.UUID) 
     return _one(db, prediction)
 
 
+def read_prediction_image(
+    db: Session, storage: FileStorage, prediction_id: uuid.UUID
+) -> tuple[bytes, str]:
+    """The photo behind a prediction; the caller has already checked ``classification:review``."""
+    prediction = repository.get_prediction(db, prediction_id)
+    if prediction is None:
+        raise NotFoundError("Prediction not found")
+    data, media = reports_service.read_media_authorised(db, storage, prediction.media_asset_id)
+    return data, media.content_type
+
+
 def list_predictions(
     db: Session, query: PredictionQuery, params: PageParams
 ) -> Page[PredictionOut]:

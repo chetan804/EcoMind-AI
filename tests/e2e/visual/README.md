@@ -9,6 +9,10 @@ Developer tooling for comparing the built screens with the design references. It
 
 Landmark boxes in `targets.json` were read by eye from the blurry references: expect about +/-5 design px of reading error.
 
+## Authenticated screens
+
+`capture-auth.mjs` signs in through the real sign-in form as `admin@example.org` (password from `DEMO_PASSWORD`) and captures every screen in `auth-targets.json` at 1440 px wide, with the viewport height derived from the reference's proportions; the theme comes from `VISUAL_THEME` (default light) or a target's own `theme`. `compare-auth.py` writes side-by-side and difference images and `out/auth-metrics.json`. The demo stack must be seeded with clearly labelled demonstration records first (never point this at real data); the committed results are in `docs/ui/evidence/screens/`.
+
 ## Other checks in this folder
 
 - `responsive-check.mjs`: overflow, console errors, failed requests, landmarks, names and focus visibility on the four screens at 1440, 1280, 768 and 390 px.

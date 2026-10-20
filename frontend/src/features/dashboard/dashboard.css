@@ -37,3 +37,6 @@
   .dash__kpis { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
   .dash, .dash__row { gap: var(--space-4); }
 }
+
+.member-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); }
+.member-links__title { font-size: var(--text-lg); margin-bottom: var(--space-1); }

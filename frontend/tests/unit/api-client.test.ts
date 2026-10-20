@@ -1,4 +1,4 @@
-import { ApiError, apiRequest, buildUrl } from '@/services/api-client';
+import { ApiError, apiBlob, apiRequest, buildUrl } from '@/services/api-client';
 
 function mockFetch(response: Response | Error) {
   const fn = vi.fn(() => (response instanceof Error ? Promise.reject(response) : Promise.resolve(response)));
@@ -59,5 +59,22 @@ describe('apiRequest', () => {
     mockFetch(new TypeError('Failed to fetch'));
     const error = (await apiRequest('/x').catch((e: unknown) => e)) as ApiError;
     expect(error).toMatchObject({ status: 0, code: 'network_error' });
+  });
+});
+
+describe('apiBlob', () => {
+  it('returns the bytes, using the un-versioned path it is given', async () => {
+    const fetchMock = mockFetch(new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } }));
+    const blob = await apiBlob('/api/v1/waste-reports/media/m1/content', { versioned: false });
+    expect(blob.size).toBe(3);
+    expect(blob.type).toBe('image/jpeg');
+    expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe('/api/v1/waste-reports/media/m1/content');
+  });
+
+  it('rejects with the structured error instead of returning an error body as an image', async () => {
+    mockFetch(Response.json({ error: { code: 'not_found', message: 'No such photo' } }, { status: 404 }));
+    const error = (await apiBlob('/api/v1/x', { versioned: false }).catch((e: unknown) => e)) as ApiError;
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 404, code: 'not_found' });
   });
 });

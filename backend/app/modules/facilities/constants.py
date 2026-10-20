@@ -14,3 +14,12 @@ class FacilityStatus(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     MAINTENANCE = "maintenance"
+
+
+class ZoneType(StrEnum):
+    RESIDENTIAL = "residential"
+    COMMERCIAL = "commercial"
+    INDUSTRIAL = "industrial"
+    MIXED_USE = "mixed_use"
+    INSTITUTIONAL = "institutional"
+    OTHER = "other"

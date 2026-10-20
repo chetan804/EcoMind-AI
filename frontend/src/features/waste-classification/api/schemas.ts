@@ -43,6 +43,10 @@ export const predictionSchema = z.object({
   }),
 });
 
+/** A prediction as listed for reviewers: also names the stored photo. */
+export const queuedPredictionSchema = predictionSchema.extend({ media_asset_id: z.string() });
+
 export type ActiveModel = z.infer<typeof activeModelSchema>;
+export type QueuedPrediction = z.infer<typeof queuedPredictionSchema>;
 export type Prediction = z.infer<typeof predictionSchema>;
 export type ReviewDecision = 'confirmed' | 'corrected' | 'rejected';

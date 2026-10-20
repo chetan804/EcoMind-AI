@@ -7,7 +7,7 @@ export const testUser: SessionUser = {
   email: 'asha@example.org',
   full_name: 'Asha Verma',
   roles: ['citizen'],
-  permissions: ['waste_reports:create', 'classification:predict', 'sorting_guide:read'],
+  permissions: ['waste_reports:create', 'classification:predict', 'sorting_guide:read', 'marketplace:read'],
 };
 
 export const authResponse = (user: SessionUser = testUser, token = 'test-access-token'): AuthResponse => ({

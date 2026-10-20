@@ -2,7 +2,10 @@
 
 An AI-powered waste-intelligence, waste-management-operations and circular-economy platform.
 
-> **Project state: foundation only.** The repository contains the architecture, database schema, tooling, CI and a minimal runnable frontend/backend. **No business feature is implemented**, no ML model has been trained, and no dataset is included. A folder or table existing does not mean the feature exists; every module README states its real status. See [`docs/project-roadmap.md`](docs/project-roadmap.md).
+> **Project state.** The backend (20 modules under `/api/v1`), the web app (every reference screen except the two excluded smart-bin telemetry references; the Marketplace is a listings-and-requests board with no payment, delivery or photos; Locations and Zones exists as named zones without map boundaries) and the CI are built and tested. The only trained model is a **candidate** waste classifier (TrashNet, six classes, held-out accuracy 0.867 on its own benchmark and only 0.454 on real facility photos) and **no model is active by default**: classification says so instead of guessing. Forecasts and anomaly flags use classical statistical methods with a naive baseline, and label public reference data as such. Rewards and impact figures come from recorded collections only. Exact status, evidence, losses and open work: [`docs/project-completion/IMPLEMENTATION_STATUS.md`](docs/project-completion/IMPLEMENTATION_STATUS.md); screens: [`docs/ui/screen-inventory.md`](docs/ui/screen-inventory.md).
+
+## What it does
+Citizens report waste with a photo and get sorting guidance; managers review reports, plan and assign collections (vehicles, deterministic route ordering), record collected weights; facility operators record material recovery and chain-of-custody passports; rewards and executive analytics are computed from the database; community incidents are triaged; administrators manage users, roles and MFA and read the audit log.
 
 ## Stack
 React 19 + TypeScript + Vite (React Router, TanStack Query, React Hook Form + Zod) · FastAPI + Pydantic v2 · PostgreSQL 16 · SQLAlchemy 2 + Alembic · pytest · Vitest + React Testing Library · Playwright · Docker Compose · GitHub Actions. Backend is a **modular monolith** ([ADR-0001](docs/decisions/ADR-0001-modular-monolith.md)).
@@ -17,7 +20,7 @@ React 19 + TypeScript + Vite (React Router, TanStack Query, React Hook Form + Zo
 | [`deployment/`](deployment/README.md) | Dockerfiles for independent frontend/backend deployment. |
 | [`tests/`](tests/README.md) | Cross-application tests: end-to-end, API contract, smoke. |
 | [`scripts/`](scripts/README.md) | Setup and quality helper scripts. |
-| [`docs/`](docs/) | Architecture, decisions, requirements, API, database, ML, security, testing, UI, operations, roadmap. |
+| [`docs/`](docs/) | Architecture, decisions, requirements, API, database (ER diagram, data dictionary), ML, security (review, route matrix), testing, UI, operations (runbook, backup and rollback), [known limitations](docs/project-completion/LIMITATIONS.md), [academic deliverables](docs/academic/README.md), roadmap. |
 | `.github/workflows/` | CI: `backend-ci`, `frontend-ci`, `quality-gates`. |
 
 Start with [`docs/architecture/system-overview.md`](docs/architecture/system-overview.md) and [`docs/architecture/component-boundaries.md`](docs/architecture/component-boundaries.md).
@@ -33,7 +36,7 @@ cd EcoMind-AI
 make env     # creates .env files from the templates and generates local secrets (never overwrites)
 make up      # db -> migrations -> backend -> frontend, waits until healthy
 ```
-- App: http://localhost:5173 (the landing page; the backend-backed *System status* page is at `/settings/system-status`)
+- App: http://localhost:5173 (landing page; register at `/sign-up`, create the first administrator with `python -m app.cli create-admin`; see `backend/README.md`)
 - API docs: http://localhost:8000/api/v1/docs · liveness `GET /health` · readiness `GET /ready`
 - Stop: `make down` (keeps the database volume) · Logs: `make logs`
 

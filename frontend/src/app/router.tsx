@@ -6,6 +6,7 @@ import { RouteErrorFallback } from '@/components/feedback/RouteErrorFallback';
 import { PageLoading } from '@/components/feedback/Loading';
 import { primaryNav } from '@/components/navigation/nav-items';
 import { RequireAuth } from './guards/RequireAuth';
+import { RequirePermission } from './guards/RequirePermission';
 
 /**
  * Route-level code splitting: each screen is fetched when its route is first visited, so for
@@ -14,6 +15,42 @@ import { RequireAuth } from './guards/RequireAuth';
  */
 function lazyPage<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K): RouteObject['lazy'] {
   return async () => ({ Component: (await load())[name] });
+}
+
+/** A route whose screen needs permissions: people without them see the Forbidden page, not an empty or failing screen. */
+function guardedPage<K extends string>(
+  permissions: string[],
+  load: () => Promise<Record<K, ComponentType>>,
+  name: K,
+): RouteObject['lazy'] {
+  return async () => {
+    const Page: ComponentType = (await load())[name];
+    return {
+      Component: () => (
+        <RequirePermission permissions={permissions}>
+          <Page />
+        </RequirePermission>
+      ),
+    };
+  };
+}
+
+/** Like `guardedPage`, but the person needs only one of the permissions. */
+function guardedAnyPage<K extends string>(
+  anyOf: string[],
+  load: () => Promise<Record<K, ComponentType>>,
+  name: K,
+): RouteObject['lazy'] {
+  return async () => {
+    const Page: ComponentType = (await load())[name];
+    return {
+      Component: () => (
+        <RequirePermission anyOf={anyOf}>
+          <Page />
+        </RequirePermission>
+      ),
+    };
+  };
 }
 
 /** Navigation entries whose feature is not built get a page that says so (see PlannedFeaturePage). */
@@ -40,7 +77,30 @@ export const routes: RouteObject[] = [
         HydrateFallback: PageLoading,
         children: [
           { path: 'dashboard', lazy: lazyPage(() => import('@/features/dashboard'), 'DashboardPage') },
+          { path: 'analytics', lazy: guardedPage(['analytics:read'], () => import('@/features/analytics'), 'AnalyticsPage') },
+          { path: 'forecasts', lazy: guardedPage(['forecasting:read'], () => import('@/features/forecasting'), 'ForecastingPage') },
+          { path: 'anomalies', lazy: guardedPage(['anomalies:read'], () => import('@/features/anomaly-alerts'), 'AnomaliesPage') },
+          {
+            path: 'notifications',
+            lazy: guardedPage(['notifications:read_own'], () => import('@/features/notifications'), 'NotificationsPage'),
+          },
+          { path: 'reports', lazy: guardedAnyPage(['waste_reports:read_own', 'waste_reports:read_all', 'waste_reports:create'], () => import('@/features/waste-reports'), 'ReportsPage') },
+          { path: 'collection', lazy: guardedPage(['collection:read'], () => import('@/features/collection'), 'CollectionsPage') },
+          { path: 'routes', lazy: guardedPage(['routes:read'], () => import('@/features/route-planning'), 'RoutesPage') },
+          { path: 'fleet', lazy: guardedPage(['fleet:read'], () => import('@/features/fleet'), 'FleetPage') },
+          { path: 'locations', lazy: guardedPage(['facilities:read'], () => import('@/features/locations'), 'LocationsPage') },
+          { path: 'facilities', lazy: guardedPage(['facilities:read'], () => import('@/features/facilities'), 'FacilitiesPage') },
+          { path: 'incidents', lazy: guardedAnyPage(['incidents:create', 'incidents:read_own', 'incidents:triage'], () => import('@/features/community-incidents'), 'IncidentsPage') },
+          { path: 'marketplace', lazy: guardedPage(['marketplace:read'], () => import('@/features/marketplace'), 'MarketplacePage') },
+          { path: 'sorting-guide', lazy: guardedPage(['sorting_guide:read'], () => import('@/features/sorting-guide'), 'SortingGuidePage') },
+          { path: 'rewards', lazy: guardedAnyPage(['rewards:read_own', 'rewards:manage'], () => import('@/features/rewards'), 'RewardsPage') },
+          { path: 'passports', lazy: guardedPage(['passports:read'], () => import('@/features/material-passports'), 'PassportsPage') },
+          { path: 'recovery', lazy: guardedPage(['circular_economy:read'], () => import('@/features/circular-economy'), 'RecoveryPage') },
+          { path: 'classify/review', lazy: guardedPage(['classification:review'], () => import('@/features/waste-classification'), 'ReviewQueuePage') },
           { path: 'classify', lazy: lazyPage(() => import('@/features/waste-classification'), 'ClassificationPage') },
+          { path: 'settings/security', lazy: lazyPage(() => import('@/features/settings'), 'SecurityPage') },
+          { path: 'settings/users', lazy: guardedPage(['users:read'], () => import('@/features/users'), 'UsersPage') },
+          { path: 'settings/audit', lazy: guardedPage(['audit:read'], () => import('@/features/audit'), 'AuditPage') },
           { path: 'settings/system-status', lazy: lazyPage(() => import('@/features/settings'), 'SystemStatusPage') },
           ...plannedRoutes,
           { path: '*', element: <NotFound /> },

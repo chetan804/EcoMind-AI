@@ -2,11 +2,11 @@
 
 Append-only record of who did what, when. Other modules write entries through this module's service.
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** `service.record` writes entries; `repository.list_page` reads them (served by `/api/v1/admin/audit-logs`).
 
 ## Ownership
 - **Tables owned:** `audit_logs`
-- **Files present:** `models.py`. Add `router.py`, `schemas.py`, `repository.py`, `service.py` and the other files of the module contract only when they are needed (docs/architecture/component-boundaries.md).
+- **Files present:** `models.py`, `service.py`, `repository.py`.
 
 ## Relationships
 - **Depends on (via services / foreign keys):** `users`

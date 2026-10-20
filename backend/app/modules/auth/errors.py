@@ -39,3 +39,35 @@ class EmailAlreadyRegisteredError(ConflictError):
 class WeakPasswordError(AppError):
     status_code = 422
     code = "weak_password"
+
+
+class MfaAlreadyEnabledError(ConflictError):
+    code = "mfa_already_enabled"
+
+
+class MfaNotEnabledError(ConflictError):
+    code = "mfa_not_enabled"
+
+
+class MfaEnrollmentNotStartedError(ConflictError):
+    code = "mfa_enrollment_not_started"
+
+
+class InvalidMfaCodeError(AppError):
+    """A management action was refused because the code did not verify."""
+
+    status_code = 422
+    code = "invalid_mfa_code"
+
+
+class MfaChallengeFailedError(UnauthenticatedError):
+    """The sign-in second step failed: bad or expired challenge, or wrong code."""
+
+    code = "invalid_mfa_code"
+
+
+class MfaUnavailableError(AppError):
+    """The stored secret cannot be decrypted (``SECRET_KEY`` changed): re-enrolment is needed."""
+
+    status_code = 409
+    code = "mfa_secret_unreadable"

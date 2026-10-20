@@ -1,88 +1,93 @@
 # EcoMind AI — Implementation Status
 
-Single source of truth for what is built, what is verified, and what is not.
-Updated as work lands. Nothing here is claimed without evidence listed in the
-**Evidence** column or in the "Verification log" section.
+Single source of truth for what is built, what is verified, and what is not. Updated as work lands.
+Nothing here is claimed without evidence listed in the table or in the "Verification log".
 
 **Status vocabulary**
 
 | Status | Meaning |
 |---|---|
 | Verified | Implemented and covered by automated tests that were run and passed |
-| Unverified | Implemented, but not covered by an automated run yet |
 | Partial | Some of the behaviour exists; gaps are listed |
-| Simulated | Visible UI backed by labelled demo data, not a real backend |
+| Planned | Visible in the product as "Soon" or documented only; nothing is faked |
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Starting baseline (Phase A audit)
+## 1. Where the project stands (branch `arena/39c812ff-ecomind-ai`, PR #9 against `main`)
 
-- Base: `main` @ `b5e858a` (merge of PR #5). No open PRs. CI on that commit: Frontend CI success, Quality gates success (Backend CI is path-filtered and did not run).
-- Working branch: `arena/4746886a-ecomind-ai`.
-- Baseline suites, run locally before any change on this branch:
+`main` is at `4474bfb` (PR #7). PR #9 adds community incidents, analytics, administration, MFA and every
+remaining frontend screen. Alembic head is `0010` (marketplace; 0009 added zones).
+
+Latest local results on this branch (run in this sandbox; CI results are listed in the verification log):
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 66 passed |
-| `alembic upgrade head` from empty + `alembic check` | clean, no drift |
-| Frontend vitest | 78 passed (12 files) |
-| Frontend ESLint + `tsc -b` | clean |
-| ML pytest | 7 passed |
-| Contract tests | 5 passed |
-| `check_structure.py`, `check_env_templates.py` | OK |
-
-**Audit finding (the important one):** the repository is a *foundation*, not a working
-application. The backend has a 29-table schema and security primitives, but
-`api/v1/router.py` is empty — there are **no business endpoints**. The frontend has four
-screens, of which only the sign-in form shape, the landing page, a demo-data dashboard
-and a "not connected" classification page exist. `ml/` contains image preprocessing only:
-no dataset, no training code, no model.
+| Backend pytest (real PostgreSQL 16.2) | 525 passed, 0 skipped (`cd backend && pytest`, full run) |
+| Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
+| Frontend vitest | 27 files, 220 tests passed |
+| Playwright e2e (local, real stack) | 21 passed, 1 skipped (the skip is the no-model classification test, which does not apply while a model is active) |
+| Frontend `tsc -b`, ESLint, production build | clean |
+| `scripts/quality/check_structure.py` | passes |
 
 ## 2. Capability matrix
 
-### Backend modules
+### Backend modules (all 20 have routes, tests and an API document under `docs/api/`)
 
-| Module | Schema | Endpoints | Status |
-|---|---|---|---|
-| auth | models + migration | register, login, refresh, logout, change-password, me | **Verified** (48 backend tests incl. concurrency + mutation checks; e2e) |
-| users / roles / permissions | models + seed migration `0002` | none (no user-management API yet) | **Partial**: RBAC seeded and enforced (38 permissions, 5 roles, drift-guard test); first admin via CLI; no user-admin endpoints |
-| audit | models | written by auth events; **no read endpoint yet** | **Partial** |
-| waste_reports + media | models + migration `0003` (idempotency) | create (idempotent), list/filter/search/sort, detail, review workflow, photo upload/download | **Verified locally (backend only)**: 90 tests incl. races and mutation checks; **no UI yet** |
-| classification | models + migration `0004` | model status, model registry/activation, predict, get/list, one-time review | **Verified locally**: 34 backend tests incl. a real-artifact parity test and 7/7 mutation checks; real model served end to end in a browser (see Phase D). UI wired. |
-| collection | models | none | Missing |
-| facilities | models | list/filter/search/sort, detail, create, partial update (no delete by design) | **Verified locally (backend only)**: 32 tests; **no UI yet** |
-| fleet | models | none | Missing |
-| route_planning | models | none | Missing |
-| sorting_guide / materials | models | none | Missing |
-| circular_economy | models | none | Missing |
-| material_passports | models | none | Missing |
-| community_incidents | models | none | Missing |
-| rewards | models | none | Missing |
-| notifications | models | none | Missing |
-| forecasting | models | none | Missing (no trained model) |
-| anomaly_detection | models | none | Missing |
-| analytics | none | none | Missing (no models by design; to be query-based) |
-| administration | none | none | Missing |
-| health / ready | n/a | yes | Verified |
+| Module | Status | Notes |
+|---|---|---|
+| auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
+| users / roles / permissions | **Verified** | 40 permissions, 5 roles, drift-guard test. |
+| administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
+| waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
+| classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
+| collection | **Verified** | Lifecycle with transitions, weights, events, reschedule. |
+| facilities, fleet | **Verified** | |
+| route_planning | **Verified** | Deterministic ordering (`route-order 1.0.0`), no ETA, no live traffic. Mutation checks 5/5. |
+| forecasting, anomaly_detection | **Verified** | `ts-1.0.0`; honest labels for platform vs public reference data. Mutation checks 5/5. |
+| sorting_guide | **Verified** | Ships no rules; entries are created by managers. |
+| circular_economy (material recovery) | **Verified** | Verification needs a different person than the recorder. |
+| material_passports | **Verified** | Chain of custody; integrity check is a consistency check only. |
+| rewards | **Verified** | Append-only ledger, no redemption. |
+| notifications | **Verified** | |
+| community_incidents | **Verified** | 9 tests; 6 mutations (2 equivalent survivors). |
+| analytics | **Verified** | Query-based; `recovery_rate` is null without verified input. |
+| marketplace | **Verified** (matching board only) | Listings, requests, accept/decline/withdraw, notifications, audit; migration 0010, 4 permissions, 22 API tests, 5 of 6 mutations caught (the survivor is an unreachable defence-in-depth branch for e-mail visibility), 7 vitest tests, 1 e2e journey. No price, payment, delivery, photos or chat. |
+| locations and zones | **Verified** (named zones only) | Zones live in the facilities module (`/api/v1/zones`, migration 0009, 13 tests, 4/4 mutations caught). No geometry: no verified map data. Collection tasks are not linked to zones (future). |
 
-### Frontend screens (22 reference screens)
+### Frontend screens (see `docs/ui/screen-inventory.md` for routes and permissions)
 
-Screens 01–04 exist; **02 (sign-in/up) is now wired to real authentication and sign-out exists**. 01 landing is static; 03 dashboard still shows labelled demonstration data; **04 classification is now wired to the real API** (upload, prediction, calibrated confidence, needs-review state, review form for permitted roles). Screens 05–22: Missing. See `docs/ui/screen-inventory.md`.
+Every reference screen except 17 and 19 (Smart bins /
+telemetry, excluded by product decision) has a working React screen over the real API. Real-browser renders, side-by-sides
+and diffs for 05–22 are in `docs/ui/evidence/screens/`; their similarity numbers are low and are **not** a fidelity claim
+(`docs/ui/evidence/README.md`). A stored light theme exists because those references are light screens; its contrast is not
+audited screen by screen. The prediction review queue (`/classify/review`) exists, with a reviewer-only photo endpoint.
 
 ### ML
 
 | Area | Status |
 |---|---|
-| Image preprocessing | Verified (7 tests) |
-| Waste-image dataset | **Resolved**: TrashNet (MIT) is fetched from GitHub; manifest `datasets/manifests/trashnet-1.0.yaml` |
-| Classification training/eval/inference | **Verified (candidate model 1.0.0)**: deterministic pipeline, report, model card, 36 ML tests; see Phase D |
-| Forecasting, anomaly detection | Missing |
+| Image preprocessing, classification training/eval/inference | Verified (ML tests); model 1.0.0 is a candidate, not released |
+| Forecasting benchmark (Austin, Ballarat and others) | Verified; `docs/ml/dataset-research/experiments/time-series-results.json` |
+| Dataset research (catalogue, manifest, selection report, ingestion, rejected list) | **Rebuilt and verified** 2026-10-20: `docs/ml/dataset-research/`. RealWaste ingested (4,752 images, checksummed, group-aware); cross-dataset evaluation and a bounded multi-dataset experiment (experiment-only: RealWaste is non-commercial) |
+| Model 1.0.0 on real facility photos (RealWaste, never seen) | **0.454 accuracy (95% CI 0.437–0.472), ECE 0.263**; the review rule sends 64% to a person and 96% of unsupported-class images. Stated in the model card |
 
-## 3. Blockers and environment limits (known at start)
+## 3. Blockers, losses and environment limits
 
-- **Dataset (resolved in Phase D).** The sandbox reaches only github.com, codeload, api.github.com, registry.npmjs.org, pypi.org and files.pythonhosted.org, so HuggingFace/TACO/GCS are unreachable. TrashNet (MIT) lives in a GitHub repository, and an ImageNet-pretrained TFLite backbone (Apache-2.0) lives in `google-coral/test_data`; both are fetched at pinned commits with SHA-256 verification. Limits that remain: TrashNet is studio photography of six classes, so field accuracy is unmeasured and organic/e-waste are not covered.
-- Docker is not available in the sandbox; Compose is validated by schema and CI only.
-- No deployment target or credentials: nothing will be deployed.
+- **Lost research tooling (rebuilt).** A sandbox reset once removed the uncommitted research code and logs. It was rewritten and committed
+  (`ml/waste_classification/research/`, `ml/tests/test_dataset_research.py`); no number from the lost logs is quoted. Every figure in
+  `docs/ml/dataset-research/` was recomputed from re-fetched, checksummed data, and the experiment was run twice with identical output.
+- **What the research concluded** (`DATASET_SELECTION_REPORT.md`): the TrashNet model does not transfer to real photos (0.45); training on
+  real photos would lift it to about 0.79 on the shared classes at some cost on studio images, but the only reachable labelled real-world set
+  is CC BY-NC-SA 4.0, so no such model is released or activated. No taxonomy class was added (organic/textile: RealWaste only; e-waste/medical:
+  TrashBox, which has no licence). **Owner decisions needed:** (A) is the deployment non-commercial research so a clearly-labelled research
+  model trained on RealWaste is acceptable? (B) permission from the TrashBox authors, or an owner-run TACO download with a licence audit.
+- **Unreachable sources** (ZeroWaste, Kaggle sets, RecyBat24, TACO images) are listed as unverified in the catalogue; nothing about them is asserted.
+- **Network allow-list:** github.com, codeload.github.com, api.github.com, registry.npmjs.org, pypi.org, files.pythonhosted.org. Hugging Face,
+  PyTorch hosts and Google Cloud Storage are unreachable.
+- Docker is not available in the sandbox; Compose is validated by schema locally and by CI.
+- No deployment target or credentials: nothing is deployed.
+- **GitGuardian** reports failures on PR #6 (two findings) and PR #9 (one finding); all are inspected false positives (see the log). History
+  is not rewritten; the owner must mark them in the GitGuardian dashboard.
 
 ## 4. Verification log
 
@@ -110,7 +115,7 @@ Defects found by testing during this phase (all fixed, none hidden):
 5. The e2e fixture logged in before registering, which on a fresh DB recorded failed logins and tripped the brute-force lockout (429); it now registers first.
 
 Known limitations of this phase (also in `docs/security/security-baseline.md`):
-- No MFA, password reset, email verification, or social sign-in (buttons stay disabled, labelled unavailable).
+- At the end of this phase there was no MFA (added in Phase G), password reset, email verification, or social sign-in (buttons stay disabled, labelled unavailable). Password reset and email verification still do not exist.
 - Registration reveals whether an email is registered (409).
 - Per-address limits use the direct peer address; behind a proxy they are shared until the ASGI server is configured to trust the proxy.
 - Password policy is a length rule plus a small denylist, not a breached-password corpus check.
@@ -193,3 +198,40 @@ Defects found and fixed during this phase: **the `.gitignore` rule `ml/*/data/*`
 Known limitations: TrashNet only (studio photographs, six classes); no field evaluation; the novelty gate is smoke-tested on 10 non-waste inputs only; timings come from a shared sandbox; the UI category list is a constant that mirrors the model card; `evaluation_metrics` is copied from the artifact at registration; uploaded images are stored when classified (no purge of unattached media); `ai-edge-litert` 2.3.0 has cp311 and cp312 x86_64 wheels (checked on PyPI), but the Docker image itself could not be built here.
 
 **CI on PR #6, head `d9b204d` (Phase D; from the check-runs API):** all project jobs `success`: Backend lint/type-check; Tests on Python 3.11 and 3.12 with PostgreSQL 16; Frontend lint/type/test/build; ML tests (Python 3.12); Structure, templates and Compose; Contract tests and generated docs; **Docker images build** (backend image with numpy and `ai-edge-litert` on python:3.12-slim, and the frontend image); **End-to-end (Compose stack + Playwright)**. These Docker and Compose results are the first real verification of the container path, which could not be run in the sandbox. In CI no model is active, so the classification e2e runs its "no active model" test and skips the real-model test (which was run locally with the trained model: see above). GitGuardian: see its own check.
+
+### Phases E–G: operations modules, administration, MFA, full frontend (PRs #7, #8, #9)
+
+Backend (see each `docs/api/*-api.md`): fleet, collection, forecasting, anomaly detection, route planning, sorting guide, material recovery,
+passports, rewards, notifications (PRs #7/#8, merged or green earlier); community incidents, analytics, administration and MFA with migration
+`0008` (PR #9). Each module's tests include at least one round of deliberate mutation (break one rule, confirm a test fails); the counts are in §2.
+
+Frontend: every screen listed in `docs/ui/screen-inventory.md`, over the real API, with shared components, form and dialog helpers, and 212 vitest
+tests. Visual comparison for screens 05–22: `docs/ui/evidence/screens/` (demonstration data only, seeded by `scripts/demo/seed_demo.py`; real
+public reference series imported from the pinned `msw-src` commit).
+
+Defects found and fixed while capturing the screens (not hidden): chart date labels overlapped on 60-point series; a long table row header made a
+page 2,800 px wide; "1 verified records" was not singular; the app had no light theme although references 05–22 are light.
+
+**CI on PR #9, head `998aa4a` (`gh pr checks 9`, 2026-10-20):** all 9 project jobs pass, including End-to-end (with the core-workflow spec) and Tests on Python 3.11 and 3.12; GitGuardian fails (false positive below). Earlier, head `4e9e2fb`: all 9 project jobs `success` (contract/docs, Docker, end-to-end, both lint jobs,
+frontend, ML, structure, Python 3.11, Python 3.12). The later commits on this branch (`e4b0b98`, `3738208` and what follows) have **not** yet
+been checked; re-run `gh pr checks 9` before relying on them.
+
+**GitGuardian on PR #9:** 1 "Generic Password" finding, commit `402a585`, `backend/tests/api/test_administration.py` line 255. Inspected individually:
+it is a tuple of words (`"secret"`, `"password"`, `"postgresql"`, ...) in `test_system_info_exposes_no_secrets`, which asserts the system-info
+endpoint contains none of them. It is not a credential; nothing to rotate. It stays red because history is not rewritten. Owner action: mark the
+incident as a false positive in the GitGuardian dashboard.
+
+**Not done yet (next actions):**
+1. Extend the Playwright core-workflow spec beyond collection (recovery, passport). It currently covers report → verified task → assignment (collector and vehicle) → collected weight → reward → analytics, passes locally (21 specs: 20 passed, 1 skipped) and needs `E2E_ADMIN_*` (CI creates the administrator); its CI result is not yet confirmed.
+2. (Done) Marketplace as a matching board; Locations and Zones as named zones without geometry.
+3. (Done) Dataset research artifacts. Remaining there: the two owner decisions above; forecasting/anomaly datasets beyond the five ingested
+   series were not found.
+4. Light-theme contrast audit; password reset and email verification; debounce on users search and audit filters.
+
+### Final round: marketplace, CI repair, release checks (PR #9)
+
+- **Marketplace** built: module `app/modules/marketplace`, migration 0010 (round trip and `alembic check` clean on PostgreSQL 16.2), 4 permissions (catalog and DB agree; drift test passes), API document `docs/api/marketplace-api.md`, screen at `/marketplace`, 22 API tests, 7 vitest tests, one Playwright journey (`tests/e2e/specs/marketplace.spec.ts`), evidence `docs/ui/evidence/screens/marketplace-*.png` (SSIM 0.238; no fidelity claim; cards show category icons, not photos, because no photo upload exists for listings). Mutation checks: 5 of 6 caught; the survivor removes the requester-e-mail visibility condition, which no API path can reach (only owners, managers and the requester ever receive that serializer), so it is kept as defence in depth.
+- **Backend CI had been red since `c4a62cb`**: `tests/api/test_security_headers.py` (`/auth/me` case) asked for a database session built from the process environment, which CI does not set (it only sets `TEST_DATABASE_URL`). It passed locally only because the shell exported `DATABASE_URL`. Reproduced in a clean `git worktree` with `env -i`, fixed by overriding `get_db` with a lazy, never-connecting session in the test, then re-ran the whole suite in the stripped environment: 524 passed, 1 skipped (the classification parity test needs the git-ignored model artifact; locally, where the artifact exists, it runs: 525 passed, 0 skipped).
+- **GitHub CI on `137e9fa`** (checked with `gh pr checks 9`): Tests (Python 3.11) pass, Tests (Python 3.12) pass, ML tests, Lint and type-check, Lint/type-check/test/build (frontend), Contract tests and generated docs, Structure/templates/Compose, Docker images build and End-to-end (Compose + Playwright) pass. **GitGuardian fails** on one finding: the reviewed false positive in `backend/tests/api/test_administration.py` (a test-only password literal in history).
+- Local final counts: backend 525 passed; vitest 220 (27 files); ML 57; Playwright 21 passed, 1 skipped; route matrix 123 operations; Alembic head 0010.
+

@@ -11,6 +11,9 @@ AI waste classification screen at `/classify`: choose an image, classify it with
 4. The result shows the category, **calibrated** confidence, all six probabilities, a "Needs review" badge with reasons, the model name/version, the model's recorded held-out accuracy ("studio photos, not a field accuracy") and the review state.
 5. Roles with `classification:review` get a review form (confirm / correct with a different category / reject). The server allows one review per prediction and never rewrites the model output.
 
+## Review queue (`/classify/review`)
+For `classification:review` (administrators, managers, facility operators). Lists the model's suggestions through `GET /classification/predictions` (default: `needs_review=true` and `review_status=unreviewed`; the selector also shows confirmed, corrected and rejected outcomes), shows the photo through `GET /classification/predictions/{id}/image` (a reviewer needs no report-reading right), and reuses `ReviewPanel`. Finished reviews show their outcome and no form. Covered by `tests/integration/review-queue.test.tsx`.
+
 ## States
 Model loading, model status error (retry), no active model, empty, ready, analysing, error (specific text for `no_active_model`, `model_unavailable`, `invalid_image`, too large, rate limited; retry), result, reviewed. No state shows a prediction that the server did not return.
 

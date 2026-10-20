@@ -304,8 +304,26 @@ def read_media(
     media = repository.get_media(db, media_id)
     if media is None or (media.uploaded_by_id != principal.user_id and not principal.has(READ_ALL)):
         raise NotFoundError("File not found")
+    return _read_bytes(storage, media), media
+
+
+def read_media_authorised(
+    db: Session, storage: FileStorage, media_id: uuid.UUID
+) -> tuple[bytes, MediaAsset]:
+    """Read a stored file whose access the *caller* has already decided (no ownership check here).
+
+    Used by modules that grant access through their own permission, for example reviewers of a
+    classification prediction, who may see the photo without holding report-reading rights.
+    """
+    media = repository.get_media(db, media_id)
+    if media is None:
+        raise NotFoundError("File not found")
+    return _read_bytes(storage, media), media
+
+
+def _read_bytes(storage: FileStorage, media: MediaAsset) -> bytes:
     try:
-        return storage.read(media.storage_key), media
+        return storage.read(media.storage_key)
     except StorageError as exc:
         # The row exists but the bytes do not: an operational fault, not a client error.
         raise AppError("The file is currently unavailable") from exc

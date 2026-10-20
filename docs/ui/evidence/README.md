@@ -49,6 +49,39 @@ Before this milestone the dashboard trend and map cards were up to 11 px too tal
 - Responsive/accessibility: 16 of 16 route/size combinations clean (no overflow, console errors, failed requests, structural problems or invisible focus stops).
 - JavaScript on a cold visit: `/` 366.9 kB (116.1 kB gzip), `/sign-in` 478.6 kB, `/dashboard` 370.3 kB, `/classify` 453.8 kB; previously 550.6 kB (171.0 kB gzip) on every route.
 
+## Screens 05 to 22 (added with the authenticated captures)
+
+`screens/` holds a render, a side-by-side and a difference image for each authenticated screen that has a reference, plus `screens/metrics.json`. They were produced by `tests/e2e/visual/capture-auth.mjs` and `compare-auth.py` against a **demo stack**: a throw-away database filled through the real API with clearly labelled demonstration records (example.org accounts, a placeholder image, invented Hyderabad facilities and vehicles) plus the real public reference series (Austin and Ballarat, imported from the pinned `msw-src` commit). The renders therefore show real UI over demonstration data, never production data.
+
+| Screen (reference) | Theme | SSIM | Mean abs colour error |
+|---|---|---|---|
+| Forecasting (05) | light | 0.334 | 70.1 |
+| Anomalies (06) | light | 0.334 | 71.9 |
+| Routes (07) | light | 0.362 | 74.6 |
+| Incidents (09) | light | 0.261 | 88.9 |
+| Sorting guide (10) | light | 0.388 | 54.6 |
+| Passports (11) | light | 0.353 | 70.9 |
+| Rewards (12) | light | 0.427 | 57.4 |
+| Waste intake (13) | light | 0.424 | 45.3 |
+| Facilities (15) | light | 0.264 | 87.0 |
+| Fleet (16) | light | 0.440 | 51.4 |
+| Collections (18) | light | 0.336 | 64.3 |
+| Analytics (20) | light | 0.359 | 30.8 |
+| Alerts (21) | light | 0.491 | 26.4 |
+| Security (22) | light | 0.397 | 35.9 |
+| Dashboard with real data (03) | dark | 0.578 | 14.8 |
+
+How to read these numbers: they are **low and should not be read as fidelity**. Each reference crop is a small blurry image that also contains a dark caption band and parts of neighbouring screens, so the colour error is dominated by content that is not the screen. The side-by-side images are the useful evidence: they show where layout, density and colour differ. No landmark boxes were measured for these screens.
+
+What the comparison changed:
+
+- References 05 to 22 are **light** screens with a dark sidebar. The app only had a dark theme, so a stored light theme (account menu, "Use light theme", kept in `localStorage` key `ecomind.theme`) was added, with the sidebar and the small-screen bar kept dark. Dark remains the default and the only theme on the landing and sign-in pages. Contrast of the light theme has **not** been audited screen by screen.
+- Chart axis dates overlapped on 60-point series; labels are now thinned (tested) and large values show `M`.
+- A long row header (anomaly explanation) made a table 2,800 px wide and the page scroll sideways; row headers now wrap. All 15 captured screens report 0 px horizontal overflow at 1440 px.
+- "1 verified records" is now singular.
+
+Remaining deviations, not fixed: the references show chart-heavy layouts with side panels (for example Model Performance on Forecasting) that the app does not have; references 08 (Marketplace), 14 (Locations and Zones), 17 and 19 have no screen (see `docs/ui/screen-inventory.md`); the light-theme values are estimates; screens were captured at 1440 px only (the earlier responsive checks cover four screens).
+
 ## Reproduce
 
 ```bash
@@ -62,4 +95,5 @@ node contrast-hero.mjs && python contrast_hero.py     # hero text contrast
 # production build payload per route:
 cd ../../../frontend && npm run build && npx vite preview --port 4173 &
 cd ../tests/e2e/visual && node route-payload.mjs
+node capture-auth.mjs && python compare-auth.py       # authenticated screens; needs a seeded demo stack and DEMO_PASSWORD
 ```

@@ -2,7 +2,7 @@
 
 Material passports and the append-only chain of custody.
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** implemented (passports and custody API + tests; append-only trigger (migration 0007)). See `docs/api/material-passports-api.md`.
 
 ## Ownership
 - **Tables owned:** `material_passports`, `custody_events`
@@ -12,8 +12,8 @@ Material passports and the append-only chain of custody.
 - **Depends on (via services / foreign keys):** `users`, `facilities`, `sorting_guide`, `collection`, `circular_economy`
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
-## API (planned, not implemented)
-`/api/v1/material-passports`, registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
+## API
+`/api/v1/material-passports`, registered in `app/api/v1/router.py`.
 
 ## Notes
 Custody events are never updated or deleted; `sequence` orders them.

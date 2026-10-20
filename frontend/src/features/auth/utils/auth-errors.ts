@@ -15,6 +15,7 @@ export function describeAuthError(error: unknown): string {
   if (!(error instanceof ApiError)) return 'Something went wrong. Please try again.';
   if (error.status === 0) return 'We could not reach the server. Check your connection and try again.';
   if (error.code === 'invalid_credentials') return 'Incorrect email or password.';
+  if (error.code === 'invalid_mfa_code') return 'That code was not accepted. Check your authenticator app, or enter a recovery code. If the code keeps failing, sign in again.';
   if (error.status === 429) return `Too many attempts. Try again in ${describeWait(error.retryAfterSeconds)}.`;
   if (error.status >= 500) return withReference('The server had a problem. Please try again shortly.', error);
   return withReference('The request could not be completed.', error);

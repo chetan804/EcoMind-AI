@@ -38,7 +38,7 @@ from app.core.security import (
 )
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestContext
-from app.modules.auth import policy, repository
+from app.modules.auth import mfa, policy, repository
 from app.modules.auth.errors import (
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
@@ -66,6 +66,14 @@ class AuthResult:
     user: UserView
     access_token: str
     refresh_token: str
+    expires_in: int
+
+
+@dataclass(frozen=True)
+class MfaRequired:
+    """Password accepted; the caller must complete the second step with this token."""
+
+    mfa_token: str
     expires_in: int
 
 
@@ -211,7 +219,7 @@ def login(
     email: str,
     password: str,
     context: RequestContext,
-) -> AuthResult:
+) -> AuthResult | MfaRequired:
     now = utc_now()
     digest = _email_digest(email)
     window_start = now - policy.LOGIN_WINDOW
@@ -260,6 +268,19 @@ def login(
 
     if password_needs_rehash(user.password_hash):
         user.password_hash = hash_password(password)
+    if mfa.is_enabled(db, user.id):
+        # Password accepted, but no session yet: the second step proves the authenticator code.
+        token, expires_in = mfa.new_challenge(settings, user.id, now=now)
+        db.commit()
+        return MfaRequired(token, expires_in)
+    return finish_login(db, settings, user, context=context)
+
+
+def finish_login(
+    db: Session, settings: Settings, user: User, *, context: RequestContext
+) -> AuthResult:
+    """Issue the session for a user who has passed every required sign-in step."""
+    now = utc_now()
     user.last_login_at = now
     access, refresh, expires_in = _issue_tokens(
         db, settings, user, family_id=uuid.uuid4(), context=context, now=now
@@ -271,7 +292,7 @@ def login(
         entity_id=user.id,
         actor_id=user.id,
         context=context,
-        changes={"email_sha256": digest},
+        changes={"email_sha256": _email_digest(user.email)},
     )
     view = user_view(db, user)
     db.commit()
