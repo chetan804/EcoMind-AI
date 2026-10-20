@@ -187,7 +187,9 @@ def rolling_origin(
 ) -> tuple[Arr, Arr, Arr]:
     """Refit at each origin using ONLY data before it; return (actual, forecast, target_index)
     flattened over horizons. Chronological: nothing after an origin is ever seen."""
-    actual, predicted, origins = [], [], []
+    actual: list[float] = []
+    predicted: list[float] = []
+    origins: list[int] = []
     for origin in range(first_origin, len(y) - horizon + 1, step):
         fit = fit_forecast(model, y[:origin], horizon, season)
         actual.extend(y[origin : origin + horizon])

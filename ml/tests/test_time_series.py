@@ -16,7 +16,10 @@ def seasonal_series(
 ) -> np.ndarray:
     t = np.arange(n)
     rng = np.random.default_rng(0)
-    return 100 + trend * t + 20 * np.sin(2 * np.pi * t / season) + rng.normal(0, noise, n)
+    return np.asarray(
+        100 + trend * t + 20 * np.sin(2 * np.pi * t / season) + rng.normal(0, noise, n),
+        dtype=np.float64,
+    )
 
 
 def test_naive_and_seasonal_naive_known_values() -> None:

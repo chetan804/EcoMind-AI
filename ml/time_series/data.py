@@ -113,7 +113,7 @@ def load_daily(key: str) -> tuple[dict[dt.date, float], DailyAudit]:
     audit.days, audit.first, audit.last = len(days), days[0], days[-1]
     span = (days[-1] - days[0]).days + 1
     audit.coverage = len(days) / span
-    counts = defaultdict(int)
+    counts: defaultdict[int, int] = defaultdict(int)
     for day in days:
         counts[day.weekday()] += 1
     weeks = span / 7
