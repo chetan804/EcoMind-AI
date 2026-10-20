@@ -36,7 +36,7 @@ describe('locations and zones', () => {
   it('shows the facilities of a zone fetched by zone id', async () => {
     const api = routeApi(fetchSpy, {
       'GET /api/v1/zones': page([zone()]),
-      'GET /api/v1/facilities': page([{ id: id(4), code: 'DEP1', name: 'North Depot', facility_type: 'depot', status: 'active', city: 'Hyderabad' }]),
+      'GET /api/v1/facilities': page([{ id: id(4), code: 'DEP1', name: 'North Depot', facility_type: 'depot', status: 'active', city: 'Hyderabad', latitude: '17.4', longitude: '78.4' }]),
     }, citizen);
     renderAt('/locations');
     await userEvent.click(await screen.findByRole('button', { name: 'Show facilities in Zone 1 - Commercial' }));

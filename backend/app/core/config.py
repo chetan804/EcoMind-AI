@@ -46,6 +46,30 @@ class Settings(BaseSettings):
     # programme policy parameter chosen by the operator, not a scientific constant.
     reward_points_per_kg: int = Field(default=10, ge=0, le=1000)
 
+    # Google Maps Platform (server side). Optional: without a key, road routes are reported as
+    # unavailable and the UI falls back to labelled straight lines. NEVER expose this value to the
+    # browser; the browser uses its own, referrer-restricted key (VITE_GOOGLE_MAPS_API_KEY).
+    google_maps_server_api_key: SecretStr | None = None
+    google_routes_timeout_seconds: float = Field(default=8.0, gt=0, le=30)
+
+    # Vehicle tracking. Thresholds are operational policy, not physical constants.
+    tracking_live_within_seconds: int = Field(default=120, ge=10, le=3600)
+    tracking_stale_after_seconds: int = Field(default=900, ge=60, le=86400)
+    tracking_max_future_skew_seconds: int = Field(default=120, ge=0, le=3600)
+    tracking_max_report_age_hours: int = Field(default=6, ge=1, le=168)
+    tracking_max_events_per_minute: int = Field(default=30, ge=1, le=600)
+    tracking_retention_days: int = Field(default=90, ge=1, le=3650)
+    # The simulator writes clearly separated, labelled events. It is off in production unless an
+    # operator opts in explicitly (e.g. for a demonstration environment).
+    tracking_simulator_enabled: bool | None = None
+
+    @field_validator("google_maps_server_api_key", mode="before")
+    @classmethod
+    def _blank_key_is_none(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
     @field_validator("cors_allowed_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
@@ -72,6 +96,10 @@ class Settings(BaseSettings):
                 raise ValueError("CORS_ALLOWED_ORIGINS must not contain '*' in production")
             if not self.refresh_cookie_secure:
                 raise ValueError("REFRESH_COOKIE_SECURE must be true in production")
+        if self.tracking_stale_after_seconds <= self.tracking_live_within_seconds:
+            raise ValueError(
+                "TRACKING_STALE_AFTER_SECONDS must exceed TRACKING_LIVE_WITHIN_SECONDS"
+            )
         if self.refresh_cookie_samesite == "none" and not self.refresh_cookie_secure:
             raise ValueError("REFRESH_COOKIE_SAMESITE=none requires REFRESH_COOKIE_SECURE=true")
         return self
@@ -79,6 +107,12 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def simulator_enabled(self) -> bool:
+        if self.tracking_simulator_enabled is not None:
+            return self.tracking_simulator_enabled
+        return not self.is_production
 
 
 @lru_cache

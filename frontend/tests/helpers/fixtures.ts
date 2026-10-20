@@ -128,3 +128,22 @@ export const forecastFixture = (beats: boolean | null = true) => ({
   generated_at: '2026-10-20T06:00:00Z',
   saved: true,
 });
+
+/** Latest-position payload as GET /tracking/vehicles returns it. */
+export const latestPositionsFixture = (items: Record<string, unknown>[] = []) => ({
+  generated_at: '2026-10-21T08:00:00Z',
+  live_within_seconds: 120,
+  stale_after_seconds: 900,
+  items,
+});
+
+export const trackedVehicle = (over: Record<string, unknown> = {}) => ({
+  vehicle_id: '00000000-0000-4000-8000-000000000008',
+  registration_number: 'TS09-1234',
+  vehicle_type: 'van',
+  vehicle_status: 'available',
+  simulated: false,
+  status: 'unavailable',
+  position: null,
+  ...over,
+});

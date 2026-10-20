@@ -25,6 +25,7 @@ from app.modules.notifications import models as notifications_models
 from app.modules.rewards import models as rewards_models
 from app.modules.route_planning import models as route_planning_models
 from app.modules.sorting_guide import models as sorting_guide_models
+from app.modules.tracking import models as tracking_models
 from app.modules.users import models as users_models
 from app.modules.waste_reports import models as waste_reports_models
 
@@ -46,6 +47,7 @@ _REGISTERED_MODEL_MODULES = (
     notifications_models,
     forecasting_models,
     anomaly_detection_models,
+    tracking_models,
     audit_models,
 )
 

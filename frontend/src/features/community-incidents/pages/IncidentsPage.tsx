@@ -17,10 +17,12 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CountList } from '@/components/ui/StatList';
 import { Pagination, Table } from '@/components/ui/Table';
 import { useCollectors } from '@/features/collection';
+import { LocationPicker, MapPanel, toPoint } from '@/features/maps';
 import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatDateTime, humanize } from '@/utils/format';
 import { INCIDENT_STATUSES, INCIDENT_TYPES, type Incident } from '../api/incidents-api';
+import { incidentMarkers } from '../markers';
 import { useAssignIncident, useCreateIncident, useIncidents, useIncidentStatus, useIncidentSummary } from '../hooks/useIncidents';
 
 const TONES: Record<string, BadgeTone> = { open: 'warning', acknowledged: 'info', in_progress: 'info', resolved: 'success', dismissed: 'neutral' };
@@ -103,6 +105,9 @@ export function IncidentsPage() {
                   ))}
                 </tbody>
               </Table>
+              {incidentMarkers(data.items).length > 0 && (
+                <MapPanel label="Incidents on this page" markers={incidentMarkers(data.items)} height={300} />
+              )}
               <Pagination
                 page={data.page}
                 pageCount={Math.max(1, Math.ceil(data.total / data.page_size))}
@@ -123,8 +128,8 @@ function ReportDialog({ onClose }: { onClose: () => void }) {
   const { can } = useAuth();
   const create = useCreateIncident();
   const [photo, setPhoto] = useState<File | null>(null);
-  const { values, bind } = useFields({ incident_type: 'illegal_dumping', title: '', description: '', address_text: '', latitude: '', longitude: '' });
-  const coordsOk = (values.latitude.trim() === '') === (values.longitude.trim() === '');
+  const { values, bind, set } = useFields({ incident_type: 'illegal_dumping', title: '', description: '', address_text: '', latitude: '', longitude: '' });
+  const [locationInvalid, setLocationInvalid] = useState(false);
   return (
     <Dialog
       open
@@ -137,7 +142,7 @@ function ReportDialog({ onClose }: { onClose: () => void }) {
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
             loading={create.isPending}
-            disabled={values.title.trim().length < 3 || !coordsOk}
+            disabled={values.title.trim().length < 3 || locationInvalid}
             onClick={() =>
               create.mutate(
                 {
@@ -169,10 +174,17 @@ function ReportDialog({ onClose }: { onClose: () => void }) {
             {(c) => <Input {...c} type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />}
           </Field>
         )}
-        <Field label="Latitude (optional)" error={coordsOk ? undefined : 'Give both latitude and longitude, or neither.'}>{(c) => <Input {...c} inputMode="decimal" {...bind('latitude')} />}</Field>
-        <Field label="Longitude (optional)">{(c) => <Input {...c} inputMode="decimal" {...bind('longitude')} />}</Field>
       </div>
       <Field label="Description (optional)">{(c) => <Textarea {...c} maxLength={5000} {...bind('description')} />}</Field>
+      <fieldset className="stack stack--tight">
+        <legend>Where is it? (optional)</legend>
+        <LocationPicker
+          label="Incident location"
+          value={values.latitude && values.longitude ? { lat: Number(values.latitude), lng: Number(values.longitude) } : null}
+          onChange={(point) => set({ latitude: point ? point.lat.toFixed(6) : '', longitude: point ? point.lng.toFixed(6) : '' })}
+          onInvalidChange={setLocationInvalid}
+        />
+      </fieldset>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
     </Dialog>
   );
@@ -201,6 +213,7 @@ function IncidentDialog({ incident, triage, onClose }: { incident: Incident; tri
           {current.description && (<><dt>Description</dt><dd>{current.description}</dd></>)}
           {current.resolution_notes && (<><dt>Resolution</dt><dd>{current.resolution_notes}</dd></>)}
         </dl>
+        {toPoint(current.latitude, current.longitude) && <MapPanel label="Incident location" height={220} markers={incidentMarkers([current])} />}
         {current.photo_content_path && <AuthImage contentPath={current.photo_content_path} alt={`Photo for ${current.title}`} />}
 
         {triage && (

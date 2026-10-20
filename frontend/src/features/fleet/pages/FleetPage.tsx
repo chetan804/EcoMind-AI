@@ -13,6 +13,7 @@ import { Input, SearchInput, Select } from '@/components/ui/Input';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Pagination, Table } from '@/components/ui/Table';
 import { useFacilityOptions } from '@/features/facilities';
+import { FleetMap, formatAge, useLatestPositions, VehicleStatusBadge } from '@/features/tracking';
 import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatKg, humanize } from '@/utils/format';
@@ -28,6 +29,8 @@ export function FleetPage() {
   const query = useVehicles(filters);
   const facilities = useFacilityOptions(can('facilities:read'));
   const manage = can('fleet:manage');
+  const positions = useLatestPositions(true, true);
+  const positionOf = (id: string) => positions.data?.items.find((p) => p.vehicle_id === id && !p.simulated);
   const set = (patch: Partial<typeof filters>) => setFilters((f) => ({ ...f, ...patch, page: 1 }));
   const facilityName = (id: string | null) => (id ? (facilities.data?.find((f) => f.id === id)?.name ?? 'Unknown facility') : '—');
 
@@ -58,6 +61,7 @@ export function FleetPage() {
           )}
         </Field>
       </div>
+      <FleetMap height={380} defaultSimulated />
       <QueryBoundary query={query} label="vehicles">
         {(data) =>
           data.items.length === 0 ? (
@@ -73,6 +77,7 @@ export function FleetPage() {
                     <th scope="col">Home depot</th>
                     <th scope="col">Active tasks</th>
                     <th scope="col">Status</th>
+                    <th scope="col">Position</th>
                     {manage && <th scope="col"><span className="visually-hidden">Actions</span></th>}
                   </tr>
                 </thead>
@@ -85,6 +90,14 @@ export function FleetPage() {
                       <td>{facilityName(v.home_facility_id)}</td>
                       <td>{v.active_task_count ?? 0}</td>
                       <td><StatusBadge value={v.status} tones={STATUS_TONES} /></td>
+                      <td>
+                        {positions.isPending ? '…' : (
+                          <>
+                            <VehicleStatusBadge status={positionOf(v.id)?.status ?? 'unavailable'} />
+                            {positionOf(v.id)?.position && <span className="muted"> {formatAge(positionOf(v.id)?.position?.age_seconds ?? 0)}</span>}
+                          </>
+                        )}
+                      </td>
                       {manage && <td><Button variant="secondary" onClick={() => setEditing(v)} aria-label={`Edit ${v.registration_number}`}>Edit</Button></td>}
                     </tr>
                   ))}

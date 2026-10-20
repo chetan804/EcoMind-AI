@@ -2,7 +2,7 @@
 
 > **Generated** by `scripts/security/generate_route_matrix.py` from the mounted application and the RBAC catalog (`backend/app/modules/users/rbac.py`). Do not edit by hand; CI fails if this file is stale. `backend/tests/security/test_route_inventory.py` fails if a route becomes public or signed-in-only without being listed there.
 
-123 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
+133 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
 
 | Method | Path | Access | Roles that hold it |
 |---|---|---|---|
@@ -110,6 +110,7 @@
 | GET | `/api/v1/route-planning/plans/{plan_id}` | `routes:read` | collector, manager, administrator |
 | POST | `/api/v1/route-planning/plans/{plan_id}/cancel` | `routes:manage` | manager, administrator |
 | POST | `/api/v1/route-planning/plans/{plan_id}/publish` | `routes:manage` | manager, administrator |
+| GET | `/api/v1/route-planning/plans/{plan_id}/road-route` | `routes:read` | collector, manager, administrator |
 | GET | `/api/v1/sorting-guide/categories` | `sorting_guide:read` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/sorting-guide/categories` | `sorting_guide:manage` | manager, administrator |
 | PATCH | `/api/v1/sorting-guide/categories/{category_id}` | `sorting_guide:manage` | manager, administrator |
@@ -117,6 +118,15 @@
 | POST | `/api/v1/sorting-guide/guidance` | `sorting_guide:manage` | manager, administrator |
 | GET | `/api/v1/sorting-guide/guidance/{guidance_id}` | `sorting_guide:read` | citizen, collector, facility_operator, manager, administrator |
 | PATCH | `/api/v1/sorting-guide/guidance/{guidance_id}` | `sorting_guide:manage` | manager, administrator |
+| GET | `/api/v1/tracking/collections/{task_id}` | `collection:read` | collector, facility_operator, manager, administrator |
+| GET | `/api/v1/tracking/config` | `fleet:read` | collector, manager, administrator |
+| GET | `/api/v1/tracking/route-plans/{plan_id}` | `routes:read` | collector, manager, administrator |
+| DELETE | `/api/v1/tracking/simulation/vehicles/{vehicle_id}/locations` | `fleet:simulate` | manager, administrator |
+| POST | `/api/v1/tracking/simulation/vehicles/{vehicle_id}/locations` | `fleet:simulate` | manager, administrator |
+| GET | `/api/v1/tracking/vehicles` | `fleet:read` | collector, manager, administrator |
+| GET | `/api/v1/tracking/vehicles/{vehicle_id}` | `fleet:read` | collector, manager, administrator |
+| GET | `/api/v1/tracking/vehicles/{vehicle_id}/locations` | `fleet:read` | collector, manager, administrator |
+| POST | `/api/v1/tracking/vehicles/{vehicle_id}/locations` | `fleet:track` or `fleet:manage` | collector, manager, administrator |
 | GET | `/api/v1/waste-reports` | `waste_reports:read_own` or `waste_reports:read_all` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/waste-reports` | `waste_reports:create` | citizen, administrator |
 | POST | `/api/v1/waste-reports/media` | `waste_reports:create` | citizen, administrator |

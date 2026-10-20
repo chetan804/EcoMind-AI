@@ -9,6 +9,7 @@ import { Input, Select, Textarea } from '@/components/ui/Input';
 import { ReasonDialog } from '@/components/ui/ReasonDialog';
 import { useFacilityOptions } from '@/features/facilities';
 import { useVehicleOptions } from '@/features/fleet';
+import { CollectionTrackMap } from '@/features/tracking';
 import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatDateTime, formatKg, humanize } from '@/utils/format';
@@ -58,6 +59,13 @@ function TaskBody({ task }: { task: TaskDetail }) {
         <dt>Collected weight</dt><dd>{task.collected_weight_kg == null ? 'Not recorded' : formatKg(task.collected_weight_kg)}</dd>
         {task.notes && (<><dt>Notes</dt><dd>{task.notes}</dd></>)}
       </dl>
+
+      {task.latitude !== null && (manage || isMine) && (
+        <section aria-label="Location and tracking">
+          <h4>Location and tracking</h4>
+          <CollectionTrackMap taskId={task.id} />
+        </section>
+      )}
 
       {action.isError && mode === null && <Alert tone="danger">{getErrorMessage(action.error)}</Alert>}
 

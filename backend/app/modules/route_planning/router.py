@@ -8,9 +8,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
-from app.api.deps import DbSession
+from app.api.deps import AppSettings, DbSession
 from app.common.enums import SortOrder
 from app.common.pagination import Page, PageParams, page_params
+from app.integrations.mapping.base import RoadRouteProvider
+from app.integrations.mapping.google_routes import GoogleRoutesProvider
 from app.modules.audit.service import RequestContext
 from app.modules.auth.dependencies import Principal, require_permissions
 from app.modules.route_planning import service
@@ -19,6 +21,7 @@ from app.modules.route_planning.schemas import (
     PlanCreate,
     PlanDetail,
     PlanOut,
+    RoadRouteOut,
     SortField,
     TransitionRequest,
 )
@@ -28,6 +31,17 @@ router = APIRouter()
 CanRead = Annotated[Principal, Depends(require_permissions("routes:read"))]
 CanManage = Annotated[Principal, Depends(require_permissions("routes:manage"))]
 Pagination = Annotated[PageParams, Depends(page_params)]
+
+
+def get_road_route_provider(settings: AppSettings) -> RoadRouteProvider:
+    """Routing provider for this request. Tests replace it through ``dependency_overrides``."""
+    return GoogleRoutesProvider(
+        settings.google_maps_server_api_key,
+        timeout_seconds=settings.google_routes_timeout_seconds,
+    )
+
+
+RoadRouting = Annotated[RoadRouteProvider, Depends(get_road_route_provider)]
 
 
 def _ctx(request: Request) -> RequestContext:
@@ -67,6 +81,17 @@ def create_plan(
 @router.get("/plans/{plan_id}", response_model=PlanDetail)
 def get_plan(plan_id: uuid.UUID, db: DbSession, _: CanRead) -> PlanDetail:
     return service.get_plan(db, plan_id)
+
+
+@router.get("/plans/{plan_id}/road-route", response_model=RoadRouteOut)
+def get_road_route(
+    plan_id: uuid.UUID, db: DbSession, _: CanRead, provider: RoadRouting
+) -> RoadRouteOut:
+    """Road geometry, distance and duration from the routing provider (never stored).
+
+    Answers 200 with ``available: false`` and a reason when the provider is not configured or
+    fails, so the client can show a labelled straight-line fallback."""
+    return service.road_route(db, plan_id, provider)
 
 
 @router.post("/plans/{plan_id}/publish", response_model=PlanDetail)

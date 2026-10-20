@@ -67,6 +67,8 @@ class PlanOut(BaseModel):
 
 class PlanDetail(PlanOut):
     start_label: str | None = None
+    start_latitude: decimal.Decimal | None = None
+    start_longitude: decimal.Decimal | None = None
     return_leg_distance_km: decimal.Decimal | None = None
     stops: list[StopOut]
     warnings: list[str] = []
@@ -80,3 +82,28 @@ class TransitionRequest(BaseModel):
         Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=1000)]
         | None
     ) = None
+
+
+class RoadRouteOut(BaseModel):
+    """A road route from a routing provider, or an explicit statement that none is available.
+
+    When ``available`` is false the client must draw straight lines between the stops and label
+    them as such; it must not present them as roads. ``distance_m`` / ``duration_s`` exist only
+    for real provider routes and are free-flow estimates (no live traffic).
+    """
+
+    plan_id: uuid.UUID
+    available: bool
+    provider: str | None = None
+    reason: str | None = None
+    detail: str | None = None
+    encoded_polylines: list[str] = []
+    distance_m: int | None = None
+    duration_s: int | None = None
+    traffic_aware: bool = False
+    request_count: int = 0
+    basis: str = (
+        "Road geometry, distance and duration come from the routing provider for the stop order "
+        "shown, driving mode, without live traffic. The stop order itself was chosen by the "
+        "platform's straight-line optimiser and is not re-optimised for road distance."
+    )
