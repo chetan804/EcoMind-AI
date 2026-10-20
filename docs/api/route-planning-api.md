@@ -51,7 +51,7 @@ Stop order and the `distance_*` figures use great-circle (haversine) distances, 
 `GET /api/v1/route-planning/plans/{id}/road-route` (`routes:read`). Asks the routing provider (Google Routes API,
 driving, **without live traffic**) for road geometry, distance and duration of the plan's stops in the stored order.
 The platform does not re-optimise the order for road distance. Nothing is stored or cached server side, and each call can
-be billed by the provider (one request per 10 stops), so clients call it on demand.
+be billed by the provider (one request per 11 route legs), so clients call it on demand.
 
 Always answers `200`:
 

@@ -46,8 +46,9 @@ What the code does to keep usage low:
 * **Maps JavaScript:** the script is injected only when a screen that has a map is rendered and a key is
   configured. Markers are diffed (unchanged markers are not recreated); the view is re-fitted only when
   the set of items changes, not on each position update.
-* **Routes API:** one request per plan when the plan has at most 10 stops (longer plans are split into
-  chunks of at most 10 intermediate waypoints, i.e. `ceil(stops / 10)` requests). Requests use
+* **Routes API:** one request per plan while the route has at most 12 points including depot start and end
+  (10 intermediate waypoints); longer routes are split into consecutive chunks of at most 10 intermediates, so the
+  request count is `ceil(legs / 11)` (the response reports `request_count`). Requests use
   `TRAFFIC_UNAWARE` and a field mask, which keeps them on the lowest Routes SKU tier at the time of
   writing (verify on the pricing page). The request is made when a plan is opened and again only when the user presses
   "Recompute road route" (the browser reuses the answer for 5 minutes when the same plan is reopened): it is not polled. Nothing from Google is stored in the database (the
