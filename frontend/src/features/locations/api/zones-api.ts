@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { getJson, sendJson } from '@/services/list-api';
-import { pageOf, uuid } from '@/services/schemas';
+import { nullableDecimal, pageOf, uuid } from '@/services/schemas';
 
 export const ZONE_TYPES = ['residential', 'commercial', 'industrial', 'mixed_use', 'institutional', 'other'] as const;
 
@@ -23,6 +23,8 @@ export const zoneFacilitySchema = z.object({
   facility_type: z.string(),
   status: z.string(),
   city: z.string().nullable(),
+  latitude: nullableDecimal,
+  longitude: nullableDecimal,
 });
 export type ZoneFacility = z.infer<typeof zoneFacilitySchema>;
 

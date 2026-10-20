@@ -67,3 +67,12 @@ remains open.
   configured. `pip-audit`, `npm audit` and `bandit` were run by hand once and are not CI gates.
 - **Not done:** DAST/penetration testing, container image scanning, threat-model review by a second
   person, load testing.
+
+## Maps and tracking (added 2026-10-21)
+
+- **Keys.** The browser key (`VITE_GOOGLE_MAPS_API_KEY`) is public by design; the control is the Google Cloud restriction (HTTP referrer plus Maps JavaScript API only). The server key (`GOOGLE_MAPS_SERVER_API_KEY`) is read only by the backend, sent in the `X-Goog-Api-Key` header (never in a URL), held as a `SecretStr`, never logged and never returned in a response; a unit test asserts it is not in the request URL. A scan of the production bundle found no `AIza` key material (placeholders are empty everywhere).
+- **CSP.** `deployment/docker/nginx.conf` adds the hosts Google documents for the Maps JavaScript API (script, style, image, connect, frame, font, worker) but still no `'unsafe-eval'`. The earlier "0 violations on 20 routes" result predates this change and the live Maps check is **pending** (needs a key and network access to Google). Re-run the CSP check with a key; if the map needs `'unsafe-eval'`, record that here as an accepted widening.
+- **Authorization.** Position ingestion requires `fleet:track` and the caller must be assigned to the vehicle; imports need `fleet:manage` and cannot be recent; the simulator has its own permission and endpoints, stays separate from real data and is disabled by default in production. Collectors read only their own vehicles; collection tracking is for managers and the assignee. All covered by `backend/tests/api/test_tracking.py` and the generated route matrix (`route-permission-matrix.md`).
+- **Privacy.** Positions are personal data about a driver's movements. Only an authorised, assigned account can write them; retention defaults to 90 days (`purge-location-events`); sharing is started by the collector and stops when the tab closes. Map labels and URLs carry no reporter identity or free text, and the directions link contains only a facility's public coordinates. A privacy notice and legal basis for tracking staff are the operator's responsibility.
+- **Residual risks.** No per-device credentials (a tracker must use a collector account); polling load is proportional to open fleet screens; the Routes API is a billable dependency (budget alerts recommended); Google scripts run in the page, so the key restrictions and CSP are the only containment.
+

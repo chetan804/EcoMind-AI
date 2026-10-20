@@ -681,6 +681,40 @@ Constraints:
 
 - Allowed values: `disposal_method` in (recycle, compost, reuse, landfill, hazardous_drop_off, e_waste_drop_off, special_collection)
 
+## Module `tracking`
+
+### `vehicle_location_events`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `vehicle_id` | uuid | NN |  | FK -> `fleet_vehicles.id` |
+| `latitude` | numeric(9, 6) | NN |  |  |
+| `longitude` | numeric(9, 6) | NN |  |  |
+| `recorded_at` | timestamptz | NN |  |  |
+| `received_at` | timestamptz | NN | `now()` |  |
+| `source` | varchar(21) | NN |  |  |
+| `quality` | varchar(20) | NN |  |  |
+| `accuracy_m` | numeric(9, 2) | null |  |  |
+| `speed_kph` | numeric(6, 2) | null |  |  |
+| `heading_deg` | numeric(5, 2) | null |  |  |
+| `sequence` | bigint | null |  |  |
+| `collection_task_id` | uuid | null |  | FK -> `collection_tasks.id` |
+| `route_plan_id` | uuid | null |  | FK -> `route_plans.id` |
+| `reported_by_id` | uuid | null |  | FK -> `users.id` |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+
+Constraints:
+
+- `ck_vehicle_location_events_accuracy_non_negative`: `accuracy_m IS NULL OR accuracy_m >= 0`
+- `ck_vehicle_location_events_heading_range`: `heading_deg IS NULL OR (heading_deg >= 0 AND heading_deg < 360)`
+- `ck_vehicle_location_events_latitude_range`: `latitude BETWEEN -90 AND 90`
+- `ck_vehicle_location_events_longitude_range`: `longitude BETWEEN -180 AND 180`
+- `ck_vehicle_location_events_sequence_non_negative`: `sequence IS NULL OR sequence >= 0`
+- `ck_vehicle_location_events_speed_range`: `speed_kph IS NULL OR (speed_kph >= 0 AND speed_kph <= 300)`
+- `uq_vehicle_location_events_identity`: unique (vehicle_id, source, recorded_at)
+- `uq_vehicle_location_events_sequence`: unique index WHERE `sequence IS NOT NULL`
+- Allowed values: `source` in (gps_device, mobile_client, imported, simulator); `quality` in (accepted, out_of_order)
+
 ## Module `users`
 
 ### `permissions`

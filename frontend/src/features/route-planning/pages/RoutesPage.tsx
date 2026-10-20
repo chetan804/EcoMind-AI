@@ -22,6 +22,7 @@ import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatDate, formatNumber, humanize } from '@/utils/format';
 import { PLAN_STATUSES } from '../api/routes-api';
+import { RoutePlanMap } from '../components/RoutePlanMap';
 import { useCreatePlan, usePlan, usePlanAction, usePlans } from '../hooks/useRoutes';
 
 const TONES: Record<string, BadgeTone> = { draft: 'warning', published: 'info', in_progress: 'info', completed: 'success', cancelled: 'neutral' };
@@ -194,6 +195,7 @@ function PlanDialog({ planId, onClose }: { planId: string; onClose: () => void }
               {plan.start_label && (<><dt>Starts at</dt><dd>{plan.start_label}</dd></>)}
             </dl>
             {(plan.warnings ?? []).map((w) => <Alert key={w} tone="warning">{w}</Alert>)}
+            <RoutePlanMap plan={plan} />
             <Table caption="Stops in order">
               <thead>
                 <tr>

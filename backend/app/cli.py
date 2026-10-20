@@ -4,6 +4,7 @@
     python -m app.cli register-model --version 1.0.0     # verify + register a trained artifact
     python -m app.cli activate-model --version 1.0.0     # make it the model that answers
     python -m app.cli import-reference-series --key austin   # public series for forecasting demos
+    python -m app.cli purge-location-events                  # retention: run daily (cron/timer)
 
 The password is read from the ECOMIND_ADMIN_PASSWORD environment variable or, when that is unset,
 prompted for without echo. It is never accepted as a command-line argument (it would leak into
@@ -29,6 +30,7 @@ from app.modules.auth.policy import password_problems
 from app.modules.classification import repository as classification_repository
 from app.modules.classification import service as classification_service
 from app.modules.forecasting import importer as forecasting_importer
+from app.modules.tracking import service as tracking_service
 from app.modules.users import repository as users
 
 ADMIN_ROLE = "administrator"
@@ -98,6 +100,16 @@ def import_reference(*, key: str) -> str:
         )
 
 
+def purge_location_events() -> str:
+    settings = get_settings()
+    with get_session_factory()() as db:
+        removed = tracking_service.purge_expired(db, settings)
+    return (
+        f"removed {removed} vehicle location events older than "
+        f"{settings.tracking_retention_days} days"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m app.cli",
@@ -118,7 +130,15 @@ def main(argv: list[str] | None = None) -> int:
         "import-reference-series", help="import a public series (with provenance) for demos"
     )
     reference.add_argument("--key", required=True)
+    sub.add_parser(
+        "purge-location-events",
+        help="delete vehicle location events older than TRACKING_RETENTION_DAYS",
+    )
     args = parser.parse_args(argv)
+
+    if args.command == "purge-location-events":
+        print(purge_location_events())
+        return 0
 
     if args.command == "import-reference-series":
         try:

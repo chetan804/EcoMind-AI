@@ -12,6 +12,7 @@ import { CreateTaskDialog } from '@/features/collection';
 import { createPrediction, type Prediction } from '@/features/waste-classification';
 import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
+import { LocationPicker, MapPanel, toPoint } from '@/features/maps';
 import { formatDateTime, formatKg, humanize } from '@/utils/format';
 import type { Report } from '../api/reports-api';
 import { useCreateReport, useReport, useReviewReport } from '../hooks/useReports';
@@ -20,9 +21,9 @@ import { ReportStatusBadge } from './ReportStatusBadge';
 export function CreateReportDialog({ onClose }: { onClose: () => void }) {
   const create = useCreateReport();
   const [photo, setPhoto] = useState<File | null>(null);
-  const { values, bind } = useFields({ title: '', description: '', address_text: '', latitude: '', longitude: '', weight: '' });
-  const coordsOk = (values.latitude.trim() === '') === (values.longitude.trim() === '');
-  const valid = values.title.trim().length >= 3 && coordsOk;
+  const { values, bind, set } = useFields({ title: '', description: '', address_text: '', latitude: '', longitude: '', weight: '' });
+  const [locationInvalid, setLocationInvalid] = useState(false);
+  const valid = values.title.trim().length >= 3 && !locationInvalid;
   const submit = () =>
     create.mutate(
       {
@@ -55,14 +56,21 @@ export function CreateReportDialog({ onClose }: { onClose: () => void }) {
       <div className="form-grid">
         <Field label="Title">{(c) => <Input {...c} data-autofocus {...bind('title')} />}</Field>
         <Field label="Address or landmark">{(c) => <Input {...c} {...bind('address_text')} />}</Field>
-        <Field label="Latitude (optional)" error={coordsOk ? undefined : 'Give both latitude and longitude, or neither.'}>{(c) => <Input {...c} inputMode="decimal" {...bind('latitude')} />}</Field>
-        <Field label="Longitude (optional)">{(c) => <Input {...c} inputMode="decimal" {...bind('longitude')} />}</Field>
         <Field label="Estimated weight, kg (optional)">{(c) => <Input {...c} inputMode="decimal" {...bind('weight')} />}</Field>
         <Field label="Photo (optional)" hint="JPEG, PNG or WebP. Location metadata is removed.">
           {(c) => <Input {...c} type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />}
         </Field>
       </div>
       <Field label="Description (optional)">{(c) => <Textarea {...c} maxLength={4000} {...bind('description')} />}</Field>
+      <fieldset className="stack stack--tight">
+        <legend>Where is it? (optional)</legend>
+        <LocationPicker
+          label="Waste location"
+          value={values.latitude && values.longitude ? { lat: Number(values.latitude), lng: Number(values.longitude) } : null}
+          onChange={(point) => set({ latitude: point ? point.lat.toFixed(6) : '', longitude: point ? point.lng.toFixed(6) : '' })}
+          onInvalidChange={setLocationInvalid}
+        />
+      </fieldset>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
     </Dialog>
   );
@@ -83,6 +91,7 @@ function ReportBody({ report }: { report: Report }) {
   const { can } = useAuth();
   const [reviewing, setReviewing] = useState(false);
   const [creatingTask, setCreatingTask] = useState(false);
+  const where = toPoint(report.latitude, report.longitude);
 
   return (
     <div className="stack stack--tight">
@@ -96,6 +105,17 @@ function ReportBody({ report }: { report: Report }) {
         <dt>Estimated weight</dt><dd>{report.estimated_weight_kg === null ? 'Not given' : formatKg(report.estimated_weight_kg)}</dd>
         {report.description && (<><dt>Description</dt><dd>{report.description}</dd></>)}
       </dl>
+
+      {where && (
+        <section aria-label="Location">
+          <h4>Location</h4>
+          <MapPanel
+            label="Report location"
+            height={240}
+            markers={[{ id: 'report', position: where, title: 'Reported location', kind: 'report', tone: 'info', glyph: 'R', details: ['Position as entered by the reporter'] }]}
+          />
+        </section>
+      )}
 
       <section aria-label="Photos">
         <h4>Photos</h4>

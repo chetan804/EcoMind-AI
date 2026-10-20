@@ -58,3 +58,22 @@ make compose-config        # validate compose.yaml
 5. Start backend (`/health` liveness, `/ready` readiness probes), then the frontend.
 6. Verify: `python tests/smoke/smoke.py --api https://<api> --web https://<web>`.
 Rollback: see [`backup-and-rollback.md`](backup-and-rollback.md). Redeploying the previous image is only safe when the migrations since that image were additive (new tables or nullable columns, as 0009 and 0010 are); this is **not guaranteed** in general, so check each migration. `alembic downgrade` drops the data of the migrations it reverses, so take a backup first.
+
+## Maps and vehicle tracking
+Full guide: [`../maps/GOOGLE_MAPS_INTEGRATION.md`](../maps/GOOGLE_MAPS_INTEGRATION.md). The product runs without any Google key (maps become labelled lists, route plans show straight lines).
+
+| Variable | File | Purpose |
+|---|---|---|
+| `VITE_GOOGLE_MAPS_API_KEY`, `VITE_GOOGLE_MAPS_MAP_ID` | `frontend/.env`, root `.env` (dev container), **build args** of the production frontend image | browser key (referrer + Maps JavaScript API restricted) and map ID; compiled in at build time |
+| `GOOGLE_MAPS_SERVER_API_KEY` | `backend/.env`, root `.env` | server key for the Routes API (IP restricted); never a `VITE_` variable |
+| `GOOGLE_ROUTES_TIMEOUT_SECONDS` | backend | provider timeout (8) |
+| `TRACKING_LIVE_WITHIN_SECONDS`, `TRACKING_STALE_AFTER_SECONDS` | backend | LIVE up to 120 s, DELAYED up to 900 s, then STALE |
+| `TRACKING_MAX_FUTURE_SKEW_SECONDS`, `TRACKING_MAX_REPORT_AGE_HOURS`, `TRACKING_MAX_EVENTS_PER_MINUTE` | backend | ingestion validation and per-vehicle rate limit (120 s, 6 h, 30) |
+| `TRACKING_RETENTION_DAYS` | backend | history kept (90) |
+| `TRACKING_SIMULATOR_ENABLED` | backend | simulator on/off; unset means on outside production, off in production |
+
+Production frontend image with maps: `docker build -f deployment/docker/frontend.Dockerfile --target production --build-arg VITE_API_BASE_URL=https://<api-origin> --build-arg VITE_GOOGLE_MAPS_API_KEY=<browser key> --build-arg VITE_GOOGLE_MAPS_MAP_ID=<map id> -t ecomind-frontend .` (the browser key is public by design; restrict it by referrer in Google Cloud).
+
+**Daily job (the platform has no scheduler):** `python -m app.cli purge-location-events` removes position events older than `TRACKING_RETENTION_DAYS`, e.g. `0 3 * * * cd /app && python -m app.cli purge-location-events`. It writes an audit record.
+
+Verify after enabling keys: open the Fleet screen (map instead of the "Google Maps is not configured" notice), open a route plan (road route, or the reason it is unavailable), and check the browser console for CSP violations. Watch the Google Cloud console for usage and set budget alerts.

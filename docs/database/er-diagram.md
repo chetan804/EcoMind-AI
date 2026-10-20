@@ -176,6 +176,13 @@ erDiagram
     users {
         uuid id PK
     }
+    vehicle_location_events {
+        uuid vehicle_id FK
+        uuid collection_task_id FK
+        uuid route_plan_id FK
+        uuid reported_by_id FK
+        uuid id PK
+    }
     waste_reports {
         uuid reporter_id FK
         uuid id PK
@@ -253,6 +260,10 @@ erDiagram
     material_categories ||--o{ sorting_guidance : "material_category_id"
     roles ||--o{ user_roles : "role_id"
     users ||--o{ user_roles : "user_id"
+    collection_tasks |o--o{ vehicle_location_events : "collection_task_id"
+    users |o--o{ vehicle_location_events : "reported_by_id"
+    route_plans |o--o{ vehicle_location_events : "route_plan_id"
+    fleet_vehicles ||--o{ vehicle_location_events : "vehicle_id"
     users ||--o{ waste_reports : "reporter_id"
 ```
 
@@ -274,5 +285,6 @@ erDiagram
 - **rewards**: `reward_ledger_entries`
 - **route_planning**: `route_plans`, `route_stops`
 - **sorting_guide**: `material_categories`, `sorting_guidance`
+- **tracking**: `vehicle_location_events`
 - **users**: `permissions`, `role_permissions`, `roles`, `user_roles`, `users`
 - **waste_reports**: `media_assets`, `waste_reports`

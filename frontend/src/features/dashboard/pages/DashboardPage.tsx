@@ -8,6 +8,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { CountList } from '@/components/ui/StatList';
 import { CollectedWeightChart, useOverview, useWeeklyTrend } from '@/features/analytics';
+import { FleetMap } from '@/features/tracking';
 import { useAuth } from '@/services/session';
 import { formatKg, formatPercent, humanize } from '@/utils/format';
 import '../dashboard.css';
@@ -31,6 +32,7 @@ export function DashboardPage() {
 }
 
 function OperationsOverview() {
+  const { can } = useAuth();
   const overview = useOverview(30);
   const trend = useWeeklyTrend(12);
   return (
@@ -107,6 +109,13 @@ function OperationsOverview() {
                     )}
                   </Card>
                 </div>
+
+                {can('fleet:read') && (
+                  <Card aria-labelledby="map-title">
+                    <CardHeader title="Fleet and facilities map" titleId="map-title" />
+                    <FleetMap height={380} />
+                  </Card>
+                )}
 
                 <div className="dash__row dash__row--summary">
                   <Card aria-labelledby="fleet-title">

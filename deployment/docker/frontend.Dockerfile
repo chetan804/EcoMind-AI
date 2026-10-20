@@ -15,7 +15,12 @@ CMD ["npx", "vite", "--host", "0.0.0.0", "--port", "5173"]
 
 FROM deps AS build
 ARG VITE_API_BASE_URL=""
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+# Public, referrer-restricted browser key for the Maps JavaScript API (optional; empty = no maps).
+ARG VITE_GOOGLE_MAPS_API_KEY=""
+ARG VITE_GOOGLE_MAPS_MAP_ID=""
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
+    VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY} \
+    VITE_GOOGLE_MAPS_MAP_ID=${VITE_GOOGLE_MAPS_MAP_ID}
 COPY frontend/ ./
 RUN npm run build
 

@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { errorReply, page, routeApi } from '../helpers/api-mock';
+import { latestPositionsFixture, trackedVehicle } from '../helpers/fixtures';
 import { renderAt, userWith } from '../helpers/render';
 import { resetSession } from '../helpers/session';
 
@@ -53,16 +54,17 @@ describe('waste reports', () => {
     const submit = within(dialog).getByRole('button', { name: 'Submit report' });
     expect(submit).toBeDisabled();
     await userEvent.type(within(dialog).getByLabelText('Title'), 'Overflowing skip');
-    await userEvent.type(within(dialog).getByLabelText('Latitude (optional)'), '17.4');
-    expect(await within(dialog).findByText('Give both latitude and longitude, or neither.')).toBeInTheDocument();
+    await userEvent.type(within(dialog).getByLabelText('Latitude'), '17.4');
+    expect(await within(dialog).findByText('Longitude must be between -180 and 180')).toBeInTheDocument();
     expect(submit).toBeDisabled();
-    await userEvent.type(within(dialog).getByLabelText('Longitude (optional)'), '78.4');
+    await userEvent.type(within(dialog).getByLabelText('Longitude'), '78.4');
+    expect(submit).toBeEnabled();
     await userEvent.upload(within(dialog).getByLabelText(/^Photo/), new File([new Uint8Array([1, 2, 3])], 'skip.jpg', { type: 'image/jpeg' }));
     await userEvent.click(submit);
     await vi.waitFor(() => expect(api.calls.some((c) => c.key === 'POST /api/v1/waste-reports')).toBe(true));
     const keys = api.calls.map((c) => c.key);
     expect(keys.indexOf('POST /api/v1/waste-reports/media')).toBeLessThan(keys.indexOf('POST /api/v1/waste-reports'));
-    expect(api.calls.find((c) => c.key === 'POST /api/v1/waste-reports')?.body).toMatchObject({ title: 'Overflowing skip', latitude: '17.4', longitude: '78.4', media_ids: [id(2)] });
+    expect(api.calls.find((c) => c.key === 'POST /api/v1/waste-reports')?.body).toMatchObject({ title: 'Overflowing skip', latitude: '17.400000', longitude: '78.400000', media_ids: [id(2)] });
     expect(api.unmatched).toEqual([]);
   });
 
@@ -210,10 +212,16 @@ describe('collection tasks', () => {
 describe('fleet and facilities', () => {
   it('lists vehicles, hides management from read-only roles, and creates a vehicle for a manager', async () => {
     const vehicle = { id: id(8), registration_number: 'TS09-1234', vehicle_type: 'van', status: 'available', capacity_kg: '800.000', home_facility_id: id(4), active_task_count: 2 };
-    const readOnly = routeApi(fetchSpy, { 'GET /api/v1/fleet/vehicles': page([vehicle]), 'GET /api/v1/facilities': page([facility()]) }, userWith(['fleet:read', 'facilities:read']));
+    const readOnly = routeApi(
+      fetchSpy,
+      { 'GET /api/v1/fleet/vehicles': page([vehicle]), 'GET /api/v1/facilities': page([facility()]), 'GET /api/v1/tracking/vehicles': latestPositionsFixture([trackedVehicle()]) },
+      userWith(['fleet:read', 'facilities:read']),
+    );
     renderAt('/fleet');
     const table = await screen.findByRole('table', { name: 'Fleet vehicles' });
     expect(within(table).getByText('North Depot')).toBeInTheDocument();
+    // A vehicle that never reported shows as unavailable; its home depot is never used as its position.
+    expect(await within(table).findByText('LOCATION UNAVAILABLE')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add vehicle' })).not.toBeInTheDocument();
     expect(readOnly.unmatched).toEqual([]);
   });
@@ -222,6 +230,7 @@ describe('fleet and facilities', () => {
     const api = routeApi(fetchSpy, {
       'GET /api/v1/fleet/vehicles': page([]),
       'GET /api/v1/facilities': page([facility()]),
+      'GET /api/v1/tracking/vehicles': latestPositionsFixture(),
       'POST /api/v1/fleet/vehicles': { id: id(8), registration_number: 'TS09-9999', vehicle_type: 'van', status: 'available', capacity_kg: '500', home_facility_id: null },
     }, manager);
     renderAt('/fleet');
@@ -247,10 +256,14 @@ describe('fleet and facilities', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Edit North Depot' }));
     const dialog = screen.getByRole('dialog', { name: 'Edit North Depot' });
     expect(within(dialog).queryByLabelText('Code')).not.toBeInTheDocument();
+    // A half-cleared coordinate pair is caught in the form instead of being sent to the server.
     await userEvent.clear(within(dialog).getByLabelText('Latitude'));
+    expect(await within(dialog).findByText('Latitude must be between -90 and 90')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Save changes' })).toBeDisabled();
+    await userEvent.type(within(dialog).getByLabelText('Latitude'), '17.6');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
     expect(await within(dialog).findByText(/latitude and longitude must be provided together/)).toBeInTheDocument();
-    expect(api.calls.find((c) => c.key.startsWith('PATCH'))?.body).toMatchObject({ latitude: null, longitude: '78.5', zone_id: null });
+    expect(api.calls.find((c) => c.key.startsWith('PATCH'))?.body).toMatchObject({ latitude: '17.600000', longitude: '78.500000', zone_id: null });
     expect(api.calls.find((c) => c.key.startsWith('PATCH'))?.body).not.toHaveProperty('code');
   });
 

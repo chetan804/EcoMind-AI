@@ -1,6 +1,6 @@
 # Known limitations
 
-Everything below is a real, current limitation as of 2026-10-20 (branch `arena/39c812ff-ecomind-ai`).
+Everything below is a real, current limitation as of 2026-10-21 (branch `arena/483a088d-ecomind-ai`).
 Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree with this list.
 
 ## Machine learning
@@ -17,10 +17,20 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 ## Product
 - **Marketplace** (reference 08) is a matching board only: no price, payment, delivery, photos, chat, expiry, partial fulfilment or link to recovery records. Its notifications use the `system` category. **Smart bins and telemetry** (17, 19):
   excluded by product decision; no sensor integration.
-- **Zones** have no geometry (no verified map data). Collection tasks are not linked to zones.
-- Route plans use straight-line distance and give no ETA.
+- **Zones** have no boundary geometry (no verified boundary data), so no polygon or coverage figure is drawn. Collection tasks are not linked to zones.
+- Route plans are ordered by straight-line distance and store no ETA. A road route (geometry, distance, duration, no live traffic) is fetched on demand from the Google Routes API only when `GOOGLE_MAPS_SERVER_API_KEY` is set; it is not stored and the order is not re-optimised for roads.
 - Rewards have no redemption. Impact is reported as recovered weight; no emission coefficients are used.
 - No e-mail verification and no password reset. No notification delivery beyond in-app.
+
+## Maps and tracking (details: `docs/maps/GOOGLE_MAPS_INTEGRATION.md`)
+- **Google integration is not verified live.** No key was available and the build sandbox cannot reach Google. Maps, advanced markers, clustering, the Routes API call and the CSP allowances are tested only with a fake `google.maps` and a mocked HTTP transport. The screenshots in `docs/ui/evidence/maps/` therefore show the labelled fallback, not Google tiles.
+- **No real GPS source is connected.** The only real producer is the "Share my position" button of the collector's task dialog (browser geolocation, only while the tab is open, at most one report per 15 s, no background tracking, no native mobile app). Hardware trackers would post as the assigned collector's account: there are no per-device credentials or tokens (`gps_device` is accepted from a `fleet:track` user only).
+- Positions update by polling every 15 s (backing off to 120 s); there is no SSE or WebSocket.
+- Retention is a manual or cron job (`purge-location-events`); the platform has no scheduler.
+- The simulator exists for demonstrations (managers only, off by default in production); simulated positions are always labelled and kept apart, and they follow straight lines unless provider geometry is supplied.
+- Not mapped, because the data does not exist: zone boundaries, heatmaps, marketplace listing location, passport movement, geographic analytics.
+- CSP omits `'unsafe-eval'` for Maps; if live testing shows it is needed, the policy must be amended.
+- The local e2e suite stays within the 10 registrations per IP per hour limit (about 8 are used); adding specs that register users needs a larger budget or seeded accounts.
 
 ## Security (details: `docs/security/security-review.md`)
 - MFA is TOTP only and not forced for any role; rotating `SECRET_KEY` invalidates stored MFA secrets.

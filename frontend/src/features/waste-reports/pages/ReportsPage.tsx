@@ -8,11 +8,13 @@ import { Switch } from '@/components/ui/Choice';
 import { Field } from '@/components/ui/Field';
 import { SearchInput, Select } from '@/components/ui/Input';
 import { Pagination, Table } from '@/components/ui/Table';
+import { MapPanel } from '@/features/maps';
 import { useAuth } from '@/services/session';
 import { formatDateTime, formatKg, humanize } from '@/utils/format';
 import { REPORT_STATUSES } from '../api/reports-api';
 import { CreateReportDialog, ReportDialog } from '../components/ReportDialogs';
 import { ReportStatusBadge } from '../components/ReportStatusBadge';
+import { reportMarkers } from '../markers';
 import { useReports } from '../hooks/useReports';
 
 export function ReportsPage() {
@@ -77,6 +79,9 @@ export function ReportsPage() {
                   ))}
                 </tbody>
               </Table>
+              {reportMarkers(data.items).length > 0 && (
+                <MapPanel label="Reports on this page" markers={reportMarkers(data.items)} height={300} />
+              )}
               <Pagination
                 page={data.page}
                 pageCount={Math.max(1, Math.ceil(data.total / data.page_size))}

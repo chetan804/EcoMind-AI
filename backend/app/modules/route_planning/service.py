@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.common.enums import SortOrder
 from app.common.pagination import Page, PageParams
 from app.core.exceptions import AppError, NotFoundError, UnprocessableError
+from app.integrations.mapping.base import LatLng, RoadRouteProvider, RoadRouteUnavailable
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestContext
 from app.modules.auth.dependencies import Principal
@@ -30,7 +31,13 @@ from app.modules.fleet.constants import VehicleStatus
 from app.modules.route_planning import optimizer, repository
 from app.modules.route_planning.constants import RoutePlanStatus
 from app.modules.route_planning.models import RoutePlan
-from app.modules.route_planning.schemas import PlanCreate, PlanDetail, PlanOut, StopOut
+from app.modules.route_planning.schemas import (
+    PlanCreate,
+    PlanDetail,
+    PlanOut,
+    RoadRouteOut,
+    StopOut,
+)
 from app.modules.users import repository as users
 
 PLANNABLE = (CollectionTaskStatus.PENDING, CollectionTaskStatus.ASSIGNED)
@@ -250,6 +257,8 @@ def _detail(db: Session, plan: RoutePlan, warnings: list[str] | None = None) -> 
     return PlanDetail(
         **base.model_dump(),
         start_label=start.name if start else None,
+        start_latitude=decimal.Decimal(str(origin[0])) if origin else None,
+        start_longitude=decimal.Decimal(str(origin[1])) if origin else None,
         return_leg_distance_km=_km(back) if back is not None else None,
         stops=stops,
         warnings=warnings or [],
@@ -316,3 +325,35 @@ def transition(
     db.commit()
     db.refresh(plan)
     return _detail(db, plan)
+
+
+def road_route(db: Session, plan_id: uuid.UUID, provider: RoadRouteProvider) -> RoadRouteOut:
+    """Ask the routing provider for the road route through the plan, depot to depot.
+
+    Never raises for provider problems: the answer says why no road route is available, so the
+    screen can show a labelled fallback. Nothing is stored.
+    """
+    detail = get_plan(db, plan_id)
+    if detail.start_latitude is None or detail.start_longitude is None:
+        return RoadRouteOut(plan_id=plan_id, available=False, reason="too_few_points")
+    depot = LatLng(float(detail.start_latitude), float(detail.start_longitude))
+    points = [depot, *(LatLng(float(s.latitude), float(s.longitude)) for s in detail.stops), depot]
+    outcome = provider.route(points)
+    if isinstance(outcome, RoadRouteUnavailable):
+        return RoadRouteOut(
+            plan_id=plan_id,
+            available=False,
+            provider=outcome.provider,
+            reason=outcome.reason,
+            detail=outcome.detail,
+        )
+    return RoadRouteOut(
+        plan_id=plan_id,
+        available=True,
+        provider=outcome.provider,
+        encoded_polylines=list(outcome.encoded_polylines),
+        distance_m=outcome.distance_m,
+        duration_s=outcome.duration_s,
+        traffic_aware=outcome.traffic_aware,
+        request_count=outcome.request_count,
+    )

@@ -14,6 +14,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Pagination, Table } from '@/components/ui/Table';
 import { getErrorMessage } from '@/services/error-handler';
 import { useZoneOptions } from '@/features/locations';
+import { directionsUrl, facilityMarkers, LocationPicker, MapPanel, toPoint } from '@/features/maps';
 import { useAuth } from '@/services/session';
 import { formatNumber, humanize } from '@/utils/format';
 import { FACILITY_STATUSES, FACILITY_TYPES, type Facility } from '../api/facilities-api';
@@ -85,7 +86,16 @@ export function FacilitiesPage() {
                         <p className="muted">{f.code}</p>
                       </th>
                       <td>{humanize(f.facility_type)}</td>
-                      <td>{[f.address_line, f.city, f.region, f.country_code].filter(Boolean).join(', ') || <Badge tone="neutral">No address</Badge>}</td>
+                      <td>
+                        {[f.address_line, f.city, f.region, f.country_code].filter(Boolean).join(', ') || <Badge tone="neutral">No address</Badge>}
+                        {toPoint(f.latitude, f.longitude) && (
+                          <p>
+                            <a href={directionsUrl(toPoint(f.latitude, f.longitude) as { lat: number; lng: number })} target="_blank" rel="noopener noreferrer">
+                              Directions<span className="visually-hidden"> to {f.name} (opens Google Maps in a new tab)</span>
+                            </a>
+                          </p>
+                        )}
+                      </td>
                       <td>{f.daily_capacity_kg === null ? 'Not set' : `${formatNumber(f.daily_capacity_kg)} kg`}</td>
                       <td><StatusBadge value={f.status} tones={STATUS_TONES} /></td>
                       {manage && (
@@ -97,6 +107,9 @@ export function FacilitiesPage() {
                   ))}
                 </tbody>
               </Table>
+              {facilityMarkers(data.items).length > 0 && (
+                <MapPanel label="Facilities on this page" markers={facilityMarkers(data.items)} height={320} />
+              )}
               <Pagination
                 page={data.page}
                 pageCount={Math.max(1, Math.ceil(data.total / data.page_size))}
@@ -115,7 +128,8 @@ export function FacilitiesPage() {
 function FacilityDialog({ facility, onClose }: { facility: Facility | null; onClose: () => void }) {
   const save = useSaveFacility();
   const zones = useZoneOptions();
-  const { values, bind } = useFields({
+  const [locationInvalid, setLocationInvalid] = useState(false);
+  const { values, bind, set } = useFields({
     code: facility?.code ?? '',
     name: facility?.name ?? '',
     facility_type: facility?.facility_type ?? 'depot',
@@ -130,7 +144,7 @@ function FacilityDialog({ facility, onClose }: { facility: Facility | null; onCl
     contact_email: facility?.contact_email ?? '',
     zone_id: facility?.zone_id ?? '',
   });
-  const valid = values.name.trim().length >= 2 && (facility !== null || values.code.trim().length >= 2);
+  const valid = values.name.trim().length >= 2 && (facility !== null || values.code.trim().length >= 2) && !locationInvalid;
 
   const submit = () => {
     const body: Record<string, unknown> = {
@@ -194,11 +208,18 @@ function FacilityDialog({ facility, onClose }: { facility: Facility | null; onCl
         <Field label="City">{(c) => <Input {...c} {...bind('city')} />}</Field>
         <Field label="Region">{(c) => <Input {...c} {...bind('region')} />}</Field>
         <Field label="Country code" hint="Two letters, for example IN">{(c) => <Input {...c} maxLength={2} {...bind('country_code')} />}</Field>
-        <Field label="Latitude">{(c) => <Input {...c} inputMode="decimal" {...bind('latitude')} />}</Field>
-        <Field label="Longitude">{(c) => <Input {...c} inputMode="decimal" {...bind('longitude')} />}</Field>
         <Field label="Daily capacity (kg)">{(c) => <Input {...c} inputMode="decimal" {...bind('daily_capacity_kg')} />}</Field>
         <Field label="Contact email">{(c) => <Input {...c} type="email" {...bind('contact_email')} />}</Field>
       </div>
+      <fieldset className="stack stack--tight">
+        <legend>Location (optional)</legend>
+        <LocationPicker
+          label="Facility location"
+          value={values.latitude && values.longitude ? { lat: Number(values.latitude), lng: Number(values.longitude) } : null}
+          onChange={(point) => set({ latitude: point ? point.lat.toFixed(6) : '', longitude: point ? point.lng.toFixed(6) : '' })}
+          onInvalidChange={setLocationInvalid}
+        />
+      </fieldset>
       {save.isError && <Alert tone="danger">{getErrorMessage(save.error)}</Alert>}
     </Dialog>
   );

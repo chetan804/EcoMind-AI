@@ -1,0 +1,29 @@
+.map-panel { display: grid; gap: var(--space-3, 0.75rem); }
+.map-panel__stage { position: relative; border: 1px solid var(--color-border); border-radius: var(--radius-md, 10px); overflow: hidden; background: var(--color-surface-raised); }
+.map-panel__canvas { width: 100%; }
+.map-panel__placeholder { display: grid; place-items: center; text-align: center; padding: 1.5rem; color: var(--color-text-secondary); }
+.map-panel__legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 0; padding: 0; list-style: none; font-size: 0.8125rem; color: var(--color-text-secondary); }
+.map-panel__legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.map-panel__swatch { width: 0.85rem; height: 0.85rem; border-radius: 50%; border: 2px solid var(--color-surface); box-shadow: 0 0 0 1px var(--color-border-strong); }
+.map-panel__line { display: inline-block; width: 1.75rem; height: 0; border-top: 3px solid var(--map-line, var(--color-info)); }
+.map-panel__line--dashed { border-top-style: dashed; }
+.map-panel__line--dotted { border-top-style: dotted; }
+.map-panel__detail { padding: 0.75rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-md, 10px); background: var(--color-surface); }
+.map-panel__detail h3 { margin: 0 0 0.25rem; font-size: 0.9375rem; }
+.map-panel__detail ul { margin: 0.25rem 0 0; padding-left: 1.1rem; color: var(--color-text-secondary); font-size: 0.8125rem; }
+.map-panel__list > summary { cursor: pointer; font-size: 0.875rem; color: var(--color-text-secondary); }
+.map-panel__scroll { max-height: 18rem; overflow: auto; margin-top: 0.5rem; }
+.map-panel__note { margin: 0; font-size: 0.8125rem; color: var(--color-text-muted); }
+
+.map-pin { --pin: var(--color-info); min-width: 1.75rem; height: 1.75rem; padding: 0 0.3rem; display: inline-grid; place-items: center; border-radius: 999px; border: 2px solid #fff; background: var(--pin); color: #04141b; font: 700 0.75rem/1 var(--font-sans, system-ui); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+.map-pin--success { --pin: #34d399; }
+.map-pin--info { --pin: #38a8f5; }
+.map-pin--warning { --pin: #f5b83d; }
+.map-pin--danger { --pin: #f24d54; color: #fff; }
+.map-pin--neutral { --pin: #a8b6bd; }
+.map-pin--simulated { --pin: #b794f6; border-style: dashed; }
+.map-pin--selected { outline: 3px solid #fff; transform: scale(1.15); }
+.map-pin--square { border-radius: 6px; }
+
+.location-picker { display: grid; gap: 0.75rem; }
+.location-picker__inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.75rem; align-items: end; }

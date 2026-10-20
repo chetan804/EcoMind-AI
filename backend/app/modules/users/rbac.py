@@ -26,6 +26,8 @@ PERMISSIONS: dict[str, str] = {
     "facilities:manage": "Create and edit facilities and depots",
     "fleet:read": "View fleet vehicles",
     "fleet:manage": "Create and edit fleet vehicles",
+    "fleet:track": "Report positions of the vehicle the user is currently assigned to",
+    "fleet:simulate": "Write labelled simulator positions (demonstration environments only)",
     "routes:read": "View route plans",
     "routes:manage": "Generate and edit route plans",
     "sorting_guide:read": "Read the material sorting guide",
@@ -71,6 +73,7 @@ _CITIZEN = {
 }
 
 _COLLECTOR = {
+    "fleet:track",
     "waste_reports:read_all",
     "classification:predict",
     "collection:read",
@@ -108,6 +111,7 @@ _MANAGER = _FACILITY_OPERATOR | {
     "facilities:manage",
     "fleet:read",
     "fleet:manage",
+    "fleet:simulate",
     "routes:read",
     "routes:manage",
     "sorting_guide:manage",

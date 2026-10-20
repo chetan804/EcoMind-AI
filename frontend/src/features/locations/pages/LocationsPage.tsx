@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { humanize } from '@/utils/format';
 import { ZONE_TYPES, type Zone } from '../api/zones-api';
+import { facilityMarkers, MapPanel } from '@/features/maps';
 import { useSaveZone, useZoneFacilities, useZones } from '../hooks/useZones';
 
 export function LocationsPage() {
@@ -35,7 +36,7 @@ export function LocationsPage() {
         actions={manage ? <Button onClick={() => setEditing('new')}>Add zone</Button> : undefined}
       />
       <Alert tone="info">
-        Zones are named areas. They have no map boundaries because the platform holds no verified map data, so no coverage is shown.
+        Zones are named areas. They have no map boundaries because the platform holds no boundary data, so no coverage is shown.
       </Alert>
       <div className="filter-bar">
         <Field label="Search">{(c) => <SearchInput {...c} placeholder="Name or code" value={filters.q} onChange={(e) => set({ q: e.target.value })} />}</Field>
@@ -121,6 +122,9 @@ function ZoneFacilities({ zone }: { zone: Zone }) {
           data.items.length === 0 ? (
             <EmptyState icon={<MapPinned size={24} />} title="No facilities in this zone" description="Assign a facility to this zone from the facility form." />
           ) : (
+            <>
+            <MapPanel label={`Facilities in ${zone.name}`} markers={facilityMarkers(data.items)} height={300} emptyMessage="None of these facilities has coordinates yet." />
+            <p className="muted">Zones have no recorded boundary data, so only the located facilities of this zone are drawn. No boundary or area is implied.</p>
             <Table caption={`Facilities in ${zone.name}`}>
               <thead>
                 <tr>
@@ -141,6 +145,7 @@ function ZoneFacilities({ zone }: { zone: Zone }) {
                 ))}
               </tbody>
             </Table>
+            </>
           )
         }
       </QueryBoundary>
