@@ -259,5 +259,5 @@ Commits on `arena/483a088d-ecomind-ai`: `5542389` (integration), then collector 
 
 Defects found and fixed along the way: the e2e Playwright registration budget (10 per IP per hour) is shared by every spec, so the tracking spec registers one account and acts through the seeded administrator and the shared fixtures account; the screenshot script used a non-existent facility type, found by running it.
 
-CI for this branch: **not yet confirmed**; see the pull request checks.
+CI for PR #10 at head `bdd4c15` (`gh pr checks 10`, 2026-10-21): all 10 checks pass (Backend lint/type-check, tests on Python 3.11 and 3.12, frontend, ML, structure/Compose, contract/generated docs, Docker images, end-to-end with the tracking spec, GitGuardian). The first run on `563b18a` failed one frontend test (`operations.test.tsx`, the first test of the file, which waits for a lazily loaded page); the cause is believed to be slow cold imports on the runner (not reproduced locally), and the wait/timeout in `tests/setup.ts` and `vite.config.ts` was raised; this attribution is a diagnosis, not a proven root cause.
 
