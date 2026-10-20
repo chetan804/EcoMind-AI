@@ -5,6 +5,7 @@ from sqlalchemy import Engine, inspect, text
 from tests.fixtures.database import downgrade, upgrade
 
 CODES = {"cardboard", "glass", "metal", "paper", "plastic", "trash"}
+TAXONOMY_ONLY = {"organic", "textile", "e_waste", "medical"}  # added by migration 0006
 
 
 def _codes(engine: Engine) -> set[str]:
@@ -12,10 +13,10 @@ def _codes(engine: Engine) -> set[str]:
         return {r[0] for r in connection.execute(text("SELECT code FROM material_categories"))}
 
 
-def test_migration_seeds_the_six_material_categories_the_model_predicts(
+def test_migrations_seed_the_six_predicted_categories_plus_four_taxonomy_ones(
     migrated_engine: Engine,
 ) -> None:
-    assert _codes(migrated_engine) == CODES
+    assert _codes(migrated_engine) == CODES | TAXONOMY_ONLY
     with migrated_engine.connect() as connection:
         rows = connection.execute(text("SELECT code, name FROM material_categories")).all()
     names = {row.code: row.name for row in rows}
@@ -43,7 +44,7 @@ def test_0004_round_trips_and_reseeding_is_idempotent(migrated_engine: Engine) -
         c["name"] for c in inspect(migrated_engine).get_columns("classification_predictions")
     }
     upgrade(migrated_engine)
-    assert _codes(migrated_engine) == CODES
+    assert _codes(migrated_engine) == CODES | TAXONOMY_ONLY  # 0006 re-seeds its four as well
     with migrated_engine.begin() as connection:  # a manual re-run of the seed must not duplicate
         connection.execute(
             text(
@@ -51,4 +52,4 @@ def test_0004_round_trips_and_reseeding_is_idempotent(migrated_engine: Engine) -
                 "VALUES (gen_random_uuid(), 'glass', 'dup', true) ON CONFLICT (code) DO NOTHING"
             )
         )
-    assert len(_codes(migrated_engine)) == 6
+    assert len(_codes(migrated_engine)) == 10

@@ -12,12 +12,17 @@ from fastapi import APIRouter
 
 from app.modules.anomaly_detection.router import router as anomaly_router
 from app.modules.auth.router import router as auth_router
+from app.modules.circular_economy.router import router as circular_economy_router
 from app.modules.classification.router import router as classification_router
 from app.modules.collection.router import router as collection_router
 from app.modules.facilities.router import router as facilities_router
 from app.modules.fleet.router import router as fleet_router
 from app.modules.forecasting.router import router as forecasting_router
+from app.modules.material_passports.router import router as passports_router
+from app.modules.notifications.router import router as notifications_router
+from app.modules.rewards.router import router as rewards_router
 from app.modules.route_planning.router import router as route_planning_router
+from app.modules.sorting_guide.router import router as sorting_guide_router
 from app.modules.waste_reports.router import router as waste_reports_router
 
 api_v1_router = APIRouter()
@@ -34,3 +39,12 @@ api_v1_router.include_router(anomaly_router, prefix="/anomalies", tags=["anomali
 api_v1_router.include_router(
     route_planning_router, prefix="/route-planning", tags=["route-planning"]
 )
+api_v1_router.include_router(sorting_guide_router, prefix="/sorting-guide", tags=["sorting-guide"])
+api_v1_router.include_router(
+    circular_economy_router, prefix="/circular-economy", tags=["circular-economy"]
+)
+api_v1_router.include_router(
+    passports_router, prefix="/material-passports", tags=["material-passports"]
+)
+api_v1_router.include_router(rewards_router, prefix="/rewards", tags=["rewards"])
+api_v1_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])

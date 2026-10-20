@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.modules.users.models import Permission, Role, RolePermission, User, UserRole
@@ -59,3 +59,8 @@ def permission_codes(db: Session, user_id: uuid.UUID) -> set[str]:
         .distinct()
     )
     return set(db.scalars(stmt))
+
+
+def lock_statement(user_id: uuid.UUID) -> Select[uuid.UUID]:
+    """``SELECT id ... FOR UPDATE``: serialises work that must not interleave per user."""
+    return select(User.id).where(User.id == user_id).with_for_update()

@@ -2,7 +2,7 @@
 
 Material recovery records and their verification. Only verified records count towards recovery metrics.
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** implemented (recovery records API + tests). See `docs/api/circular-economy-api.md`.
 
 ## Ownership
 - **Tables owned:** `recovery_records`
@@ -12,8 +12,8 @@ Material recovery records and their verification. Only verified records count to
 - **Depends on (via services / foreign keys):** `users`, `facilities`, `sorting_guide`, `waste_reports`, `collection`
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
-## API (planned, not implemented)
-`/api/v1/circular-economy/recovery-records`, registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
+## API
+`/api/v1/circular-economy`, registered in `app/api/v1/router.py`.
 
 ## Notes
 -
