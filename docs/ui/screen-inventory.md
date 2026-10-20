@@ -31,3 +31,34 @@ Reference list of screens the product needs, mapped to features and API areas. *
 | Audit log | `/admin/audit` | audit | audit | administrators | Not started |
 
 **Not on the list by design:** Smart Bins & Telemetry (no hardware; see `docs/architecture/component-boundaries.md`).
+
+## Design references
+
+`docs/ui/reference/` holds the 22 design reference images (immutable; integrity is checked against `manifest.json` by `scripts/quality/check_structure.py`). The mapping below uses the **file titles only**; screens 05 to 22 have not been reviewed in detail and each mapping must be confirmed when its screen is built.
+
+| Reference | Screen | Inventory row / module | Status |
+|---|---|---|---|
+| 01 Landing Page | Landing | landing | **UI only** |
+| 02 Login / Sign Up | Sign in / Sign up | auth | **UI only** |
+| 03 Operational Command Center | Dashboard | dashboard (analytics) | **UI only** |
+| 04 AI Waste Classification | Classify an item | waste-classification | **UI only** |
+| 05 Fill Level Forecasting | Forecasts | forecasting | Not started |
+| 06 Anomaly Detection | Anomaly alerts | anomaly-alerts | Not started |
+| 07 Route Optimization | Route plans | route-planning | Not started |
+| 08 Circular Surplus Marketplace | Recovery records and verification | circular-economy | Not started |
+| 09 Community Incident Triage | Community incidents | community-incidents | Not started |
+| 10 Material Sorting Guide | Sorting guide | sorting-guide | Not started |
+| 11 Chain of Custody Passports | Material passport and custody timeline | material-passports | Not started |
+| 12 Rewards and Impact Ledger | Rewards and impact | rewards | Not started |
+| 13 Waste Intake Records | Waste reports | waste-reports (closest row; titles differ) | Not started |
+| 14 Locations and Zones | Locations and zones | **no dedicated row or module yet**: owner to be decided (facilities is the closest) | Not started |
+| 15 Processing Facilities and Depots | Facilities | facilities | Not started |
+| 16 Collection Fleet Vehicles | Fleet | fleet | Not started |
+| 17 Smart Bins and Sensor Telemetry | none | **excluded by product decision** (no hardware; no nav item, no simulated telemetry) | Not planned |
+| 18 Collections and Impact | Collection tasks | collection (impact figures come from analytics) | Not started |
+| 19 Waste Intake / Fleet Vehicles | unclear title | waste-reports or fleet; **confirm against the image before building** | Not started |
+| 20 Executive Analytics and Reporting | Analytics and trends | analytics | Not started |
+| 21 Operational System Alerts | Alerts / notifications | anomaly-alerts, notifications | Not started |
+| 22 Security and MFA | Account security | auth (MFA is not in the security baseline yet; needs a decision) | Not started |
+
+Visual evidence for the four built screens is in `docs/ui/evidence/`.

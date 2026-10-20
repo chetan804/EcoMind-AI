@@ -1,9 +1,9 @@
-.classify { display: grid; grid-template-columns: minmax(0, 0.94fr) minmax(0, 1fr); column-gap: 26px; row-gap: 36px; align-items: start; }
+.classify { padding-top: 6px; display: grid; grid-template-columns: minmax(0, 0.94fr) minmax(0, 1fr); column-gap: 26px; row-gap: 36px; align-items: start; }
 .classify__wide { grid-column: 1 / -1; }
 .classify__side { display: grid; gap: var(--space-4); }
 
 .dropzone {
-  display: grid; align-content: start; gap: var(--space-3); padding: var(--space-6); min-height: 548px;
+  display: grid; align-content: start; gap: var(--space-3); padding: var(--space-6); min-height: 545px;
   border: 2px dashed color-mix(in srgb, var(--color-teal) 55%, transparent); border-radius: var(--radius-xl);
   background: var(--color-surface); text-align: center;
 }
@@ -15,7 +15,7 @@
 .dropzone__sub { color: var(--color-teal); font-size: var(--text-base); margin-bottom: var(--space-2); }
 .sample-bottle { width: 220px; height: 260px; }
 
-.result { min-height: 437px; }
+.result { min-height: 445px; }
 .result__stack { display: grid; gap: var(--space-5); }
 .result__class { display: flex; align-items: center; gap: var(--space-4); }
 .result__tile { display: grid; place-items: center; width: 78px; height: 78px; border-radius: var(--radius-lg); background: var(--color-info); color: #fff; flex: none; }
@@ -29,8 +29,13 @@
 .result__actions .btn { flex: 1 1 auto; min-height: 56px; }
 
 .classes__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-4); }
-.classes__item { display: grid; justify-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-secondary); }
-.classes__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: var(--radius-lg); background: var(--color-surface-raised); }
+.classes__item { display: grid; justify-items: center; gap: var(--space-2); font-size: var(--text-base); font-weight: var(--font-weight-medium); color: var(--color-text); }
+.classes__icon {
+  display: grid; place-items: center; width: 60px; height: 60px; border-radius: var(--radius-lg);
+  background: color-mix(in srgb, currentColor 18%, var(--color-surface-raised));
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  box-shadow: 0 0 16px -6px currentColor;
+}
 .classes__note { margin-top: var(--space-4); color: var(--color-text-muted); font-size: var(--text-sm); }
 
 @media (max-width: 1023px) {

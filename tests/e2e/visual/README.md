@@ -9,6 +9,14 @@ Developer tooling for comparing the built screens with the design references. It
 
 Landmark boxes in `targets.json` were read by eye from the blurry references: expect about +/-5 design px of reading error.
 
+## Other checks in this folder
+
+- `responsive-check.mjs`: overflow, console errors, failed requests, landmarks, names and focus visibility on the four screens at 1440, 1280, 768 and 390 px.
+- `contrast-hero.mjs` + `contrast_hero.py`: per-line WCAG contrast of the landing hero text over the artwork.
+- `route-payload.mjs`: JavaScript downloaded by a cold visit to each route (use `vite preview` on a production build).
+
+Committed results live in `docs/ui/evidence/`.
+
 ## Run it
 
 ```bash
