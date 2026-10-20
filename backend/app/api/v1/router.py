@@ -10,11 +10,13 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.modules.analytics.router import router as analytics_router
 from app.modules.anomaly_detection.router import router as anomaly_router
 from app.modules.auth.router import router as auth_router
 from app.modules.circular_economy.router import router as circular_economy_router
 from app.modules.classification.router import router as classification_router
 from app.modules.collection.router import router as collection_router
+from app.modules.community_incidents.router import router as incidents_router
 from app.modules.facilities.router import router as facilities_router
 from app.modules.fleet.router import router as fleet_router
 from app.modules.forecasting.router import router as forecasting_router
@@ -48,3 +50,7 @@ api_v1_router.include_router(
 )
 api_v1_router.include_router(rewards_router, prefix="/rewards", tags=["rewards"])
 api_v1_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
+api_v1_router.include_router(
+    incidents_router, prefix="/community-incidents", tags=["community-incidents"]
+)
+api_v1_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
