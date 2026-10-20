@@ -2,22 +2,25 @@
 
 Reports of waste submitted by users, and the metadata of uploaded images (bytes live in the file-storage integration).
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** implemented and verified locally (API + database); not yet wired into the web UI.
 
 ## Ownership
 - **Tables owned:** `waste_reports`, `media_assets`
-- **Files present:** `models.py`, `constants.py`. Add `router.py`, `schemas.py`, `repository.py`, `service.py` and the other files of the module contract only when they are needed (docs/architecture/component-boundaries.md).
+- **Files:** `models.py`, `constants.py`, `schemas.py`, `repository.py`, `service.py`, `router.py`, `images.py`, `errors.py`.
 
 ## Relationships
-- **Depends on (via services / foreign keys):** `users`
+- **Depends on:** `users`, `audit`, `auth` (principal), `integrations/file_storage`
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
-## API (planned, not implemented)
-`/api/v1/waste-reports`, `/api/v1/media`, registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
+## API
+`/api/v1/waste-reports` (see [docs/api/waste-reports-api.md](../../../../docs/api/waste-reports-api.md)). Registered in `app/api/v1/router.py`.
 
 ## Notes
-Upload -> classify -> submit: a media asset exists before it is attached to a report.
+- `images.py` is the only place that decodes uploads: format from the bytes, size guards, re-encode to strip metadata.
+- `service.py` decides visibility (404 rather than 403 for other people's data) and owns every transaction; `repository.py` has no commits.
+- Review transitions live in `constants.ALLOWED_TRANSITIONS`.
+- Upload -> classify -> submit: a media asset exists before it is attached to a report. Classification itself is not implemented yet.
 
 ## Tests
-The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. When endpoints are added, add API tests in `backend/tests/api/` and authorization tests in `backend/tests/security/`.
+`tests/unit/test_images.py`, `tests/unit/test_file_storage.py`, `tests/unit/test_search_pattern.py`, `tests/api/test_waste_reports.py`, `tests/api/test_waste_report_media.py` (90 tests; includes two-thread races for idempotency, review and photo claiming). Constraints: `tests/integration/test_schema_constraints.py`, `test_migrations.py`.
 Run: `make test-backend`.

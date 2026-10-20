@@ -625,6 +625,8 @@ Constraints:
 | `address_text` | varchar(500) | null |  |  |
 | `estimated_weight_kg` | numeric(12, 3) | null |  |  |
 | `reported_at` | timestamptz | NN | `now()` |  |
+| `idempotency_key` | varchar(64) | null |  |  |
+| `request_fingerprint` | varchar(64) | null |  |  |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |
@@ -634,7 +636,9 @@ Constraints:
 Constraints:
 
 - `ck_waste_reports_geo_point_complete`: `(latitude IS NULL) = (longitude IS NULL)`
+- `ck_waste_reports_idempotency_complete`: `(idempotency_key IS NULL) = (request_fingerprint IS NULL)`
 - `ck_waste_reports_latitude_range`: `latitude BETWEEN -90 AND 90`
 - `ck_waste_reports_longitude_range`: `longitude BETWEEN -180 AND 180`
 - `ck_waste_reports_weight_non_negative`: `estimated_weight_kg IS NULL OR estimated_weight_kg >= 0`
+- `uq_waste_reports_reporter_id_idempotency_key`: unique (reporter_id, idempotency_key)
 - Allowed values: `status` in (submitted, under_review, verified, rejected, closed)

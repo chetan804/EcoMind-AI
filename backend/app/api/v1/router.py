@@ -15,6 +15,8 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.modules.auth.router import router as auth_router
+from app.modules.waste_reports.router import router as waste_reports_router
 
 api_v1_router = APIRouter()
 api_v1_router.include_router(auth_router, prefix="/auth", tags=["auth"])
+api_v1_router.include_router(waste_reports_router, prefix="/waste-reports", tags=["waste-reports"])
