@@ -1,4 +1,4 @@
-"""HTTP middleware: request correlation id and access logging."""
+"""HTTP middleware: request correlation id, access logging and baseline security headers."""
 
 from __future__ import annotations
 
@@ -28,6 +28,11 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         started = time.perf_counter()
         response = await call_next(request)
         response.headers[REQUEST_ID_HEADER] = request_id
+        # Defaults only: an endpoint that sets its own value (for example the photo endpoints'
+        # `Cache-Control: private`) keeps it. API answers carry personal data: do not cache them.
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("Cache-Control", "no-store")
         logger.info(
             "request",
             extra={

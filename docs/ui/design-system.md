@@ -11,7 +11,7 @@ The UI is plain CSS (custom properties plus one stylesheet per component) on Rea
 - Components use **tokens**, never hard-coded colours or one-off sizes. Where a value was measured against the design references and has no token yet, add a token (for example `--text-title`, `--text-stat`).
 - **Accessibility target: WCAG 2.2 AA.** Landmarks and heading order; every control labelled; visible keyboard focus; state is never conveyed by colour alone; errors use `role="alert"`, other messages `role="status"`; touch targets are at least 44 px; `prefers-reduced-motion` is respected.
 - **Honesty rules** (binding, from the project constraints):
-  - Fixtures live in the owning feature's `fixtures/` folder and every region that shows them carries a visible `DemoDataNotice` ("Demonstration data, not live" or "Sample layout").
+  - Fixtures live in the owning feature's `fixtures/` folder and every region that shows them carries a visible notice (`DemoDataNotice`: "Demonstration data, not live" or "Sample layout"). The product screens currently read the API only and use no fixtures, so the component is presently unused; demonstration records exist only in a seeded demo database (`scripts/demo/seed_demo.py`) and are labelled as such there.
   - No model accuracy, confidence or prediction is ever shown as real. The classification layout preview is labelled "Sample layout", shows "Model: Not connected" and "Evaluation: Not evaluated", and has no percentage.
   - Actions that need a missing backend are rendered with `unavailableReason`: the control is `aria-disabled`, keeps focus, ignores activation, and explains why through an accessible description. They are never silently inert and never fake success.
   - The greeting is time-of-day only: no invented user name.
@@ -21,7 +21,7 @@ The UI is plain CSS (custom properties plus one stylesheet per component) on Rea
 
 ## Themes and tokens
 
-Defined in `src/styles/tokens.css` (values), `base.css` (reset, typography, utilities) and `global.css` (imports). Dark is the default (`:root`, `[data-theme='dark']`). The light theme applies when `data-theme="light"` is set on the root element; there is **no theme switcher and no `prefers-color-scheme` detection yet** (Stage 2). Light keeps the **dark sidebar** on every screen. Surfaces are flat; gradients appear only in illustrations, scrims, chart area fills and primary-button highlights (see "Illustration and surface conventions").
+Defined in `src/styles/tokens.css` (values), `base.css` (reset, typography, utilities) and `global.css` (imports). Dark is the default (`:root`, `[data-theme='dark']`). The light theme applies when `data-theme="light"` is set on the root element; signed-in screens have a theme switch in the account menu (`src/services/theme/theme.ts`; the choice is stored in `localStorage` under `ecomind.theme`, dark by default, and public pages stay dark); there is no `prefers-color-scheme` detection. The light palette was checked against the reference screens only by eye and SSIM (`docs/ui/evidence/screens/`); a WCAG contrast audit of the light theme has **not** been done. Light keeps the **dark sidebar** on every screen. Surfaces are flat; gradients appear only in illustrations, scrims, chart area fills and primary-button highlights (see "Illustration and surface conventions").
 
 | Token group | Values |
 |---|---|
@@ -35,7 +35,7 @@ Defined in `src/styles/tokens.css` (values), `base.css` (reset, typography, util
 | Icons | `lucide-react`, 1.75 stroke |
 | Breakpoints | 1023 px (sidebar becomes a drawer), 767 px, 479 px |
 
-Computed contrast (WCAG): primary text 15.5:1, secondary 9.2:1, muted 4.9 to 6.4:1 on dark surfaces; text on primary 11.8:1; white on nav-active 5.35:1. **The light-theme values are provisional estimates**: only dark screens exist in Stage 1, and the light palette will be finalised and contrast-checked against the light reference screens in Stage 2.
+Computed contrast (WCAG): primary text 15.5:1, secondary 9.2:1, muted 4.9 to 6.4:1 on dark surfaces; text on primary 11.8:1; white on nav-active 5.35:1. **The light-theme values have not had a computed contrast audit** (the figures above are for the dark theme).
 
 ## Component inventory
 
@@ -126,7 +126,7 @@ Routes are split with React Router's native `lazy` (no new dependency): the land
 
 ## Open items for Stage 2
 
-- The 18 remaining screens (references 05 to 22) and the light theme: finalise light tokens and contrast-check them.
+- Contrast-audit the light theme (the screens themselves are built; see `docs/ui/screen-inventory.md`).
 - Mount `ToastProvider` when the first feature needs notifications.
 - Real authentication and the account menu contents, once the auth milestone exists.
 - Decide whether to commission or license a photographic hero; the current vector scene is a stand-in that follows the composition.

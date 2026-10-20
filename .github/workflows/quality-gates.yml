@@ -64,6 +64,10 @@ jobs:
       - run: pytest tests/contract
       - name: Data dictionary matches the models
         run: python scripts/database/generate_data_dictionary.py --check
+      - name: ER diagram matches the models
+        run: python scripts/database/generate_er_diagram.py --check
+      - name: Route permission matrix matches the app
+        run: python scripts/security/generate_route_matrix.py --check
 
   images:
     name: Docker images build
