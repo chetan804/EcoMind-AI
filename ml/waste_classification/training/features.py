@@ -27,9 +27,10 @@ CACHE = REPO / "ml" / "artifacts" / "_cache"
 
 
 def load_config(path: Path | None = None) -> dict:  # type: ignore[type-arg]
-    return yaml.safe_load(
+    loaded: dict = yaml.safe_load(  # type: ignore[type-arg]
         (path or REPO / "ml" / "configs" / "waste_classification.yaml").read_text()
     )
+    return loaded
 
 
 def embedder_for(config: dict, name: str, threads: int = 2) -> TFLiteEmbedder:  # type: ignore[type-arg]

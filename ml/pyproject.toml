@@ -27,5 +27,5 @@ files = ["common", "tests"]
 
 # Libraries without type information (no py.typed / stubs published for them).
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "ai_edge_litert.*"]
+module = ["sklearn.*", "ai_edge_litert.*", "yaml"]
 ignore_missing_imports = true

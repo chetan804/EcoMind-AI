@@ -1,0 +1,65 @@
+# Dataset manifest: RealWaste. EVALUATION AND EXPERIMENT ONLY (non-commercial licence).
+# The image files are NOT in this repository (datasets/external/ is git-ignored). To obtain exactly this
+# content:
+#   git init realwaste-src && cd realwaste-src
+#   git remote add origin https://github.com/sam-single/realwaste.git
+#   git fetch --depth 1 origin 156e8e9154eeb163df30fcfd767f55b19633bb06 && git checkout FETCH_HEAD
+# then verify `files_digest` below (SHA-256 over the sorted "<folder>/<file> <sha256-of-file>" lines).
+name: realwaste
+version: "1.0"
+accessed: "2026-10-20"
+description: >
+  Photographs of waste received at the Whyte's Gully Waste and Resource Recovery facility,
+  Wollongong NSW, Australia, in nine material classes.
+source:
+  url: https://github.com/sam-single/realwaste
+  commit: 156e8e9154eeb163df30fcfd767f55b19633bb06      # 2024-04-14
+  readme_sha256: e812725fd1e38b9dcd8c60253fba55a99c5b90617ce27765fa1f65d1336e13b1
+licence:
+  spdx: CC-BY-NC-SA-4.0
+  evidence: >
+    README.md of the repository states "this dataset is licenced under CC BY-NC-SA 4.0". The
+    repository has no LICENSE file and GitHub reports no licence field.
+  consequence: >
+    NonCommercial + ShareAlike. Not redistributed here. Used ONLY to evaluate the released model and in
+    one documented experiment (docs/ml/dataset-research/experiments/multi-dataset-realwaste.json).
+    No model trained on it may be released, shipped or activated by default. Whether a research or
+    academic deployment qualifies as non-commercial is for the project owner to decide.
+citation: >
+  "RealWaste: A Novel Real-Life Data Set for Landfill Waste Classification Using Deep Learning"
+  (title and link exactly as given in the dataset README): https://www.mdpi.com/2078-2489/14/12/633.
+  Authors, year and pages were NOT verified (the paper was not retrievable from this sandbox);
+  complete them from the MDPI page before citing in the academic report.
+images:
+  total: 4752
+  format: JPEG
+  size_px: [524, 524]            # all 4,752 images, verified by decoding every file
+  total_bytes: 688308374
+  files_digest: 59fabef99c26bb25afb86b718981e6fc6e04b6bcba6bd39de5834ee668f432ef
+  undecodable: 0
+  exact_duplicate_files: 0
+  exact_overlap_with_trashnet: 0
+labels:
+  scope: material_category          # one label per image, whole-image classification
+  classes:
+    - {name: Cardboard,           count: 461, maps_to: cardboard}
+    - {name: Glass,               count: 420, maps_to: glass}
+    - {name: Metal,               count: 790, maps_to: metal}
+    - {name: Paper,               count: 500, maps_to: paper}
+    - {name: Plastic,             count: 921, maps_to: plastic}
+    - {name: Miscellaneous Trash, count: 495, maps_to: trash, mapping: approximate}
+    - {name: Food Organics,       count: 411, maps_to: organic (experiment taxonomy only)}
+    - {name: Vegetation,          count: 436, maps_to: organic (experiment taxonomy only)}
+    - {name: Textile Trash,       count: 318, maps_to: textile (experiment taxonomy only)}
+  counts_verified_against_readme: true
+personal_data:
+  contains: not assessed        # no image was inspected by a person; photographs of received waste, people not expected but not ruled out
+leakage:
+  near_duplicates: >
+    78.7% of images fall in a multi-image near-duplicate group (cosine >= 0.70 on S embeddings, per class;
+    2,043 groups, largest 72). Splits are therefore group-aware; a random split would overstate accuracy.
+  collection: one facility (per the README); camera, period and capture protocol not documented in the README.
+known_limitations:
+  - Single site in Australia; Indian waste streams are not represented.
+  - Labels are the authors' and were not independently audited here.
+  - '"Miscellaneous Trash" is a catch-all class and is not known to be equivalent to TrashNet "trash"; the mapping is approximate.'

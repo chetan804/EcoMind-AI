@@ -1,0 +1,266 @@
+{
+  "dataset": "realwaste",
+  "model": {
+    "name": "waste-material-classifier",
+    "version": "1.0.0",
+    "classes": [
+      "cardboard",
+      "glass",
+      "metal",
+      "paper",
+      "plastic",
+      "trash"
+    ]
+  },
+  "images_found": 4752,
+  "images_decoded": 4752,
+  "undecodable": [],
+  "exact_duplicate_files_within_dataset": 0,
+  "exact_overlap_with_training_images": 0,
+  "mapping": {
+    "Cardboard": "cardboard",
+    "Glass": "glass",
+    "Metal": "metal",
+    "Paper": "paper",
+    "Plastic": "plastic",
+    "Miscellaneous Trash": "trash",
+    "Food Organics": null,
+    "Textile Trash": null,
+    "Vegetation": null
+  },
+  "approximate_mapping": [
+    "Miscellaneous Trash"
+  ],
+  "files_listing_sha256": "c02cc49fce3d9c4086ab9cd617ff36952020a61201cf82cb980c6e7676caeaa9",
+  "in_scope_without_approximate": {
+    "n": 3092,
+    "accuracy": 0.4538,
+    "accuracy_ci95": [
+      0.4366,
+      0.4715
+    ],
+    "macro_f1_over_present_classes": 0.5142,
+    "ece_10_bins": 0.2627,
+    "mean_confidence": 0.7143,
+    "coverage_auto_accepted": 0.3638,
+    "accuracy_on_auto_accepted": 0.5529,
+    "per_class": {
+      "cardboard": {
+        "support": 461,
+        "precision": 0.7267,
+        "recall": 0.2364,
+        "f1": 0.3568
+      },
+      "glass": {
+        "support": 420,
+        "precision": 0.4813,
+        "recall": 0.4286,
+        "f1": 0.4534
+      },
+      "metal": {
+        "support": 790,
+        "precision": 0.7294,
+        "recall": 0.5494,
+        "f1": 0.6267
+      },
+      "paper": {
+        "support": 500,
+        "precision": 0.6179,
+        "recall": 0.456,
+        "f1": 0.5247
+      },
+      "plastic": {
+        "support": 921,
+        "precision": 0.8028,
+        "recall": 0.4908,
+        "f1": 0.6092
+      }
+    },
+    "confusion_true_rows_pred_columns": {
+      "cardboard": {
+        "cardboard": 109,
+        "glass": 1,
+        "metal": 16,
+        "paper": 91,
+        "plastic": 11
+      },
+      "glass": {
+        "cardboard": 3,
+        "glass": 180,
+        "metal": 22,
+        "paper": 23,
+        "plastic": 70
+      },
+      "metal": {
+        "cardboard": 14,
+        "glass": 91,
+        "metal": 434,
+        "paper": 11,
+        "plastic": 23
+      },
+      "paper": {
+        "cardboard": 14,
+        "glass": 0,
+        "metal": 4,
+        "paper": 228,
+        "plastic": 7
+      },
+      "plastic": {
+        "cardboard": 10,
+        "glass": 102,
+        "metal": 119,
+        "paper": 16,
+        "plastic": 452
+      }
+    }
+  },
+  "in_scope_with_approximate": {
+    "n": 3587,
+    "accuracy": 0.4633,
+    "accuracy_ci95": [
+      0.4466,
+      0.4792
+    ],
+    "macro_f1_over_present_classes": 0.4568,
+    "ece_10_bins": 0.2428,
+    "mean_confidence": 0.7023,
+    "coverage_auto_accepted": 0.3312,
+    "accuracy_on_auto_accepted": 0.5589,
+    "per_class": {
+      "cardboard": {
+        "support": 461,
+        "precision": 0.5291,
+        "recall": 0.2364,
+        "f1": 0.3268
+      },
+      "glass": {
+        "support": 420,
+        "precision": 0.47,
+        "recall": 0.4286,
+        "f1": 0.4483
+      },
+      "metal": {
+        "support": 790,
+        "precision": 0.6889,
+        "recall": 0.5494,
+        "f1": 0.6113
+      },
+      "paper": {
+        "support": 500,
+        "precision": 0.4882,
+        "recall": 0.456,
+        "f1": 0.4716
+      },
+      "plastic": {
+        "support": 921,
+        "precision": 0.7521,
+        "recall": 0.4908,
+        "f1": 0.594
+      },
+      "trash": {
+        "support": 495,
+        "precision": 0.1992,
+        "recall": 0.5232,
+        "f1": 0.2886
+      }
+    },
+    "confusion_true_rows_pred_columns": {
+      "cardboard": {
+        "cardboard": 109,
+        "glass": 1,
+        "metal": 16,
+        "paper": 91,
+        "plastic": 11,
+        "trash": 233
+      },
+      "glass": {
+        "cardboard": 3,
+        "glass": 180,
+        "metal": 22,
+        "paper": 23,
+        "plastic": 70,
+        "trash": 122
+      },
+      "metal": {
+        "cardboard": 14,
+        "glass": 91,
+        "metal": 434,
+        "paper": 11,
+        "plastic": 23,
+        "trash": 217
+      },
+      "paper": {
+        "cardboard": 14,
+        "glass": 0,
+        "metal": 4,
+        "paper": 228,
+        "plastic": 7,
+        "trash": 247
+      },
+      "plastic": {
+        "cardboard": 10,
+        "glass": 102,
+        "metal": 119,
+        "paper": 16,
+        "plastic": 452,
+        "trash": 222
+      },
+      "trash": {
+        "cardboard": 56,
+        "glass": 9,
+        "metal": 35,
+        "paper": 98,
+        "plastic": 38,
+        "trash": 259
+      }
+    }
+  },
+  "out_of_scope": {
+    "n": 1165,
+    "by_folder": {
+      "Food Organics": {
+        "n": 411,
+        "sent_to_review": 0.9757,
+        "predicted_as": {
+          "trash": 162,
+          "glass": 11,
+          "plastic": 21,
+          "cardboard": 130,
+          "metal": 76,
+          "paper": 11
+        }
+      },
+      "Textile Trash": {
+        "n": 318,
+        "sent_to_review": 0.8711,
+        "predicted_as": {
+          "paper": 72,
+          "cardboard": 50,
+          "trash": 165,
+          "glass": 3,
+          "metal": 19,
+          "plastic": 9
+        }
+      },
+      "Vegetation": {
+        "n": 436,
+        "sent_to_review": 0.9977,
+        "predicted_as": {
+          "trash": 122,
+          "cardboard": 216,
+          "plastic": 35,
+          "paper": 31,
+          "metal": 29,
+          "glass": 3
+        }
+      }
+    },
+    "overall_sent_to_review": 0.9554,
+    "note": "The model has no class for these; a safe model sends them to a person. 'Predicted as' is what it would say otherwise."
+  },
+  "review_reasons_all_images": {
+    "low_confidence": 3332,
+    "unfamiliar_image": 1614
+  },
+  "seconds": 149.3
+}

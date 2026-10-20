@@ -1,0 +1,112 @@
+# Machine-readable dataset registry. Companion to DATASET_CATALOG.md (read that for the evidence behind each field).
+# verification: verified = read at the source or computed from downloaded files; secondhand = snippet/other README only;
+#               unverified = source unreachable from the sandbox.
+generated: "2026-10-20"
+taxonomy:
+  supported: [cardboard, glass, metal, paper, plastic, trash]
+  unsupported_review_expected: [organic, textile, e_waste, medical, battery, unknown]
+datasets:
+  - id: trashnet-1.0
+    task: image_classification_material
+    url: https://github.com/garythung/trashnet
+    version: {commit: 6fa2b878c6c1b4304b91109070ce0edf9279bb31}
+    licence: {spdx: MIT, verification: verified}
+    images: 2527
+    exact_duplicates: 3
+    near_duplicate_images_pct: 60.98
+    manifest: datasets/manifests/trashnet-1.0.yaml
+    use: train_release_candidate
+    status: ingested
+  - id: realwaste-1.0
+    task: image_classification_material
+    url: https://github.com/sam-single/realwaste
+    version: {commit: 156e8e9154eeb163df30fcfd767f55b19633bb06}
+    licence: {spdx: CC-BY-NC-SA-4.0, verification: verified_readme_statement}
+    images: 4752
+    exact_duplicates: 0
+    near_duplicate_images_pct: 78.7
+    files_digest: 59fabef99c26bb25afb86b718981e6fc6e04b6bcba6bd39de5834ee668f432ef
+    manifest: datasets/manifests/realwaste-1.0.yaml
+    use: evaluation_and_experiment_only
+    redistribute: false
+    release_model_allowed: false
+    status: ingested
+    label_mapping:
+      Cardboard: cardboard
+      Glass: glass
+      Metal: metal
+      Paper: paper
+      Plastic: plastic
+      Miscellaneous Trash: trash          # approximate
+      Food Organics: organic              # experiment taxonomy only
+      Vegetation: organic                 # experiment taxonomy only
+      Textile Trash: textile              # experiment taxonomy only
+  - id: msw-ucloudml
+    task: weekly_waste_forecasting_and_anomaly_experiments
+    url: https://github.com/UCloudMl/solid-waste-prediction
+    version: {commit: 6ff6b1a073e7acbe7725150119a74c5f2fba26d2}
+    licence: {repository: MIT, records: unverified}
+    series_used: [austin, ballarat, boralesgamuwa, dehiwala]
+    series_excluded: {moratuwa: day_month_swapped, homagama: interpolation_gate, kerawalapitiya: per_vehicle_tickets_no_labels}
+    results: docs/ml/dataset-research/experiments/time-series-results.json
+    use: benchmark_reference_series
+    status: ingested
+  - id: ksu-routes
+    task: route_order_validation
+    url: https://github.com/kamthornsa/ksu-waste-collection-dataset
+    version: {commit: 1653571de51c79058548fd7185980b4ef80ed8ab}
+    licence: {spdx: CC-BY-4.0, verification: recorded_earlier_recheck_before_redistribution}
+    results: docs/ml/dataset-research/experiments/route-validation-ksu.json
+    use: algorithm_validation
+    status: ingested
+  - id: trashbox
+    task: image_classification_material
+    url: https://github.com/nikhilvenkatkumsetty/TrashBox
+    version: {commit: 91e66aa8fee5b02c0613f0ee0e262707cc29342f, test_valid_commit: bdd4fca5c46615695a0995ba297becbac80db8ae}
+    licence: {spdx: none, verification: verified_absent}
+    status: rejected_no_licence
+    would_add: [e_waste, medical]
+  - id: taco
+    task: object_detection_segmentation
+    url: https://github.com/pedropro/TACO
+    version: {commit: 29de1a9ba05a647b83a90f18d7772e20bb23d846}
+    licence: {annotations: CC-BY-4.0, images: per_photo_flickr, verification: readme_statement}
+    status: deferred_images_unreachable
+  - id: detect-waste
+    url: https://github.com/wimlds-trojmiasto/detect-waste
+    licence: {code: MIT, data: per_constituent}
+    status: deferred_no_pooled_images
+  - id: spotgarbage-gini
+    url: https://github.com/spotgarbage/spotgarbage-GINI
+    licence: {spdx: none, verification: verified_absent}
+    status: rejected
+  - id: nawanolt-garbage-dataset
+    url: https://github.com/NawanolT/Garbage-Dataset
+    licence: {spdx: MIT}
+    status: rejected_no_images
+  - id: zerowaste
+    licence: {claimed_cc_by_nc: secondhand}
+    status: unverified_unreachable
+  - id: kaggle-garbage-classification-v2
+    licence: unverified
+    status: unverified_unreachable
+  - id: kaggle-waste-pictures
+    licence: unverified
+    status: unverified_unreachable
+  - id: recybat24
+    licence: unverified
+    status: unverified_unreachable
+  - id: globalwastedata
+    licence: secondhand
+    status: not_used
+models:
+  - id: waste-classification-1.0.0
+    registry: ml/model_registry/waste_classification/1.0.0.yaml
+    trained_on: [trashnet-1.0]
+    cross_dataset: {realwaste-1.0: {accuracy_5_classes: 0.4538, ci95: [0.4366, 0.4715], macro_f1: 0.5142, ece: 0.2627, share_sent_to_review_unsupported_classes: 0.9554}}
+    status: candidate_not_default
+experiments:
+  - id: multi-dataset-realwaste
+    file: docs/ml/dataset-research/experiments/multi-dataset-realwaste.json
+    releasable: false
+    reason: realwaste_licence_noncommercial

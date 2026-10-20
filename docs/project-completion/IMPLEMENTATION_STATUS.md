@@ -22,9 +22,9 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 477 passed, 1 skipped (the skip is the classification parity test, which needs the git-ignored model artifact that is not in this sandbox) |
+| Backend pytest (real PostgreSQL 16.2) | 477 passed, 1 skipped (2 further tests for the review-queue image endpoint are green in CI; the skip is the classification parity test, which needs the git-ignored model artifact that is not in this sandbox) |
 | Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
-| Frontend vitest | 22 files, 202 tests passed |
+| Frontend vitest | 23 files, 207 tests passed |
 | Frontend `tsc -b`, ESLint, production build | clean |
 | `scripts/quality/check_structure.py` | passes |
 
@@ -67,19 +67,20 @@ audited screen by screen. The prediction review queue (`/classify/review`) exist
 |---|---|
 | Image preprocessing, classification training/eval/inference | Verified (ML tests); model 1.0.0 is a candidate, not released |
 | Forecasting benchmark (Austin, Ballarat and others) | Verified; `docs/ml/dataset-research/experiments/time-series-results.json` |
-| Multi-dataset research (RealWaste, TrashBox, TACO and others) | **Lost, then partly re-recorded.** See §3 |
+| Dataset research (catalogue, manifest, selection report, ingestion, rejected list) | **Rebuilt and verified** 2026-10-20: `docs/ml/dataset-research/`. RealWaste ingested (4,752 images, checksummed, group-aware); cross-dataset evaluation and a bounded multi-dataset experiment (experiment-only: RealWaste is non-commercial) |
+| Model 1.0.0 on real facility photos (RealWaste, never seen) | **0.454 accuracy (95% CI 0.437–0.472), ECE 0.263**; the review rule sends 64% to a person and 96% of unsupported-class images. Stated in the model card |
 
 ## 3. Blockers, losses and environment limits
 
-- **Lost research work.** A sandbox reset removed uncommitted dataset-research tooling and outputs (`ml/waste_classification/research/`,
-  `ml/configs/datasets.yaml`, ingestion manifests, experiment logs, venv, model artifacts). They were never committed, so they cannot be
-  recovered and **no multi-dataset result is claimed**. Indicative earlier pooled validation macro-F1 (about 0.82–0.86) comes from a lost
-  log and must not be quoted. What survives in Git: the TrashNet manifest, the 1.0.0 candidate's report and card, time-series results,
-  and the KSU routing validation.
-- **Dataset facts verified from the GitHub API / README (accessed 2026-10-20)**, not yet turned into a catalog:
-  RealWaste (`sam-single/realwaste`, 4,752 images, 9 classes, README states CC BY-NC-SA 4.0 — non-commercial, so it cannot feed a
-  releasable model), TrashBox (`nikhilvenkatkumsetty/TrashBox`, no licence file, all rights reserved by default — experiment-only),
-  TACO (images are on Flickr and unreachable from the sandbox). Never auto-activate a model trained on non-commercial or unlicensed data.
+- **Lost research tooling (rebuilt).** A sandbox reset once removed the uncommitted research code and logs. It was rewritten and committed
+  (`ml/waste_classification/research/`, `ml/tests/test_dataset_research.py`); no number from the lost logs is quoted. Every figure in
+  `docs/ml/dataset-research/` was recomputed from re-fetched, checksummed data, and the experiment was run twice with identical output.
+- **What the research concluded** (`DATASET_SELECTION_REPORT.md`): the TrashNet model does not transfer to real photos (0.45); training on
+  real photos would lift it to about 0.79 on the shared classes at some cost on studio images, but the only reachable labelled real-world set
+  is CC BY-NC-SA 4.0, so no such model is released or activated. No taxonomy class was added (organic/textile: RealWaste only; e-waste/medical:
+  TrashBox, which has no licence). **Owner decisions needed:** (A) is the deployment non-commercial research so a clearly-labelled research
+  model trained on RealWaste is acceptable? (B) permission from the TrashBox authors, or an owner-run TACO download with a licence audit.
+- **Unreachable sources** (ZeroWaste, Kaggle sets, RecyBat24, TACO images) are listed as unverified in the catalogue; nothing about them is asserted.
 - **Network allow-list:** github.com, codeload.github.com, api.github.com, registry.npmjs.org, pypi.org, files.pythonhosted.org. Hugging Face,
   PyTorch hosts and Google Cloud Storage are unreachable.
 - Docker is not available in the sandbox; Compose is validated by schema locally and by CI.
@@ -203,14 +204,14 @@ Backend (see each `docs/api/*-api.md`): fleet, collection, forecasting, anomaly 
 passports, rewards, notifications (PRs #7/#8, merged or green earlier); community incidents, analytics, administration and MFA with migration
 `0008` (PR #9). Each module's tests include at least one round of deliberate mutation (break one rule, confirm a test fails); the counts are in §2.
 
-Frontend: every screen listed in `docs/ui/screen-inventory.md`, over the real API, with shared components, form and dialog helpers, and 202 vitest
+Frontend: every screen listed in `docs/ui/screen-inventory.md`, over the real API, with shared components, form and dialog helpers, and 207 vitest
 tests. Visual comparison for screens 05–22: `docs/ui/evidence/screens/` (demonstration data only, seeded by `scripts/demo/seed_demo.py`; real
 public reference series imported from the pinned `msw-src` commit).
 
 Defects found and fixed while capturing the screens (not hidden): chart date labels overlapped on 60-point series; a long table row header made a
 page 2,800 px wide; "1 verified records" was not singular; the app had no light theme although references 05–22 are light.
 
-**CI on PR #9, head `4e9e2fb` (from the check-runs API):** all 9 project jobs `success` (contract/docs, Docker, end-to-end, both lint jobs,
+**CI on PR #9, head `998aa4a` (`gh pr checks 9`, 2026-10-20):** all 9 project jobs pass, including End-to-end (with the core-workflow spec) and Tests on Python 3.11 and 3.12; GitGuardian fails (false positive below). Earlier, head `4e9e2fb`: all 9 project jobs `success` (contract/docs, Docker, end-to-end, both lint jobs,
 frontend, ML, structure, Python 3.11, Python 3.12). The later commits on this branch (`e4b0b98`, `3738208` and what follows) have **not** yet
 been checked; re-run `gh pr checks 9` before relying on them.
 
@@ -222,6 +223,6 @@ incident as a false positive in the GitGuardian dashboard.
 **Not done yet (next actions):**
 1. Extend the Playwright core-workflow spec beyond collection (recovery, passport). It currently covers report → verified task → assignment (collector and vehicle) → collected weight → reward → analytics, passes locally (21 specs: 20 passed, 1 skipped) and needs `E2E_ADMIN_*` (CI creates the administrator); its CI result is not yet confirmed.
 2. Locations and Zones (needs a backend decision); Marketplace (needs a backend).
-3. Dataset research artifacts under `docs/ml/dataset-research/` (catalog, manifest, selection report) rebuilt from re-fetched, checksummed data,
-   and any multi-dataset experiments. Until then, only model 1.0.0 (TrashNet-trained candidate) exists.
+3. (Done) Dataset research artifacts. Remaining there: the two owner decisions above; forecasting/anomaly datasets beyond the five ingested
+   series were not found.
 4. Light-theme contrast audit; password reset and email verification; debounce on users search and audit filters.

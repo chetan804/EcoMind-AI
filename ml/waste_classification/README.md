@@ -1,6 +1,6 @@
 # Waste classification
 
-**Status:** `1.0.0` trained and evaluated on TrashNet; **candidate**, not validated on field data.
+**Status:** `1.0.0` trained and evaluated on TrashNet; **candidate**. Measured on real facility photos (RealWaste, never seen) it reaches only 0.45 accuracy, so it is decision support behind a review gate, not an unattended classifier (`docs/ml/dataset-research/DATASET_SELECTION_REPORT.md`).
 Evidence: [model card](../../docs/ml/model-cards/waste-classification-1.0.0.md),
 [evaluation report](../../docs/ml/reports/waste-classification-1.0.0.md),
 [registry manifest](../model_registry/waste_classification/1.0.0.yaml).
@@ -24,6 +24,7 @@ the overfit-resistant choice here. "Confidence" is **calibrated** (mean confiden
 ## Layout
 | Path | Purpose |
 |---|---|
+| `research/` | Cross-dataset evaluation (`cross_dataset.py`) and the bounded multi-dataset experiment (`multi_dataset_experiment.py`); never trains a released model. Evidence: `docs/ml/dataset-research/`. |
 | `data/fetch.py` | Fetch TrashNet and the backbones at pinned commits; verify SHA-256 (all git-ignored). |
 | `data/trashnet.py` | Loader, near-duplicate grouping, group-aware stratified split. |
 | `training/features.py` | Embedding extraction with cache; hand-crafted baseline features. |

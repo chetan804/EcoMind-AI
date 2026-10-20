@@ -472,7 +472,7 @@ Class counts: cardboard 403, glass 501, metal 410, paper 594, plastic 482, trash
 **Review rule:** needs review when calibrated confidence < {rule["min_confidence"]:.2f} or similarity to the training images < {rule["min_novelty_similarity"]:.3f}.
 
 ## Known weaknesses
-- **Studio-to-field gap.** Accuracy on real streets, bins and mixed piles will be lower than the test score; this has not been measured.
+- **Studio-to-field gap, measured on one real-world dataset.** On RealWaste (4,752 photographs from a recycling facility in Wollongong, Australia; never seen in training; CC BY-NC-SA 4.0, evaluation only) this model reaches 0.45 accuracy (95% CI 0.44-0.47) and macro-F1 0.51 on the five mappable material classes, with ECE 0.26 (over-confident). The review rule sends 64% of those images to a person; the auto-accepted 36% are 55% accurate. 96% of food, vegetation and textile images (classes this model does not have) are sent to review. Details: `docs/ml/dataset-research/experiments/cross-dataset-realwaste.json` and `docs/ml/dataset-research/DATASET_SELECTION_REPORT.md`. Treat every field prediction as a suggestion.
 - Glass is frequently confused with metal and plastic; `trash` is the weakest class (F1 {tc["per_class"][5]["f1"]:.2f}, 23 test images).
 - Worst synthetic stress: **{worst[0]}** (accuracy {worst[1]["accuracy"]:.2f}; auto-accepted accuracy {worst[1]["accepted_accuracy"]:.2f}), where the model is over-confident.
 - Only six classes: items outside them will be forced into one (mitigated, not solved, by the novelty gate; tested only on a ten-input smoke set).
