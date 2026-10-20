@@ -12,7 +12,7 @@ from app.api.deps import AppSettings, DbSession
 from app.common.enums import SortOrder
 from app.common.pagination import Page, PageParams, page_params
 from app.integrations.mapping.base import RoadRouteProvider
-from app.integrations.mapping.google_routes import GoogleRoutesProvider
+from app.integrations.mapping.factory import build_road_route_provider
 from app.modules.audit.service import RequestContext
 from app.modules.auth.dependencies import Principal, require_permissions
 from app.modules.route_planning import service
@@ -35,10 +35,7 @@ Pagination = Annotated[PageParams, Depends(page_params)]
 
 def get_road_route_provider(settings: AppSettings) -> RoadRouteProvider:
     """Routing provider for this request. Tests replace it through ``dependency_overrides``."""
-    return GoogleRoutesProvider(
-        settings.google_maps_server_api_key,
-        timeout_seconds=settings.google_routes_timeout_seconds,
-    )
+    return build_road_route_provider(settings)
 
 
 RoadRouting = Annotated[RoadRouteProvider, Depends(get_road_route_provider)]

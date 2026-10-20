@@ -12,7 +12,7 @@ Two operator steps, both optional and both run once per region, not by the app:
 Examples
   python scripts/maps/prepare_offline_maps.py assets --all-ranges
   python scripts/maps/prepare_offline_maps.py tiles --bbox 78.2,17.2,78.7,17.6 \
-      --source https://build.protomaps.com/20261001.pmtiles --maxzoom 15
+      --source <URL of a build from https://maps.protomaps.com/builds> --maxzoom 15
 
 The tile step needs the `pmtiles` CLI (https://github.com/protomaps/go-pmtiles/releases) and network
 access to the source. Map data is (c) OpenStreetMap contributors under the ODbL; the app shows that

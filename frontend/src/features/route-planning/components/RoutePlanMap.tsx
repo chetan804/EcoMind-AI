@@ -9,9 +9,9 @@ import type { PlanDetail } from '../api/routes-api';
 import { useRoadRoute } from '../hooks/useRoutes';
 
 const REASON_TEXT: Record<string, string> = {
-  not_configured: 'Road routing is not configured on this server (no routing key), so only straight lines are shown.',
+  not_configured: 'Road routing is not configured on this server (no routing provider is enabled), so only straight lines are shown.',
   too_few_points: 'The plan has too few located points for a road route.',
-  access_denied: 'The routing provider rejected the request (check the server key and that the Routes API is enabled).',
+  access_denied: 'The routing provider rejected the request (check the provider's credentials and access).',
   quota_exceeded: 'The routing provider quota was exceeded.',
   provider_error: 'The routing provider reported an error.',
   timeout: 'The routing provider did not answer in time.',

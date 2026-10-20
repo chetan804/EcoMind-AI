@@ -8,4 +8,4 @@ Fonts and sprites used by the built-in offline map (`frontend/src/features/maps`
 | `sprites/v4/light*` | POI/shield icons for the `light` basemap flavour | `protomaps/basemaps-assets` (`sprites/v4`), derived from tangrams/icons | MIT |
 
 Other scripts (Devanagari, Telugu, Arabic and so on) are **not** included: place names in those scripts render without labels until the matching ranges are copied from the same repository
-(`scripts/maps/fetch_map_assets.py --all-ranges`). The tile file itself (`/map-assets/tiles/region.pmtiles`) is not part of the repository; see `docs/maps/OFFLINE_MAPS.md`.
+(`python scripts/maps/prepare_offline_maps.py assets --all-ranges`). The tile file itself (`/map-assets/tiles/region.pmtiles`) is not part of the repository; see `docs/maps/OFFLINE_MAPS.md`.
