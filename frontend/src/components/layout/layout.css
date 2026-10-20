@@ -77,3 +77,9 @@
   .page-header__title { font-size: var(--text-2xl); }
   .user-tools__name { display: none; }
 }
+
+.user-tools__bell { position: relative; display: inline-flex; }
+.user-tools__badge {
+  position: absolute; top: 0; right: 0; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center;
+  border-radius: 9px; background: var(--color-danger); color: #fff; font-size: 11px; font-weight: var(--font-weight-bold); pointer-events: none;
+}

@@ -44,3 +44,5 @@
 .status-page__text { color: var(--color-text-muted); max-width: 48ch; }
 
 .page-loading { display: grid; place-items: center; min-height: 100dvh; background: var(--color-bg); }
+
+.query-loading { display: grid; gap: var(--space-3); padding: var(--space-4) 0; }

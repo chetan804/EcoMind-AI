@@ -34,12 +34,12 @@ export interface NavItem {
  */
 export const primaryNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, status: 'available' },
-  { id: 'analytics', label: 'Analytics', to: '/analytics', icon: LineChart, status: 'planned' },
+  { id: 'analytics', label: 'Analytics', to: '/analytics', icon: LineChart, status: 'available' },
   { id: 'classification', label: 'Classification', to: '/classify', icon: ScanSearch, status: 'available' },
   { id: 'collections', label: 'Collections', to: '/collection', icon: ClipboardList, status: 'planned' },
-  { id: 'forecasting', label: 'Forecasting', to: '/forecasts', icon: TrendingUp, status: 'planned' },
-  { id: 'anomalies', label: 'Anomalies', to: '/alerts', icon: TriangleAlert, status: 'planned' },
-  { id: 'alerts', label: 'Alerts', to: '/notifications', icon: Bell, status: 'planned' },
+  { id: 'forecasting', label: 'Forecasting', to: '/forecasts', icon: TrendingUp, status: 'available' },
+  { id: 'anomalies', label: 'Anomalies', to: '/anomalies', icon: TriangleAlert, status: 'available' },
+  { id: 'alerts', label: 'Alerts', to: '/notifications', icon: Bell, status: 'available' },
   { id: 'vehicles', label: 'Vehicles', to: '/fleet', icon: Truck, status: 'planned' },
   { id: 'facilities', label: 'Facilities', to: '/facilities', icon: Building2, status: 'planned' },
   { id: 'marketplace', label: 'Marketplace', to: '/circular-economy', icon: Store, status: 'planned' },

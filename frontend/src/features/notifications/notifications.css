@@ -1,0 +1,4 @@
+.notification-list { display: grid; gap: var(--space-3); }
+.notification { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.notification--unread { border-left: 4px solid var(--color-teal); }
+.notification__title { font-weight: var(--font-weight-semibold); }

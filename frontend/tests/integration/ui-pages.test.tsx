@@ -71,14 +71,14 @@ describe('application navigation', () => {
     renderAt('/dashboard');
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     expect(within(nav).getByRole('link', { name: /^Dashboard/ })).toHaveAttribute('aria-current', 'page');
-    expect(within(nav).getByRole('link', { name: /^Analytics/ })).toHaveTextContent('Soon');
+    expect(within(nav).getByRole('link', { name: /^Marketplace/ })).toHaveTextContent('Soon');
     expect(within(nav).getByRole('link', { name: /^Classification/ })).not.toHaveTextContent('Soon');
   });
 
   it('an unbuilt destination says plainly that it is not built yet', async () => {
     renderAt('/dashboard');
-    await userEvent.click(await screen.findByRole('link', { name: /^Analytics/ }));
-    expect(await screen.findByRole('heading', { name: 'Analytics is not built yet' })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('link', { name: /^Marketplace/ }));
+    expect(await screen.findByRole('heading', { name: 'Marketplace is not built yet' })).toBeInTheDocument();
   });
 
   it('the mobile drawer opens, and closes with Escape', async () => {
@@ -97,11 +97,11 @@ describe('application navigation', () => {
     renderAt('/dashboard');
     await userEvent.click(await screen.findByRole('button', { name: 'Search pages…' }));
     const dialog = screen.getByRole('dialog', { name: 'Search pages' });
-    await userEvent.type(within(dialog).getByRole('searchbox', { name: 'Page name' }), 'fore');
+    await userEvent.type(within(dialog).getByRole('searchbox', { name: 'Page name' }), 'market');
     const results = within(dialog).getByRole('list', { name: 'Pages' });
     expect(within(results).getAllByRole('link')).toHaveLength(1);
-    await userEvent.click(within(results).getByRole('link', { name: /Forecasting/ }));
-    expect(await screen.findByRole('heading', { name: 'Forecasting is not built yet' })).toBeInTheDocument();
+    await userEvent.click(within(results).getByRole('link', { name: /Marketplace/ }));
+    expect(await screen.findByRole('heading', { name: 'Marketplace is not built yet' })).toBeInTheDocument();
   });
 
   it('page search reports when nothing matches', async () => {
@@ -139,12 +139,12 @@ describe('application navigation', () => {
 describe('dashboard', () => {
   beforeEach(() => signInViaRefresh(fetchSpy));
 
-  it('labels all content as demonstration data and makes no data request (only the session restore)', async () => {
+  it('shows a citizen only the destinations they may use, and requests no data', async () => {
     renderAt('/dashboard');
-    expect(await screen.findByText(/Demonstration data, not live/)).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: /Key metrics \(demonstration data\)/ })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /Waste generation trend.*demonstration data.*\(kg per day\)/i })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /Not live data/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /Good (morning|afternoon|evening), Asha Verma/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Classify an item' })).toHaveAttribute('href', '/classify');
+    expect(screen.queryByRole('link', { name: 'Collections' })).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/demonstration data/i);
     expect(dataCalls(fetchSpy)).toEqual([]);
   });
 });
@@ -176,7 +176,7 @@ describe('sign-in', () => {
     );
     renderAt('/sign-in');
     await submitSignIn();
-    expect(await screen.findByText(/Demonstration data, not live/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /Good (morning|afternoon|evening)/ })).toBeInTheDocument();
     const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('/api/v1/auth/login');
     expect(JSON.parse(String(init.body))).toEqual({ email: 'asha@example.org', password: 'a long passphrase 1' });

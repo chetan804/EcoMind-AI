@@ -5,6 +5,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { IconButton, IconLink } from '@/components/ui/IconButton';
 import { Menu, type MenuItem } from '@/components/ui/Menu';
 import { PageSearch } from '@/components/navigation/PageSearch';
+import { useUnreadCount } from '@/features/notifications';
 import { useAuth } from '@/services/session';
 import './layout.css';
 
@@ -19,7 +20,8 @@ const ROLE_LABELS: Record<string, string> = {
 /** Search, notifications and the account menu, showing the real signed-in user (or "Guest"). */
 export function UserTools({ showSearch = true }: { showSearch?: boolean }) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const { status, user, signOut } = useAuth();
+  const { status, user, signOut, can } = useAuth();
+  const unread = useUnreadCount(status === 'authenticated' && can('notifications:read_own')).data?.unread ?? 0;
   const navigate = useNavigate();
 
   const items: MenuItem[] =
@@ -44,7 +46,18 @@ export function UserTools({ showSearch = true }: { showSearch?: boolean }) {
       {showSearch && (
         <IconButton label="Search pages" icon={<Search size={20} aria-hidden="true" />} onClick={() => setSearchOpen(true)} />
       )}
-      <IconLink label="Notifications" to="/notifications" icon={<Bell size={20} aria-hidden="true" />} />
+      <span className="user-tools__bell">
+        <IconLink
+          label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+          to="/notifications"
+          icon={<Bell size={20} aria-hidden="true" />}
+        />
+        {unread > 0 && (
+          <span className="user-tools__badge" aria-hidden="true">
+            {unread > 99 ? '99+' : unread}
+          </span>
+        )}
+      </span>
       <Menu
         label="Account menu"
         align="end"
