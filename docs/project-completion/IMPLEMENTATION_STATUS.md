@@ -51,7 +51,7 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 | community_incidents | **Verified** | 9 tests; 6 mutations (2 equivalent survivors). |
 | analytics | **Verified** | Query-based; `recovery_rate` is null without verified input. |
 | circular surplus marketplace | **Planned** | No backend; the nav item says "Soon". |
-| locations and zones | **Verified** (named zones only) | Zones live in the facilities module (`/api/v1/zones`, migration 0009, 11 tests, 4/4 mutations caught). No geometry: no verified map data. Collection tasks are not linked to zones (future). |
+| locations and zones | **Verified** (named zones only) | Zones live in the facilities module (`/api/v1/zones`, migration 0009, 13 tests, 4/4 mutations caught). No geometry: no verified map data. Collection tasks are not linked to zones (future). |
 
 ### Frontend screens (see `docs/ui/screen-inventory.md` for routes and permissions)
 

@@ -82,7 +82,7 @@ def handcrafted_features(samples: list[Sample]) -> NDArray[np.float32]:
         stats = [gray.mean() / 255, gray.std() / 255, magnitude.mean() / 255]
         rows.append(
             np.concatenate(
-                [hist.ravel() / hist.sum(), orient / max(orient.sum(), 1e-9), stats]
+                [hist.ravel() / hist.sum(), orient / max(float(orient.sum()), 1e-9), stats]
             ).astype(np.float32)
         )
     return np.stack(rows)
