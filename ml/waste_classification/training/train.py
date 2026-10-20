@@ -104,7 +104,16 @@ def git_state() -> tuple[str, bool]:
             text=True,
             check=True,
         ).stdout.strip()
-        return head, not dirty
+        # `git status` does not list ignored files, but an ignored .py file used by the run would be
+        # code that is missing from the recorded commit, so it counts as "not clean" too.
+        hidden = subprocess.run(  # noqa: S603
+            ["git", "ls-files", "--others", "--ignored", "--exclude-standard", "--", *code_paths],  # noqa: S607
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.split()
+        return head, not dirty and not [path for path in hidden if path.endswith(".py")]
     except (OSError, subprocess.CalledProcessError):
         return "unknown", False
 

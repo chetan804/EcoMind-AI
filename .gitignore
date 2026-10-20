@@ -53,6 +53,8 @@ ml/artifacts/*
 ml/*/data/*
 !ml/*/data/.gitkeep
 !ml/*/data/*.md
+# source modules (loaders, fetch scripts) live in data/ packages; only data FILES are ignored
+!ml/*/data/*.py
 ml/**/.ipynb_checkpoints/
 ml/notebooks/**/*.csv
 ml/notebooks/**/*.parquet
