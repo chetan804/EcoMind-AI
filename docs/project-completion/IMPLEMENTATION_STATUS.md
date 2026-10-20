@@ -29,7 +29,7 @@ Latest local results on this branch (run in this sandbox; remote CI is reported 
 | Backend pytest (real PostgreSQL 16.2) | 623 passed, 1 skipped (the classification parity test needs the git-ignored model artifact); one more test (transport scheme guard) was added after that run and passes in the re-run of the affected files (58 passed) |
 | Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
 | Frontend vitest | 301 tests passed |
-| Playwright e2e (local, real stack) | 21 passed, 1 skipped on the full suite plus the tracking spec failing on the new provider; after adapting the spec (list view reached through the map's disclosure) the tracking spec passes on its own (1 passed). **The full suite was not re-run after that spec change.** |
+| Playwright e2e (local, real stack, Chromium without extra GL flags) | 22 passed, 1 skipped (the no-model classification test). The first run after the provider change failed the tracking spec (it assumed the Google fallback text); fixed, then the full suite passed. |
 | Contract tests (`pytest tests/contract`) | 37 passed (map script 5, TACO scripts 27, others 5) |
 | Frontend `tsc -b`, ESLint, production build | clean; no `AIza` key material in the bundle |
 | Generated docs (data dictionary, ER diagram, route matrix) `--check` | up to date at `5542389` |
