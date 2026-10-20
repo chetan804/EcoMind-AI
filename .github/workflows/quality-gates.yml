@@ -45,13 +45,7 @@ jobs:
         run: ruff format --check .
       - name: Types (mypy)
         working-directory: ml
-        shell: bash
-        run: |
-          # TEMPORARY DIAGNOSTIC: surface mypy output as annotations (job logs are not retrievable by API clients)
-          python --version
-          mypy > /tmp/mypy.txt 2>&1 && rc=0 || rc=$?
-          { python --version; pip list 2>/dev/null | grep -i -E "^(numpy|scikit-learn|mypy|ai-edge-litert|pillow|pyyaml) "; head -40 /tmp/mypy.txt; } | while IFS= read -r line; do echo "::error::${line}"; done
-          exit $rc
+        run: mypy
       - name: Tests (pytest)
         working-directory: ml
         run: pytest
