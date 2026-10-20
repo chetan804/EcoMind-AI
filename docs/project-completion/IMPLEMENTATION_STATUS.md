@@ -48,7 +48,7 @@ no dataset, no training code, no model.
 | users / roles / permissions | models + seed migration `0002` | none (no user-management API yet) | **Partial**: RBAC seeded and enforced (38 permissions, 5 roles, drift-guard test); first admin via CLI; no user-admin endpoints |
 | audit | models | written by auth events; **no read endpoint yet** | **Partial** |
 | waste_reports + media | models + migration `0003` (idempotency) | create (idempotent), list/filter/search/sort, detail, review workflow, photo upload/download | **Verified locally (backend only)**: 90 tests incl. races and mutation checks; **no UI yet** |
-| classification | models | none | Missing (no model artifact exists) |
+| classification | models + migration `0004` | model status, model registry/activation, predict, get/list, one-time review | **Verified locally**: 34 backend tests incl. a real-artifact parity test and 7/7 mutation checks; real model served end to end in a browser (see Phase D). UI wired. |
 | collection | models | none | Missing |
 | facilities | models | list/filter/search/sort, detail, create, partial update (no delete by design) | **Verified locally (backend only)**: 32 tests; **no UI yet** |
 | fleet | models | none | Missing |
@@ -67,23 +67,20 @@ no dataset, no training code, no model.
 
 ### Frontend screens (22 reference screens)
 
-Screens 01–04 exist; **02 (sign-in/up) is now wired to real authentication and sign-out exists**. 01 landing is static; 03 dashboard still shows labelled demonstration data; 04 classification still shows "not connected". Screens 05–22: Missing. See `docs/ui/screen-inventory.md`.
+Screens 01–04 exist; **02 (sign-in/up) is now wired to real authentication and sign-out exists**. 01 landing is static; 03 dashboard still shows labelled demonstration data; **04 classification is now wired to the real API** (upload, prediction, calibrated confidence, needs-review state, review form for permitted roles). Screens 05–22: Missing. See `docs/ui/screen-inventory.md`.
 
 ### ML
 
 | Area | Status |
 |---|---|
 | Image preprocessing | Verified (7 tests) |
-| Waste-image dataset | Blocked — see Blockers |
-| Classification training/eval/inference | Missing |
+| Waste-image dataset | **Resolved**: TrashNet (MIT) is fetched from GitHub; manifest `datasets/manifests/trashnet-1.0.yaml` |
+| Classification training/eval/inference | **Verified (candidate model 1.0.0)**: deterministic pipeline, report, model card, 36 ML tests; see Phase D |
 | Forecasting, anomaly detection | Missing |
 
 ## 3. Blockers and environment limits (known at start)
 
-- **No waste-image dataset is reachable.** The sandbox can reach only github.com, codeload,
-  api.github.com, registry.npmjs.org, pypi.org and files.pythonhosted.org. TrashNet/TACO and
-  similar are hosted elsewhere. Consequence: no classification model will be trained here and
-  none will be claimed. The inference path, registry and "no active model" state are still built.
+- **Dataset (resolved in Phase D).** The sandbox reaches only github.com, codeload, api.github.com, registry.npmjs.org, pypi.org and files.pythonhosted.org, so HuggingFace/TACO/GCS are unreachable. TrashNet (MIT) lives in a GitHub repository, and an ImageNet-pretrained TFLite backbone (Apache-2.0) lives in `google-coral/test_data`; both are fetched at pinned commits with SHA-256 verification. Limits that remain: TrashNet is studio photography of six classes, so field accuracy is unmeasured and organic/e-waste are not covered.
 - Docker is not available in the sandbox; Compose is validated by schema and CI only.
 - No deployment target or credentials: nothing will be deployed.
 
@@ -156,3 +153,41 @@ Known limitations of this increment (also in `docs/security/security-baseline.md
 **CI on PR #6, head `7d4814a` (Phase C part 1; from the check-runs API, not inferred):** 17 check runs, all `success`: Backend lint/type-check; Tests on Python 3.11 and 3.12 with PostgreSQL 16 (push and pull_request); Frontend lint/type-check/test/build; Structure/templates/Compose; ML tests; Contract tests and generated docs; **Docker images build** (confirms the new Pillow dependency installs in the slim image); **End-to-end (Compose stack + Playwright)**. The PR's merge state is `CLEAN`.
 
 **GitGuardian, read carefully:** it posted **no check at all** for the four Phase C commits (neither pass nor fail; the reason is not known), while its **failure on the earlier commits `46bb072` and `2477278` still stands** (the two false positives described above, not yet dismissed in its dashboard). `CLEAN` therefore only means the head commit has no failing check; it is not a scanner approval of the new code. The Phase C tests deliberately contain no password-like literals.
+
+### Phase D: AI/ML waste classification (this branch)
+
+**Scope boundary.** Done: material-category classifier (training, evaluation, serving, API, UI). **Not done:** forecasting and anomaly-detection baselines; object-level labels (the data has none, so `object_label` is always null); any field-data evaluation.
+
+**Commits:** `000d03a` (ML pipeline), `80b97d2` (backend classification), `5909054` (report, model card, registry) and the frontend/e2e commit after it. The registered model was trained from `000d03a` with a clean code tree (recorded in the registry manifest).
+
+**Model:** frozen EfficientNet-EdgeTPU-M TFLite backbone, L2-normalised features, multinomial logistic regression (C = 0.03, picked by a pre-declared one-standard-error rule on grouped CV over the train split only), temperature scaling, review rule. Evidence: `docs/ml/reports/waste-classification-1.0.0.md` (all numbers come from the JSON next to it), model card `docs/ml/model-cards/waste-classification-1.0.0.md`.
+
+| Held-out result (group-aware test split, n = 421, evaluated once) | Value |
+|---|---|
+| Accuracy | 0.867 (95% CI 0.813–0.912) |
+| Macro-F1 | 0.841 (95% CI 0.781–0.887); baseline (hand-crafted features) 0.592 |
+| Calibration | ECE 0.031; mean confidence 0.869 vs accuracy 0.867 |
+| With the review rule | 73.6% auto-accepted at 96.1% accuracy; 78.6% of errors sent to review |
+| Weakest | `trash` F1 0.65 (n = 23); glass is confused with metal; occlusion drops accuracy to 0.66 (over-confident) |
+| Latency, bytes to decision, 2 CPU cores (shared sandbox) | p50 about 24 ms, p95 about 26 ms |
+
+**On "high confidence without overfitting or underfitting".** Raw confidence was not maximised: that would be a defect. Accuracy and macro-F1 were maximised on properly held-out data and confidence was *calibrated*; "higher confidence" is an operating point (review threshold 0.81). Over/underfitting evidence: train 0.976 vs grouped-CV 0.843 vs validation 0.821 vs test 0.841 macro-F1 (no selection overfitting; a real generalisation gap that regularisation does not close and the learning curve attributes to data diversity); C = 0.003 underfits, C >= 1 trains to 1.0 without a held-out gain. A leakage control showed a naive random split would have reported 0.893 accuracy; the grouped split reports 0.867.
+
+**Reproducibility:** three full training runs gave identical test metrics. Command: `python -m ml.waste_classification.data.fetch && python -m ml.waste_classification.training.train && python -m ml.waste_classification.evaluation.report`.
+
+Migration `0004_classification_runtime`: richer prediction columns, one-active-model partial unique index, seed of the six material categories. Verified: upgrade, downgrade to `0003` and re-upgrade (test), schema test.
+
+| Check | Command (from the directory shown) | Result |
+|---|---|---|
+| Backend lint/format/types | `cd backend && ruff check . && ruff format --check . && mypy` | clean (149 source files) |
+| Backend tests, real PostgreSQL 16.2 | `cd backend && pytest` | **293 passed** (259 + 34 new: API 17, runtime unit 11, schema 3, CLI 2, real-artifact parity 1 (it RAN locally; it is skipped where the git-ignored artifact is absent)) |
+| ML | `cd ml && ruff check . && ruff format --check . && mypy && pytest` | clean; **36 passed** |
+| Contract / structure / env | `pytest tests/contract`; `check_structure.py`; `check_env_templates.py` | 5 passed; ok; ok |
+| Data dictionary | `generate_data_dictionary.py --check` | up to date |
+| Backend mutation checks | break one rule, run classification tests | **7/7 caught**: second review, correction equal to prediction, cross-user read, no idempotent replay, artifact hash unchecked, low-confidence never flagged, unfamiliar image never flagged |
+| Frontend | `cd frontend && npm run lint && npm run typecheck && npx vitest run` | clean; **134 passed** (127 + 7 net: 11 classification tests replace 5, +1 raw-body test); UI mutation checks 4/4 caught |
+| E2E, real stack with the real model activated | `cd tests/e2e && npx playwright test` | **19 passed, 1 skipped** (the no-model test, which does not apply while a model is active; CI has no model so it runs the other way round). Evidence: `docs/ui/evidence/classification-real-model-result.png` (a real TrashNet photo: Plastic, 67%, flagged for review) |
+
+Defects found and fixed during this phase: the first provenance record named the parent commit because the code was uncommitted (now records `code_tree_clean` and the training was re-run from the commit); the report's latency line printed 8 backbone passes instead of 1; its regularisation wording overstated "worse or no better" (C = 0.1–0.3 are within one SE); mutable class attribute in a test double; `app.cli --help` collapsed its text.
+
+Known limitations: TrashNet only (studio photographs, six classes); no field evaluation; the novelty gate is smoke-tested on 10 non-waste inputs only; timings come from a shared sandbox; the UI category list is a constant that mirrors the model card; `evaluation_metrics` is copied from the artifact at registration; uploaded images are stored when classified (no purge of unattached media); `ai-edge-litert` 2.3.0 has cp311 and cp312 x86_64 wheels (checked on PyPI), but the Docker image itself could not be built here.

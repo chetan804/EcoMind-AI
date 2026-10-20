@@ -324,7 +324,47 @@ describe('sign-up', () => {
 });
 
 describe('classification', () => {
-  beforeEach(() => signInViaRefresh(fetchSpy));
+  const model = {
+    id: 'model-1',
+    name: 'waste-material-classifier',
+    version: '1.0.0',
+    status: 'active',
+    evaluation_metrics: { accuracy: 0.867, n_test: 421, dataset: 'TrashNet 1.0' },
+  };
+  const category = (code: string, name: string) => ({ id: `cat-${code}`, code, name });
+  const prediction = (over: Record<string, unknown> = {}) => ({
+    id: 'pred-1',
+    model_name: model.name,
+    model_version: model.version,
+    material_category: category('plastic', 'Plastic'),
+    confidence: 0.91,
+    class_probabilities: { cardboard: 0.01, glass: 0.04, metal: 0.03, paper: 0.01, plastic: 0.91, trash: 0 },
+    needs_review: false,
+    review_reasons: [],
+    inference_ms: 24.4,
+    review: { status: 'unreviewed', corrected_category: null, notes: null },
+    ...over,
+  });
+  const json = (body: unknown, status = 200) => Response.json(body, { status });
+  const apiError = (status: number, code: string, message: string) => json({ error: { code, message, request_id: 'r1' } }, status);
+
+  interface Backend {
+    active?: typeof model | null;
+    predict?: () => Response;
+    review?: () => Response;
+  }
+  function useBackend(options: Backend = {}, user = testUser) {
+    const { active = model, predict = () => json(prediction(), 201), review = () => json(prediction()) } = options;
+    signInViaRefresh(fetchSpy, user, (url, init) => {
+      const method = init?.method ?? 'GET';
+      if (url.endsWith('/classification/model')) return json({ active, scope: 'material_category', note: 'n' });
+      if (url.includes('/waste-reports/media') && method === 'POST') return json({ id: 'media-1' }, 201);
+      if (url.endsWith('/classification/predictions') && method === 'POST') return predict();
+      if (url.endsWith('/review') && method === 'POST') return review();
+      return new Response('{}', { status: 404 });
+    });
+  }
+  const callsTo = (suffix: string) => dataCalls(fetchSpy).filter(([url]) => String(url).includes(suffix));
 
   const png = () => new File(['x'], 'bottle.png', { type: 'image/png' });
 
@@ -334,49 +374,167 @@ describe('classification', () => {
     await userEvent.upload(input, file, { applyAccept: false });
   }
 
-  it('starts empty and says what will happen', async () => {
+  it('starts empty, asks the server which model is active and uploads nothing', async () => {
+    useBackend();
     renderAt('/classify');
     expect(await screen.findByRole('heading', { level: 1, name: 'AI waste classification' })).toBeInTheDocument();
-    expect(screen.getByText('No image yet')).toBeInTheDocument();
-    expect(screen.getByText(/No model has been trained yet/)).toBeInTheDocument();
+    expect(await screen.findByText('No image yet')).toBeInTheDocument();
+    expect(callsTo('/classification/model')).toHaveLength(1);
+    expect(callsTo('/waste-reports/media')).toHaveLength(0);
   });
 
-  it('rejects an unsupported file with an error', async () => {
+  it('says so when no model is active: no classify button, no upload, no prediction', async () => {
+    useBackend({ active: null });
+    renderAt('/classify');
+    expect(await screen.findByText('No classification model is active')).toBeInTheDocument();
+    await pick(png());
+    expect(await screen.findByRole('img', { name: 'Selected image: bottle.png' })).toHaveAttribute('src', 'blob:preview');
+    expect(screen.queryByRole('button', { name: 'Classify image' })).not.toBeInTheDocument();
+    expect(callsTo('/waste-reports/media')).toHaveLength(0);
+    expect(callsTo('/classification/predictions')).toHaveLength(0);
+  });
+
+  it('reports a model-status failure and lets the user retry', async () => {
+    let fail = true;
+    signInViaRefresh(fetchSpy, testUser, (url) =>
+      url.endsWith('/classification/model') && fail
+        ? apiError(400, 'bad_request', 'Model status is unavailable.')
+        : json({ active: model, scope: 'material_category', note: 'n' }),
+    );
+    renderAt('/classify');
+    expect(await screen.findByText('Could not check the classification model')).toBeInTheDocument();
+    fail = false;
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('No image yet')).toBeInTheDocument();
+  });
+
+  it('rejects an unsupported file with an error before anything is sent', async () => {
+    useBackend();
     renderAt('/classify');
     await screen.findByText('No image yet');
     await pick(new File(['x'], 'notes.pdf', { type: 'application/pdf' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Use a JPEG, PNG or WebP image.');
+    expect(callsTo('/waste-reports/media')).toHaveLength(0);
   });
 
-  it('previews a valid image locally and reports that classification is unavailable (no upload, no result)', async () => {
+  it('uploads the image as a raw body, classifies it, and shows the server result', async () => {
+    useBackend();
+    renderAt('/classify');
+    await screen.findByText('No image yet');
+    const file = png();
+    await pick(file);
+    await userEvent.click(await screen.findByRole('button', { name: 'Classify image' }));
+
+    expect(await screen.findByText('Plastic', { selector: 'p' })).toBeInTheDocument();
+    const [uploadUrl, uploadInit] = callsTo('/waste-reports/media')[0] as [string, RequestInit];
+    expect(uploadUrl).toContain('filename=bottle.png');
+    expect(uploadInit.body).toBe(file);
+    expect(uploadInit.headers).toMatchObject({ 'Content-Type': 'image/png', Authorization: 'Bearer test-access-token' });
+    const [, predictInit] = callsTo('/classification/predictions')[0] as [string, RequestInit];
+    expect(JSON.parse(String(predictInit.body))).toEqual({ media_id: 'media-1' });
+
+    expect(screen.getByText('91%', { selector: 'strong' })).toBeInTheDocument();
+    expect(screen.getByText('Confident')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Calibrated confidence' })).toHaveAttribute('aria-valuenow', '91');
+    expect(screen.getByRole('progressbar', { name: 'glass probability' })).toHaveAttribute('aria-valuenow', '4');
+    expect(screen.getByText(/waste-material-classifier 1\.0\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/87% accuracy on 421 held-out studio photos/)).toBeInTheDocument();
+    expect(screen.getByText(/not been measured on real-world/)).toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Review this result' })).not.toBeInTheDocument();
+  });
+
+  it('flags a low-confidence result for review with the reasons', async () => {
+    useBackend({
+      predict: () =>
+        json(prediction({ confidence: 0.52, needs_review: true, review_reasons: ['low_confidence', 'unfamiliar_image'] }), 201),
+    });
     renderAt('/classify');
     await screen.findByText('No image yet');
     await pick(png());
-    expect(await screen.findByRole('img', { name: 'Selected image: bottle.png' })).toHaveAttribute('src', 'blob:preview');
-    expect(screen.getByText('Classification is not available yet')).toBeInTheDocument();
-    expect(screen.getByText(/Nothing was uploaded/)).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Classify image' }));
+    expect(await screen.findByText('Needs review')).toBeInTheDocument();
+    expect(screen.getByText(/not confident enough/)).toBeInTheDocument();
+    expect(screen.getByText(/unlike the photos the model was trained on/)).toBeInTheDocument();
+  });
+
+  it('shows a failure instead of a prediction, and a retry can succeed', async () => {
+    let fail = true;
+    useBackend({
+      predict: () => (fail ? apiError(503, 'model_unavailable', 'x') : json(prediction(), 201)),
+    });
+    renderAt('/classify');
+    await screen.findByText('No image yet');
+    await pick(png());
+    await userEvent.click(await screen.findByRole('button', { name: 'Classify image' }));
+    expect(await screen.findByText('The model is unavailable')).toBeInTheDocument();
     expect(screen.queryByText('Plastic', { selector: 'p' })).not.toBeInTheDocument();
-    expect(dataCalls(fetchSpy)).toEqual([]);
-    await userEvent.click(screen.getByRole('button', { name: 'Try another image' }));
-    expect(screen.getByText('No image yet')).toBeInTheDocument();
+    fail = false;
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Plastic', { selector: 'p' })).toBeInTheDocument();
   });
 
-  it('the layout preview is labelled as a sample and shows no confidence or accuracy figure', async () => {
+  it('explains an image the server cannot decode, using the server message', async () => {
+    useBackend({ predict: () => apiError(422, 'invalid_image', 'The image could not be read.') });
     renderAt('/classify');
-    await userEvent.click(await screen.findByRole('switch', { name: /layout preview/i }));
-    expect(screen.getByText('Sample layout')).toBeInTheDocument();
-    expect(screen.getByText(/not a model result/i)).toBeInTheDocument();
-    expect(screen.getByText('Not connected')).toBeInTheDocument();
-    expect(screen.getByText('Not evaluated')).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/\d+(\.\d+)?\s*%\s*(confidence|accuracy)/i);
-    const verify = screen.getByRole('button', { name: 'Verify result' });
-    expect(verify).toHaveAttribute('aria-disabled', 'true');
-    expect(verify).toHaveAccessibleDescription(/not built yet/);
+    await screen.findByText('No image yet');
+    await pick(png());
+    await userEvent.click(await screen.findByRole('button', { name: 'Classify image' }));
+    expect(await screen.findByText('This image cannot be analysed')).toBeInTheDocument();
+    expect(screen.getByText('The image could not be read.')).toBeInTheDocument();
   });
 
-  it('states that the classes are planned, not supported', async () => {
+  it('keeps Classify image unavailable, with the reason, for a role without the permission', async () => {
+    useBackend({}, { ...testUser, permissions: ['sorting_guide:read'] });
     renderAt('/classify');
-    expect(await screen.findByRole('heading', { name: 'Planned waste classes' })).toBeInTheDocument();
-    expect(screen.queryByText(/supported waste classes/i)).not.toBeInTheDocument();
+    await screen.findByText('No image yet');
+    await pick(png());
+    const button = await screen.findByRole('button', { name: 'Classify image' });
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveAccessibleDescription('Your role is not allowed to classify images.');
+    await userEvent.click(button);
+    expect(callsTo('/waste-reports/media')).toHaveLength(0);
+  });
+
+  it('lets a reviewer correct a prediction, requires the category, and shows the saved review', async () => {
+    const reviewer = {
+      ...testUser,
+      roles: ['manager'],
+      permissions: [...testUser.permissions, 'classification:review'],
+    };
+    useBackend(
+      {
+        review: () =>
+          json(prediction({ review: { status: 'corrected', corrected_category: category('glass', 'Glass'), notes: null } })),
+      },
+      reviewer,
+    );
+    renderAt('/classify');
+    await screen.findByText('No image yet');
+    await pick(png());
+    await userEvent.click(await screen.findByRole('button', { name: 'Classify image' }));
+    const form = await screen.findByRole('form', { name: 'Review this result' });
+
+    await userEvent.click(within(form).getByRole('radio', { name: 'No, correct it' }));
+    await userEvent.click(within(form).getByRole('button', { name: 'Save review' }));
+    expect(await within(form).findByText('Choose the correct category.')).toBeInTheDocument();
+    expect(callsTo('/review')).toHaveLength(0);
+
+    const select = within(form).getByRole('combobox', { name: /Correct category/ });
+    expect(within(select).queryByRole('option', { name: 'plastic' })).not.toBeInTheDocument(); // not the predicted one
+    await userEvent.selectOptions(select, 'glass');
+    await userEvent.click(within(form).getByRole('button', { name: 'Save review' }));
+
+    expect(await screen.findByText(/Corrected by a reviewer/)).toBeInTheDocument();
+    const [, init] = callsTo('/review')[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ decision: 'corrected', material_category_code: 'glass' });
+    expect(screen.queryByRole('form', { name: 'Review this result' })).not.toBeInTheDocument();
+  });
+
+  it('states the model scope: six material categories, not organic or e-waste', async () => {
+    useBackend();
+    renderAt('/classify');
+    expect(await screen.findByRole('heading', { name: 'Material categories' })).toBeInTheDocument();
+    expect(screen.getByText(/does not recognise organic waste, e-waste or hazardous/)).toBeInTheDocument();
+    expect(screen.queryByText(/Planned waste classes/)).not.toBeInTheDocument();
   });
 });

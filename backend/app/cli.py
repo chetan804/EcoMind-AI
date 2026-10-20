@@ -88,7 +88,11 @@ def activate_model(*, version: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m app.cli", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="python -m app.cli",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     admin = sub.add_parser("create-admin", help="create an administrator account")
     admin.add_argument("--email", required=True)

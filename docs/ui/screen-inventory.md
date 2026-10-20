@@ -1,6 +1,6 @@
 # Screen inventory
 
-Reference list of screens the product needs, mapped to features and API areas. **Six screens have a UI** (System status, Not found, Landing, Sign in / Sign up, Dashboard, Classify). System status and **Sign in / Sign up / Sign out** talk to the backend (real authentication; see `docs/api/auth-api.md`); all pages other than Landing and the auth pages now require a signed-in user. The Landing, Sign-in/Sign-up, Dashboard and Classify UIs are the Stage 1 UI milestone: they render labelled demonstration content or an honest "not available yet" state (see `design-system.md`). Everything else is **Not started**: sidebar entries for those screens route to a "planned, not built" page and are tagged "Soon". Roles are provisional until the authorization milestone.
+Reference list of screens the product needs, mapped to features and API areas. **Six screens have a UI** (Classify is now functional) (System status, Not found, Landing, Sign in / Sign up, Dashboard, Classify). System status and **Sign in / Sign up / Sign out** talk to the backend (real authentication; see `docs/api/auth-api.md`); all pages other than Landing and the auth pages now require a signed-in user. The Landing, Sign-in/Sign-up, Dashboard and Classify UIs are the Stage 1 UI milestone: they render labelled demonstration content or an honest "not available yet" state (see `design-system.md`). Everything else is **Not started**: sidebar entries for those screens route to a "planned, not built" page and are tagged "Soon". Roles are provisional until the authorization milestone.
 
 | Screen | Route (proposed) | Feature | Backend | Primary roles | Status |
 |---|---|---|---|---|---|
@@ -9,7 +9,7 @@ Reference list of screens the product needs, mapped to features and API areas. *
 | Landing | `/` | landing | — | public | **UI only** (static content; stats are repository facts, not product metrics) |
 | Sign in / Sign up | `/sign-in`, `/sign-up` | auth | auth | all | **Implemented** (real registration and sign-in; server errors, rate-limit and policy messages; return-to-page after sign-in) |
 | Dashboard (Operational Command Center) | `/dashboard` | dashboard | analytics | managers | **UI only** (labelled demonstration data; no analytics API) |
-| Classify an item (upload, object + material + confidence + guidance) | `/classify` | waste-classification | classification, sorting_guide | citizens, staff | **UI only** (local preview and validation; no model, no result) |
+| Classify an item (upload, object + material + confidence + guidance) | `/classify` | waste-classification | classification, sorting_guide | citizens, staff | **Working** (real upload, prediction, calibrated confidence, needs-review state; review form for reviewers). Needs an activated model artifact; without one the page says so |
 | Sign out | account menu | auth | auth | all | **Implemented** (revokes the server session, clears the client session and query cache) |
 | Prediction review queue | `/classification/review` | waste-classification | classification | staff | Not started |
 | Waste reports list / detail / create | `/reports`, `/reports/:id`, `/reports/new` | waste-reports | waste_reports | citizens, staff | Not started (API implemented and tested; no UI yet) |
@@ -41,7 +41,7 @@ Reference list of screens the product needs, mapped to features and API areas. *
 | 01 Landing Page | Landing | landing | **UI only** |
 | 02 Login / Sign Up | Sign in / Sign up | auth | **Implemented** |
 | 03 Operational Command Center | Dashboard | dashboard (analytics) | **UI only** |
-| 04 AI Waste Classification | Classify an item | waste-classification | **UI only** |
+| 04 AI Waste Classification | Classify an item | waste-classification | **Working** (needs an active model) |
 | 05 Fill Level Forecasting | Forecasts | forecasting | Not started |
 | 06 Anomaly Detection | Anomaly alerts | anomaly-alerts | Not started |
 | 07 Route Optimization | Route plans | route-planning | Not started |

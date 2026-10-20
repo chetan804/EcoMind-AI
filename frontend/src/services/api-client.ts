@@ -33,6 +33,10 @@ export class ApiError extends Error {
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  /**
+   * A `Blob`/`File` is sent as the raw request body with its own content type (image upload).
+   * Anything else is sent as JSON.
+   */
   body?: unknown;
   signal?: AbortSignal;
   /**
@@ -100,6 +104,7 @@ function toApiError(response: Response, body: unknown): ApiError {
 
 async function send(path: string, options: RequestOptions, token: string | null): Promise<Response> {
   const { method = 'GET', body, signal, versioned = true, headers = {} } = options;
+  const raw = body instanceof Blob;
   try {
     return await fetch(buildUrl(path, versioned), {
       method,
@@ -109,11 +114,13 @@ async function send(path: string, options: RequestOptions, token: string | null)
       credentials: 'include',
       headers: {
         Accept: 'application/json',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(body !== undefined
+          ? { 'Content-Type': raw ? body.type || 'application/octet-stream' : 'application/json' }
+          : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : raw ? body : JSON.stringify(body),
     });
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;

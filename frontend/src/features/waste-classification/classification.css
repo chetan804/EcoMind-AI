@@ -47,3 +47,13 @@
   .dropzone__stage { min-height: 200px; }
   .classes__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.result__confidence { margin-top: var(--space-2); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.result__reasons { margin: 0; padding-left: var(--space-5); color: var(--color-text-secondary); }
+.result__subhead { font-size: var(--text-base); font-weight: var(--font-weight-medium); margin-bottom: var(--space-2); }
+.result__probs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.result__probs li { display: grid; grid-template-columns: 88px minmax(0, 1fr) 44px; align-items: center; gap: var(--space-3); }
+.result__prob-name { text-transform: capitalize; color: var(--color-text-secondary); }
+.result__prob-value { text-align: right; font-variant-numeric: tabular-nums; }
+.result__caveat { color: var(--color-text-muted); font-size: var(--text-sm); }
+.review { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
