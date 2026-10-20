@@ -67,18 +67,13 @@ describe('application navigation', () => {
     expect(labels.join(' ')).not.toMatch(/\bbins?\b/i);
   });
 
-  it('marks the current page and flags unbuilt destinations as "Soon"', async () => {
+  it('marks the current page, and no destination is flagged "Soon" now that every entry is built', async () => {
     renderAt('/dashboard');
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     expect(within(nav).getByRole('link', { name: /^Dashboard/ })).toHaveAttribute('aria-current', 'page');
-    expect(within(nav).getByRole('link', { name: /^Marketplace/ })).toHaveTextContent('Soon');
-    expect(within(nav).getByRole('link', { name: /^Classification/ })).not.toHaveTextContent('Soon');
-  });
-
-  it('an unbuilt destination says plainly that it is not built yet', async () => {
-    renderAt('/dashboard');
-    await userEvent.click(await screen.findByRole('link', { name: /^Marketplace/ }));
-    expect(await screen.findByRole('heading', { name: 'Marketplace is not built yet' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: /^Marketplace/ })).not.toHaveTextContent('Soon');
+    expect(within(nav).getByRole('link', { name: /^Marketplace/ })).toHaveAttribute('href', '/marketplace');
+    for (const link of within(nav).getAllByRole('link')) expect(link).not.toHaveTextContent('Soon');
   });
 
   it('the mobile drawer opens, and closes with Escape', async () => {
@@ -101,7 +96,7 @@ describe('application navigation', () => {
     const results = within(dialog).getByRole('list', { name: 'Pages' });
     expect(within(results).getAllByRole('link')).toHaveLength(1);
     await userEvent.click(within(results).getByRole('link', { name: /Marketplace/ }));
-    expect(await screen.findByRole('heading', { name: 'Marketplace is not built yet' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Circular surplus marketplace' })).toBeInTheDocument();
   });
 
   it('page search reports when nothing matches', async () => {

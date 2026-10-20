@@ -53,7 +53,7 @@ export const primaryNav: NavItem[] = [
   { id: 'vehicles', label: 'Vehicles', to: '/fleet', icon: Truck, status: 'available', anyOf: ['fleet:read'] },
   { id: 'facilities', label: 'Facilities', to: '/facilities', icon: Building2, status: 'available', anyOf: ['facilities:read'] },
   { id: 'locations', label: 'Zones', to: '/locations', icon: MapPinned, status: 'available', anyOf: ['facilities:read'] },
-  { id: 'marketplace', label: 'Marketplace', to: '/circular-economy', icon: Store, status: 'planned' },
+  { id: 'marketplace', label: 'Marketplace', to: '/marketplace', icon: Store, status: 'available', anyOf: ['marketplace:read'] },
   { id: 'reports', label: 'Reports', to: '/reports', icon: FileText, status: 'available', anyOf: ['waste_reports:read_own', 'waste_reports:read_all', 'waste_reports:create'] },
   { id: 'guide', label: 'Guide', to: '/sorting-guide', icon: BookOpen, status: 'available', anyOf: ['sorting_guide:read'] },
   { id: 'recovery', label: 'Recovery', to: '/recovery', icon: Recycle, status: 'available', anyOf: ['circular_economy:read'] },
