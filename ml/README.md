@@ -2,7 +2,7 @@
 
 Model training, evaluation and inference code for EcoMind AI. It is **separate from the API**: the backend never trains models, and nothing here imports `backend/app`. The backend calls the `inference/` code of a capability through the owning module's service (for example `backend/app/modules/classification`).
 
-**Status:** no model has been trained and no dataset has been acquired. The only implemented code is shared image preprocessing (`common/preprocessing/images.py`, tested). Nothing in this repository may claim a model is trained, accurate or production-ready without evidence stored under `docs/ml/model-cards/`.
+**Status:** one model exists: the waste *material* classifier `1.0.0` (candidate; TrashNet only; see `waste_classification/README.md`, its model card and evaluation report). Shared code: image preprocessing (`common/preprocessing`) and classification metrics (`common/evaluation`). Forecasting and anomaly detection have no models yet. Nothing in this repository may claim a model is accurate or production-ready beyond the evidence stored under `docs/ml/`.
 
 ## Layout
 | Path | Responsibility |

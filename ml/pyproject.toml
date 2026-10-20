@@ -16,8 +16,16 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
+# Orchestration script that assembles large report dictionaries; long literals are intentional.
+"waste_classification/training/train.py" = ["E501"]
+"waste_classification/evaluation/report.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
 files = ["common", "tests"]
+
+# Libraries without type information (no py.typed / stubs published for them).
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "ai_edge_litert.*"]
+ignore_missing_imports = true

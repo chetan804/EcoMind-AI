@@ -1,2 +1,9 @@
-# Runtime dependencies actually imported by ml/ code today.
+# Runtime dependencies actually imported by ml/ code.
+# Serving (the backend image) needs only: numpy, pillow, ai-edge-litert.
 pillow>=10.3
+numpy>=2,<3
+ai-edge-litert>=2,<3
+# Training / evaluation only (never installed in the API image):
+scikit-learn>=1.5,<2
+pyyaml>=6,<7
+matplotlib>=3.8,<4
