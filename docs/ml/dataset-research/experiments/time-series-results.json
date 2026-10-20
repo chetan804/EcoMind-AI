@@ -1,0 +1,508 @@
+{
+  "protocol": {
+    "granularity": "weekly totals (Monday start)",
+    "season_weeks": 52,
+    "horizon_weeks": 4,
+    "split": "chronological 70% development / 30% test",
+    "max_interpolated_fraction": 0.25,
+    "seed": 42
+  },
+  "excluded": {
+    "moratuwa": "ticket_date appears day/month-swapped for days <= 12 (series ends 2018-12-11)",
+    "kerawalapitiya": "per-vehicle tickets; used for anomaly experiments only, not forecasting"
+  },
+  "series": {
+    "boralesgamuwa": {
+      "name": "Boralesgamuwa UC",
+      "country": "Sri Lanka",
+      "rows": 2988,
+      "non_positive_rows_dropped": 5,
+      "unparseable_rows": 0,
+      "observed_days": 2412,
+      "day_coverage": 0.943,
+      "weekday_presence": [
+        0.953,
+        0.942,
+        0.942,
+        0.939,
+        0.942,
+        0.947,
+        0.939
+      ],
+      "week_rule": "operating weekdays [0, 1, 2, 3, 4, 5, 6]; week complete if >= 6 of 7 present",
+      "forecast": {
+        "weeks": 365,
+        "weeks_interpolated": 30,
+        "first_week": "2012-01-02",
+        "last_week": "2018-12-24",
+        "split_week": "2016-11-21",
+        "n_development": 255,
+        "n_test_weeks": 110,
+        "selected_on_development": "naive",
+        "development_backtest_mae": {
+          "naive": 23061.802884615387,
+          "moving_average": 24536.09775641025,
+          "ses": 29282.500534946128,
+          "holt_damped": 28464.432811093156,
+          "seasonal_naive": 49706.666666666664,
+          "holt_winters": 35807.8778274023
+        },
+        "models": {
+          "naive": {
+            "model": "naive",
+            "mae": 26356.666666666664,
+            "rmse": 32946.01740888868,
+            "wape": 0.13677330141142913,
+            "mase": 1.1182872934021775,
+            "bias": 1896.0194174757285,
+            "n_scored": 103
+          },
+          "moving_average": {
+            "model": "moving_average",
+            "mae": 21726.881067961163,
+            "rmse": 28295.045803502715,
+            "wape": 0.1127478406363422,
+            "mase": 0.9218500704525598,
+            "bias": 40.51375404530735,
+            "n_scored": 103
+          },
+          "ses": {
+            "model": "ses",
+            "mae": 21096.060558539662,
+            "rmse": 26900.56423185555,
+            "wape": 0.10947430818389682,
+            "mase": 0.8950849802753666,
+            "bias": 284.8762818454464,
+            "n_scored": 103
+          },
+          "holt_damped": {
+            "model": "holt_damped",
+            "mae": 21224.533552490786,
+            "rmse": 27055.44875897353,
+            "wape": 0.1101409962650239,
+            "mase": 0.9005359623171351,
+            "bias": 530.6172706023442,
+            "n_scored": 103
+          },
+          "seasonal_naive": {
+            "model": "seasonal_naive",
+            "mae": 32568.300970873788,
+            "rmse": 41731.23201136897,
+            "wape": 0.16900748874974558,
+            "mase": 1.3818407920864788,
+            "bias": -5608.592233009709,
+            "n_scored": 103
+          },
+          "holt_winters": {
+            "model": "holt_winters",
+            "mae": 22474.00595598677,
+            "rmse": 28138.618040069527,
+            "wape": 0.11662491427369795,
+            "mase": 0.9535498403601187,
+            "bias": 952.9584566955158,
+            "n_scored": 103
+          },
+          "selected": {
+            "model": "naive",
+            "mae": 26356.666666666664,
+            "rmse": 32946.01740888868,
+            "wape": 0.13677330141142913,
+            "mase": 1.1182872934021775,
+            "bias": 1896.0194174757285,
+            "n_scored": 103
+          }
+        },
+        "selected_vs_naive_mae_ratio": 1.0,
+        "beats_naive": false,
+        "interval_80_empirical_coverage": 0.8252427184466019,
+        "interval_n": 103
+      },
+      "anomaly": {
+        "season_used": 52,
+        "scored_weeks": 261,
+        "alerts_on_clean_series": 11,
+        "clean_alert_rate_per_100_weeks": 4.21455938697318,
+        "injected": 10,
+        "injected_detected": 10,
+        "injected_recall": 1.0,
+        "injected_critical": 9,
+        "alerts_not_injected": 11,
+        "note": "injected anomalies are synthetic; this is sensitivity, not real-incident recall"
+      }
+    },
+    "dehiwala": {
+      "name": "Dehiwala MC",
+      "country": "Sri Lanka",
+      "rows": 3583,
+      "non_positive_rows_dropped": 0,
+      "unparseable_rows": 0,
+      "observed_days": 2125,
+      "day_coverage": 0.831,
+      "weekday_presence": [
+        0.835,
+        0.835,
+        0.827,
+        0.84,
+        0.829,
+        0.829,
+        0.821
+      ],
+      "week_rule": "operating weekdays [0, 1, 2, 3, 4, 5, 6]; week complete if >= 6 of 7 present",
+      "forecast": {
+        "weeks": 365,
+        "weeks_interpolated": 66,
+        "first_week": "2012-01-02",
+        "last_week": "2018-12-24",
+        "split_week": "2016-11-21",
+        "n_development": 255,
+        "n_test_weeks": 110,
+        "selected_on_development": "naive",
+        "development_backtest_mae": {
+          "naive": 37099.93827160494,
+          "moving_average": 37883.53780864197,
+          "ses": 50481.07282088645,
+          "holt_damped": 57287.30293105562,
+          "seasonal_naive": 328202.2723765432,
+          "holt_winters": 73454.17436740363
+        },
+        "models": {
+          "naive": {
+            "model": "naive",
+            "mae": 197093.54166666666,
+            "rmse": 266577.6043475637,
+            "wape": 0.20183375456302535,
+            "mase": 2.4795748140576874,
+            "bias": 24085.787037037036,
+            "n_scored": 96
+          },
+          "moving_average": {
+            "model": "moving_average",
+            "mae": 137031.62905092593,
+            "rmse": 193650.38346825683,
+            "wape": 0.1403273184466485,
+            "mase": 1.7239538812419484,
+            "bias": 23322.016782407412,
+            "n_scored": 96
+          },
+          "ses": {
+            "model": "ses",
+            "mae": 137514.54660334237,
+            "rmse": 192970.8990838323,
+            "wape": 0.14082185044360981,
+            "mase": 1.7300293223249612,
+            "bias": 35937.50639227239,
+            "n_scored": 96
+          },
+          "holt_damped": {
+            "model": "holt_damped",
+            "mae": 142700.00953397382,
+            "rmse": 199357.97563694272,
+            "wape": 0.14613202673648296,
+            "mase": 1.7952660783002996,
+            "bias": 30604.462733741297,
+            "n_scored": 96
+          },
+          "seasonal_naive": {
+            "model": "seasonal_naive",
+            "mae": 310909.85918209876,
+            "rmse": 406701.0275103809,
+            "wape": 0.3183874198958464,
+            "mase": 3.9114638143444376,
+            "bias": 205387.32445987655,
+            "n_scored": 96
+          },
+          "holt_winters": {
+            "model": "holt_winters",
+            "mae": 135885.14513835893,
+            "rmse": 187166.6332267953,
+            "wape": 0.13915326093739305,
+            "mase": 1.7095303105339275,
+            "bias": 29061.711574674526,
+            "n_scored": 96
+          },
+          "selected": {
+            "model": "naive",
+            "mae": 197093.54166666666,
+            "rmse": 266577.6043475637,
+            "wape": 0.20183375456302535,
+            "mase": 2.4795748140576874,
+            "bias": 24085.787037037036,
+            "n_scored": 96
+          }
+        },
+        "selected_vs_naive_mae_ratio": 1.0,
+        "beats_naive": false,
+        "interval_80_empirical_coverage": 0.59375,
+        "interval_n": 96
+      },
+      "anomaly": {
+        "season_used": 52,
+        "scored_weeks": 261,
+        "alerts_on_clean_series": 15,
+        "clean_alert_rate_per_100_weeks": 5.747126436781609,
+        "injected": 10,
+        "injected_detected": 9,
+        "injected_recall": 0.9,
+        "injected_critical": 9,
+        "alerts_not_injected": 13,
+        "note": "injected anomalies are synthetic; this is sensitivity, not real-incident recall"
+      }
+    },
+    "homagama": {
+      "name": "Homagama PS",
+      "country": "Sri Lanka",
+      "rows": 2729,
+      "non_positive_rows_dropped": 0,
+      "unparseable_rows": 0,
+      "observed_days": 2054,
+      "day_coverage": 0.804,
+      "weekday_presence": [
+        0.813,
+        0.816,
+        0.802,
+        0.811,
+        0.819,
+        0.83,
+        0.734
+      ],
+      "week_rule": "operating weekdays [0, 1, 2, 3, 4, 5, 6]; week complete if >= 6 of 7 present",
+      "excluded": "126 of 362 weeks interpolated (> 25% gate)"
+    },
+    "austin": {
+      "name": "Austin (TX)",
+      "country": "USA",
+      "rows": 5591,
+      "non_positive_rows_dropped": 303,
+      "unparseable_rows": 0,
+      "observed_days": 5288,
+      "day_coverage": 0.783,
+      "weekday_presence": [
+        0.904,
+        0.897,
+        0.904,
+        0.889,
+        0.899,
+        0.9,
+        0.089
+      ],
+      "week_rule": "operating weekdays [0, 1, 2, 3, 4, 5]; week complete if >= 5 of 6 present",
+      "forecast": {
+        "weeks": 875,
+        "weeks_interpolated": 2,
+        "first_week": "2004-09-27",
+        "last_week": "2021-06-28",
+        "split_week": "2016-06-20",
+        "n_development": 612,
+        "n_test_weeks": 263,
+        "selected_on_development": "holt_winters",
+        "development_backtest_mae": {
+          "naive": 768613.9166666666,
+          "moving_average": 677525.2916666666,
+          "ses": 705995.7703310222,
+          "holt_damped": 763598.6758686038,
+          "seasonal_naive": 623617.0833333334,
+          "holt_winters": 586389.1723471492
+        },
+        "models": {
+          "naive": {
+            "model": "naive",
+            "mae": 695654.8128934363,
+            "rmse": 913059.6584490367,
+            "wape": 0.07055219065316445,
+            "mase": 1.3444549355986457,
+            "bias": 47543.619538996136,
+            "n_scored": 259
+          },
+          "moving_average": {
+            "model": "moving_average",
+            "mae": 734246.2617683398,
+            "rmse": 1044544.5392376051,
+            "wape": 0.07446607323995985,
+            "mase": 1.4190385695362357,
+            "bias": -17997.985706563693,
+            "n_scored": 259
+          },
+          "ses": {
+            "model": "ses",
+            "mae": 673377.2190460222,
+            "rmse": 916777.4173190979,
+            "wape": 0.0682928329670166,
+            "mase": 1.301400218738653,
+            "bias": -3578.7339213104437,
+            "n_scored": 259
+          },
+          "holt_damped": {
+            "model": "holt_damped",
+            "mae": 678809.8103894203,
+            "rmse": 912874.3978636676,
+            "wape": 0.06884379763095096,
+            "mase": 1.3118994981360643,
+            "bias": 11711.236286871625,
+            "n_scored": 259
+          },
+          "seasonal_naive": {
+            "model": "seasonal_naive",
+            "mae": 725900.488569112,
+            "rmse": 1077542.528600985,
+            "wape": 0.0736196583643825,
+            "mase": 1.402909139018219,
+            "bias": -284394.31868494215,
+            "n_scored": 259
+          },
+          "holt_winters": {
+            "model": "holt_winters",
+            "mae": 559290.4947315702,
+            "rmse": 848415.1278324197,
+            "wape": 0.056722341143133806,
+            "mase": 1.0809108945106283,
+            "bias": -42028.600259233004,
+            "n_scored": 259
+          },
+          "selected": {
+            "model": "holt_winters",
+            "mae": 559290.4947315702,
+            "rmse": 848415.1278324197,
+            "wape": 0.056722341143133806,
+            "mase": 1.0809108945106283,
+            "bias": -42028.600259233004,
+            "n_scored": 259
+          }
+        },
+        "selected_vs_naive_mae_ratio": 0.803977036262157,
+        "beats_naive": true,
+        "interval_80_empirical_coverage": 0.8494208494208494,
+        "interval_n": 259
+      },
+      "anomaly": {
+        "season_used": 52,
+        "scored_weeks": 771,
+        "alerts_on_clean_series": 16,
+        "clean_alert_rate_per_100_weeks": 2.0752269779507135,
+        "injected": 10,
+        "injected_detected": 10,
+        "injected_recall": 1.0,
+        "injected_critical": 10,
+        "alerts_not_injected": 16,
+        "note": "injected anomalies are synthetic; this is sensitivity, not real-incident recall"
+      }
+    },
+    "ballarat": {
+      "name": "Ballarat",
+      "country": "Australia",
+      "rows": 3891,
+      "non_positive_rows_dropped": 8,
+      "unparseable_rows": 0,
+      "observed_days": 3878,
+      "day_coverage": 0.721,
+      "weekday_presence": [
+        0.987,
+        0.986,
+        0.989,
+        0.987,
+        0.985,
+        0.111,
+        0.0
+      ],
+      "week_rule": "operating weekdays [0, 1, 2, 3, 4]; week complete if >= 4 of 5 present",
+      "forecast": {
+        "weeks": 767,
+        "weeks_interpolated": 5,
+        "first_week": "2000-07-10",
+        "last_week": "2015-03-16",
+        "split_week": "2010-10-18",
+        "n_development": 536,
+        "n_test_weeks": 231,
+        "selected_on_development": "holt_winters",
+        "development_backtest_mae": {
+          "naive": 17222.083333333332,
+          "moving_average": 15715.416666666666,
+          "ses": 15594.037286402017,
+          "holt_damped": 15762.964443692908,
+          "seasonal_naive": 24726.875,
+          "holt_winters": 14090.734235599763
+        },
+        "models": {
+          "naive": {
+            "model": "naive",
+            "mae": 25158.95575221239,
+            "rmse": 37063.837699657444,
+            "wape": 0.06225464869755534,
+            "mase": 1.8095685452556955,
+            "bias": -736.4778761061947,
+            "n_scored": 226
+          },
+          "moving_average": {
+            "model": "moving_average",
+            "mae": 19912.146017699117,
+            "rmse": 26873.995702988563,
+            "wape": 0.04927166561900233,
+            "mase": 1.4321895335023282,
+            "bias": -379.0265486725664,
+            "n_scored": 226
+          },
+          "ses": {
+            "model": "ses",
+            "mae": 19768.79560241778,
+            "rmse": 27901.872041538394,
+            "wape": 0.048916951781437616,
+            "mase": 1.4218789941859404,
+            "bias": -368.6961080025824,
+            "n_scored": 226
+          },
+          "holt_damped": {
+            "model": "holt_damped",
+            "mae": 19780.163613677734,
+            "rmse": 27954.154478142733,
+            "wape": 0.04894508138881672,
+            "mase": 1.4226966432092436,
+            "bias": -689.7606151598741,
+            "n_scored": 226
+          },
+          "seasonal_naive": {
+            "model": "seasonal_naive",
+            "mae": 23135.466076696168,
+            "rmse": 32556.83588443897,
+            "wape": 0.057247618988807786,
+            "mase": 1.6640281935603825,
+            "bias": -10412.610619469027,
+            "n_scored": 226
+          },
+          "holt_winters": {
+            "model": "holt_winters",
+            "mae": 18385.402476613668,
+            "rmse": 25765.480002394146,
+            "wape": 0.04549381077726558,
+            "mase": 1.3223778578576593,
+            "bias": 26.685060658190807,
+            "n_scored": 226
+          },
+          "selected": {
+            "model": "holt_winters",
+            "mae": 18385.402476613668,
+            "rmse": 25765.480002394146,
+            "wape": 0.04549381077726558,
+            "mase": 1.3223778578576593,
+            "bias": 26.685060658190807,
+            "n_scored": 226
+          }
+        },
+        "selected_vs_naive_mae_ratio": 0.7307696971881243,
+        "beats_naive": true,
+        "interval_80_empirical_coverage": 0.8097345132743363,
+        "interval_n": 226
+      },
+      "anomaly": {
+        "season_used": 52,
+        "scored_weeks": 663,
+        "alerts_on_clean_series": 17,
+        "clean_alert_rate_per_100_weeks": 2.5641025641025643,
+        "injected": 10,
+        "injected_detected": 10,
+        "injected_recall": 1.0,
+        "injected_critical": 10,
+        "alerts_not_injected": 18,
+        "note": "injected anomalies are synthetic; this is sensitivity, not real-incident recall"
+      }
+    }
+  }
+}
