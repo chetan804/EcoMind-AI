@@ -7,8 +7,8 @@
 3. **Design:** modular monolith, PostgreSQL as the only authority, RBAC, audit, MFA, isolated ML package.
 4. **Evidence:** held-out accuracy 0.867, but only 0.454 on real facility photos: I report both, and the
    system abstains and asks for review instead of pretending.
-5. **Completeness:** 19 backend modules, 19 of 22 reference screens, nine migrations, end-to-end tests.
-6. **Limits:** no marketplace, no sensors, no map geometry, no redemption, straight-line routes.
+5. **Completeness:** 20 backend modules, 20 of 22 reference screens, ten migrations, end-to-end tests.
+6. **Limits:** marketplace without payment or photos, no sensors, no map geometry, no redemption, straight-line routes.
 
 ## Demonstration order (about 8 minutes)
 Sign in as citizen and submit a report with a photo → as manager open the review queue, verify, create a task
@@ -48,8 +48,7 @@ become labels later.
 **Is the forecast reliable?** It beats a naive baseline on two long series and not on two short noisy ones;
 the API shows the baseline and refuses to forecast with under 26 weeks of data.
 
-**What would you do with more time?** Fine-tune with legitimate field data and licences; a marketplace
-backend; sensor integration behind an adapter; travel-time routing; forced MFA for administrators; a
+**What would you do with more time?** Fine-tune with legitimate field data and licences; marketplace photos and a payment-free hand-over workflow; sensor integration behind an adapter; travel-time routing; forced MFA for administrators; a
 breached-password check and password reset; a full accessibility and light-theme contrast audit.
 
 **What did testing find?** Real bugs, including CI-only failures (typing differences between numpy versions),

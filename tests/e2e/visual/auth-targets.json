@@ -27,6 +27,11 @@
       "path": "/routes"
     },
     {
+      "id": "marketplace",
+      "reference": "08_Circular_Surplus_Marketplace.png",
+      "path": "/marketplace"
+    },
+    {
       "id": "incidents",
       "reference": "09_Community_Incident_Triage.png",
       "path": "/incidents"

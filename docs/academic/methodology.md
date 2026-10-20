@@ -2,7 +2,7 @@
 
 ## 1. Architecture
 A modular monolith (decision record: `docs/decisions/ADR-0001-modular-monolith.md`). React 19 and
-TypeScript single-page app; FastAPI under `/api/v1`; PostgreSQL 16 with SQLAlchemy 2 and Alembic (nine
+TypeScript single-page app; FastAPI under `/api/v1`; PostgreSQL 16 with SQLAlchemy 2 and Alembic (ten
 migrations, head `0009`); an isolated `ml/` package for training, evaluation and inference code, kept out
 of request handlers. Diagrams and tables: `docs/architecture/`, `docs/database/er-diagram.md`,
 `docs/database/data-dictionary.md`. No message broker, cache server or PostGIS is used because no verified

@@ -94,5 +94,11 @@
     "ssim": 0.297,
     "mean_abs_colour_error": 80.7,
     "theme": "light"
+  },
+  "marketplace": {
+    "reference": "08_Circular_Surplus_Marketplace.png",
+    "ssim": 0.238,
+    "mean_abs_colour_error": 86.5,
+    "theme": "light"
   }
 }

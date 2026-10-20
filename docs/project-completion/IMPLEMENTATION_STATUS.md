@@ -16,21 +16,22 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 ## 1. Where the project stands (branch `arena/39c812ff-ecomind-ai`, PR #9 against `main`)
 
 `main` is at `4474bfb` (PR #7). PR #9 adds community incidents, analytics, administration, MFA and every
-remaining frontend screen. Alembic head is `0009` (zones).
+remaining frontend screen. Alembic head is `0010` (marketplace; 0009 added zones).
 
 Latest local results on this branch (run in this sandbox; CI results are listed in the verification log):
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 477 passed, 1 skipped (2 further tests for the review-queue image endpoint are green in CI; the skip is the classification parity test, which needs the git-ignored model artifact that is not in this sandbox) |
+| Backend pytest (real PostgreSQL 16.2) | 525 passed, 0 skipped (`cd backend && pytest`, full run) |
 | Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
-| Frontend vitest | 24 files, 212 tests passed |
+| Frontend vitest | 27 files, 220 tests passed |
+| Playwright e2e (local, real stack) | 21 passed, 1 skipped (the skip is the no-model classification test, which does not apply while a model is active) |
 | Frontend `tsc -b`, ESLint, production build | clean |
 | `scripts/quality/check_structure.py` | passes |
 
 ## 2. Capability matrix
 
-### Backend modules (all 19 have routes, tests and an API document under `docs/api/`)
+### Backend modules (all 20 have routes, tests and an API document under `docs/api/`)
 
 | Module | Status | Notes |
 |---|---|---|
@@ -50,12 +51,12 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 | notifications | **Verified** | |
 | community_incidents | **Verified** | 9 tests; 6 mutations (2 equivalent survivors). |
 | analytics | **Verified** | Query-based; `recovery_rate` is null without verified input. |
-| circular surplus marketplace | **Planned** | No backend; the nav item says "Soon". |
+| marketplace | **Verified** (matching board only) | Listings, requests, accept/decline/withdraw, notifications, audit; migration 0010, 4 permissions, 22 API tests, 5 of 6 mutations caught (the survivor is an unreachable defence-in-depth branch for e-mail visibility), 7 vitest tests, 1 e2e journey. No price, payment, delivery, photos or chat. |
 | locations and zones | **Verified** (named zones only) | Zones live in the facilities module (`/api/v1/zones`, migration 0009, 13 tests, 4/4 mutations caught). No geometry: no verified map data. Collection tasks are not linked to zones (future). |
 
 ### Frontend screens (see `docs/ui/screen-inventory.md` for routes and permissions)
 
-Every reference screen except 08 (Marketplace, planned), 17 and 19 (Smart bins /
+Every reference screen except 17 and 19 (Smart bins /
 telemetry, excluded by product decision) has a working React screen over the real API. Real-browser renders, side-by-sides
 and diffs for 05–22 are in `docs/ui/evidence/screens/`; their similarity numbers are low and are **not** a fidelity claim
 (`docs/ui/evidence/README.md`). A stored light theme exists because those references are light screens; its contrast is not
@@ -222,7 +223,7 @@ incident as a false positive in the GitGuardian dashboard.
 
 **Not done yet (next actions):**
 1. Extend the Playwright core-workflow spec beyond collection (recovery, passport). It currently covers report → verified task → assignment (collector and vehicle) → collected weight → reward → analytics, passes locally (21 specs: 20 passed, 1 skipped) and needs `E2E_ADMIN_*` (CI creates the administrator); its CI result is not yet confirmed.
-2. Marketplace (needs a backend). Locations and Zones is done as named zones without geometry.
+2. (Done) Marketplace as a matching board; Locations and Zones as named zones without geometry.
 3. (Done) Dataset research artifacts. Remaining there: the two owner decisions above; forecasting/anomaly datasets beyond the five ingested
    series were not found.
 4. Light-theme contrast audit; password reset and email verification; debounce on users search and audit filters.

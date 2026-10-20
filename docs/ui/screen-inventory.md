@@ -1,6 +1,6 @@
 # Screen inventory
 
-Reference list of screens the product needs, mapped to features, routes and API areas. Every screen below marked **Working** renders only data returned by the backend (no mock arrays, no demonstration numbers) and shows an explicit empty, error or "not available" state otherwise. Navigation entries are filtered by the signed-in user's permissions (a UX nicety; the server enforces access). **Marketplace** has no backend and is not built; its entry stays tagged "Soon". **Locations and zones** is built over named zones without map geometry (see the table). Smart Bins & Telemetry is intentionally absent from navigation.
+Reference list of screens the product needs, mapped to features, routes and API areas. Every screen below marked **Working** renders only data returned by the backend (no mock arrays, no demonstration numbers) and shows an explicit empty, error or "not available" state otherwise. Navigation entries are filtered by the signed-in user's permissions (a UX nicety; the server enforces access). **Marketplace** is a matching board (listings and requests; no price, payment, delivery or photos). **Locations and zones** is built over named zones without map geometry (see the table). Smart Bins & Telemetry is intentionally absent from navigation.
 
 Test coverage: `frontend/tests/integration/{security,operations,circular,...}.test.tsx` plus component and unit tests (see `docs/project-completion/IMPLEMENTATION_STATUS.md` for counts). Real-browser renders, side-by-sides and difference images for screens 05 to 22 are in `docs/ui/evidence/screens/` (demonstration data; low similarity scores, no fidelity claim); do not read "Working" as visual fidelity.
 
@@ -29,7 +29,7 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 | Security and MFA (TOTP enrolment, recovery codes, change password) | `/settings/security` | settings | auth, MFA | signed in | **Working** |
 | Users and roles | `/settings/users` | users | administration | `users:read`; `users:manage` | **Working** |
 | Audit log | `/settings/audit` | audit | administration | `audit:read` | **Working** |
-| Circular surplus marketplace | `/circular-economy` | none | **no backend** | none | **Planned** ("Soon"; nothing invented) |
+| Circular surplus marketplace | `/marketplace` | `marketplace` | `/api/v1/marketplace/*` (docs/api/marketplace-api.md) | `marketplace:read` | **Working** (matching board only; category icons instead of photos) |
 | Locations and zones | `/locations` | locations | facilities (`/api/v1/zones`, `GET /facilities?zone_id=`) | `facilities:read`; manage with `facilities:manage` | **Working** (zones table, facilities per zone, create/edit/retire; **no map or boundaries**: the platform holds no verified map data, and the page says so) |
 | Prediction review queue | `/classify/review` | waste-classification | classification (+ `GET /predictions/{id}/image`) | `classification:review` | **Working** (photo, suggestion, confirm / correct / reject) |
 | Smart bins and sensor telemetry | none | none | none | none | **Excluded by product decision** |
@@ -47,7 +47,7 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 | 05 Fill Level Forecasting | Forecasts | forecasting | **Working** |
 | 06 Anomaly Detection | Anomalies | anomaly-alerts | **Working** |
 | 07 Route Optimization | Route plans | route-planning | **Working** |
-| 08 Circular Surplus Marketplace | none | none (no backend) | **Planned** |
+| 08 Circular Surplus Marketplace | Marketplace | marketplace | **Working** |
 | 09 Community Incident Triage | Incidents | community-incidents | **Working** |
 | 10 Material Sorting Guide | Sorting guide | sorting-guide | **Working** |
 | 11 Chain of Custody Passports | Passports | material-passports | **Working** |

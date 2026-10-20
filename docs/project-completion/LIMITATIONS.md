@@ -15,7 +15,7 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
   beat the baseline on two of four usable series. Anomaly detection has no labels, so no precision/recall.
 
 ## Product
-- **Marketplace** (reference 08): no backend, nav item tagged "Soon". **Smart bins and telemetry** (17, 19):
+- **Marketplace** (reference 08) is a matching board only: no price, payment, delivery, photos, chat, expiry, partial fulfilment or link to recovery records. Its notifications use the `system` category. **Smart bins and telemetry** (17, 19):
   excluded by product decision; no sensor integration.
 - **Zones** have no geometry (no verified map data). Collection tasks are not linked to zones.
 - Route plans use straight-line distance and give no ETA.
