@@ -2,16 +2,34 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
+from app.db.session import get_db
 from app.main import create_app
 from tests.conftest import SettingsFactory
 
 
 @pytest.fixture
-def client(make_settings: SettingsFactory) -> TestClient:
-    return TestClient(create_app(make_settings()))
+def client(make_settings: SettingsFactory) -> Iterator[TestClient]:
+    settings = make_settings()
+    app = create_app(settings)
+    # The sign-in check on /auth/me asks for a session before it looks at the credentials. The
+    # engine is lazy and never connects (there is no token to look up), and this keeps the test
+    # independent of any DATABASE_URL in the environment.
+    engine = create_engine(settings.database_url)
+
+    def _unused_session() -> Iterator[Session]:
+        with Session(engine) as session:
+            yield session
+
+    app.dependency_overrides[get_db] = _unused_session
+    yield TestClient(app)
+    engine.dispose()
 
 
 @pytest.mark.parametrize(
