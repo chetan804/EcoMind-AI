@@ -35,7 +35,7 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 | Module | Status | Notes |
 |---|---|---|
 | auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
-| users / roles / permissions | **Verified** | 36 permissions, 5 roles, drift-guard test. |
+| users / roles / permissions | **Verified** | 40 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
 | classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |

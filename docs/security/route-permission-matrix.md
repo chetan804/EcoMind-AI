@@ -2,7 +2,7 @@
 
 > **Generated** by `scripts/security/generate_route_matrix.py` from the mounted application and the RBAC catalog (`backend/app/modules/users/rbac.py`). Do not edit by hand; CI fails if this file is stale. `backend/tests/security/test_route_inventory.py` fails if a route becomes public or signed-in-only without being listed there.
 
-111 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
+123 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
 
 | Method | Path | Access | Roles that hold it |
 |---|---|---|---|
@@ -76,6 +76,18 @@
 | GET | `/api/v1/forecasting/forecasts/latest` | `forecasting:read` | manager, administrator |
 | GET | `/api/v1/forecasting/series` | `forecasting:read` | manager, administrator |
 | GET | `/api/v1/forecasting/series/history` | `forecasting:read` | manager, administrator |
+| GET | `/api/v1/marketplace/listings` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/listings` | `marketplace:create` | facility_operator, manager, administrator |
+| GET | `/api/v1/marketplace/listings/{listing_id}` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| PATCH | `/api/v1/marketplace/listings/{listing_id}` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/listings/{listing_id}/close` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/listings/{listing_id}/publish` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/marketplace/listings/{listing_id}/requests` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/listings/{listing_id}/requests` | `marketplace:request` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/marketplace/requests/mine` | `marketplace:request` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/requests/{request_id}/accept` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/requests/{request_id}/decline` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/requests/{request_id}/withdraw` | `marketplace:request` | citizen, collector, facility_operator, manager, administrator |
 | GET | `/api/v1/material-passports` | `passports:read` | facility_operator, manager, administrator |
 | POST | `/api/v1/material-passports` | `passports:manage` | facility_operator, manager, administrator |
 | GET | `/api/v1/material-passports/by-code/{code}` | `passports:read` | facility_operator, manager, administrator |

@@ -18,7 +18,7 @@ outside their benchmark.
 | O5 | Forecast collected volume and flag suspected anomalies, with baselines and provenance | Done on one platform series (empty until real data accrues) and public reference series |
 | O6 | Trace recovered material through facilities | Done (recovery records, hash-chained passports) |
 | O7 | Reward verified participation and report impact with sourced formulas only | Done (points rule documented; no redemption; no environmental coefficients invented) |
-| O8 | Provide role-based access, MFA, audit and administration | Done (36 permissions, five roles, TOTP, audit log) |
+| O8 | Provide role-based access, MFA, audit and administration | Done (40 permissions, five roles, TOTP, audit log) |
 | O9 | Provide an interface for every designed screen | 19 of 22 reference screens built; marketplace has no backend ("Soon"); two smart-bin/telemetry references are excluded by product decision |
 | O10 | Evaluate honestly | Done: held-out and cross-dataset evaluation, calibration, per-class failure analysis, mutation checks of the tests |
 

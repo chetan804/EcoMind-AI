@@ -22,6 +22,7 @@ from app.modules.facilities.router import router as facilities_router
 from app.modules.facilities.zone_router import router as zones_router
 from app.modules.fleet.router import router as fleet_router
 from app.modules.forecasting.router import router as forecasting_router
+from app.modules.marketplace.router import router as marketplace_router
 from app.modules.material_passports.router import router as passports_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.rewards.router import router as rewards_router
@@ -58,3 +59,4 @@ api_v1_router.include_router(
 )
 api_v1_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
 api_v1_router.include_router(administration_router, prefix="/admin", tags=["administration"])
+api_v1_router.include_router(marketplace_router, prefix="/marketplace", tags=["marketplace"])
