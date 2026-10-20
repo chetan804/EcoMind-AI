@@ -1,5 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createPrediction, fetchActiveModel, reviewPrediction, uploadImage } from '../api/classification-api';
+import {
+  createPrediction,
+  fetchActiveModel,
+  fetchReviewQueue,
+  reviewPrediction,
+  uploadImage,
+  type QueueFilters,
+} from '../api/classification-api';
 
 export const modelKey = ['classification', 'model'] as const;
 
@@ -19,3 +26,6 @@ export function useReviewPrediction(predictionId: string) {
     mutationFn: (review: Parameters<typeof reviewPrediction>[1]) => reviewPrediction(predictionId, review),
   });
 }
+
+export const useReviewQueue = (filters: QueueFilters) =>
+  useQuery({ queryKey: ['classification', 'queue', filters], queryFn: ({ signal }) => fetchReviewQueue(filters, signal) });

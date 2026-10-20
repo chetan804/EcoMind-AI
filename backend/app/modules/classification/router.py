@@ -115,6 +115,23 @@ def list_predictions(
     return service.list_predictions(db, query, params)
 
 
+@router.get("/predictions/{prediction_id}/image")
+def prediction_image(
+    prediction_id: uuid.UUID, db: DbSession, storage: Storage, _: CanReview
+) -> Response:
+    """The classified photo, so a reviewer can judge the suggestion against the picture."""
+    data, content_type = service.read_prediction_image(db, storage, prediction_id)
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; sandbox",
+            "Cache-Control": "private, no-cache",
+        },
+    )
+
+
 @router.get("/predictions/{prediction_id}", response_model=PredictionOut)
 def get_prediction(prediction_id: uuid.UUID, db: DbSession, principal: CanPredict) -> PredictionOut:
     return service.get_prediction(db, principal, prediction_id)

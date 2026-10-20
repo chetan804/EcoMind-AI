@@ -327,3 +327,29 @@ def test_registering_twice_is_idempotent_and_a_changed_artifact_is_refused(s: Se
     (directory / "model.json").write_text(json.dumps(manifest))
     with pytest.raises(Exception, match="already registered with different artifacts"):
         _register(s, "1.0.0")  # model.json changed -> hash no longer matches its files' record
+
+
+# -- the photo behind a prediction, for reviewers ------------------------------------------------
+def test_reviewers_can_see_the_classified_photo_and_nobody_else(s: Setup) -> None:
+    add_model_version(s.engine)
+    pid = s.predict(s.upload()).json()["id"]
+    url = f"{CLS}/predictions/{pid}/image"
+    operator = s._user("operator@example.org", ("facility_operator",))
+    # An operator can review but holds no report-reading right: the image must still be served.
+    for headers in (s.manager, s.admin, operator):
+        response = s.client.get(url, headers=headers)
+        assert response.status_code == 200, response.text
+        assert response.headers["content-type"].startswith("image/")
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["content-security-policy"] == "default-src 'none'; sandbox"
+        assert Image.open(io.BytesIO(response.content)).size == (64, 48)
+    assert s.client.get(url).status_code == 401
+    # The uploader and strangers lack the review permission; the ordinary media route is theirs.
+    assert s.client.get(url, headers=s.owner).status_code == 403
+    assert s.client.get(url, headers=s.stranger).status_code == 403
+    assert s.client.get(url, headers=s.norole).status_code == 403
+
+
+def test_the_prediction_image_of_an_unknown_prediction_is_404(s: Setup) -> None:
+    missing = "00000000-0000-4000-8000-000000000000"
+    assert s.client.get(f"{CLS}/predictions/{missing}/image", headers=s.manager).status_code == 404

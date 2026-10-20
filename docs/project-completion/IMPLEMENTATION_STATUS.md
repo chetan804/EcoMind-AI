@@ -59,7 +59,7 @@ Every reference screen except 08 (Marketplace, planned), 14 (Locations and Zones
 telemetry, excluded by product decision) has a working React screen over the real API. Real-browser renders, side-by-sides
 and diffs for 05–22 are in `docs/ui/evidence/screens/`; their similarity numbers are low and are **not** a fidelity claim
 (`docs/ui/evidence/README.md`). A stored light theme exists because those references are light screens; its contrast is not
-audited screen by screen. The classification review queue (`classification:review`) has no dedicated list screen yet.
+audited screen by screen. The prediction review queue (`/classify/review`) exists, with a reviewer-only photo endpoint.
 
 ### ML
 
@@ -220,8 +220,8 @@ endpoint contains none of them. It is not a credential; nothing to rotate. It st
 incident as a false positive in the GitGuardian dashboard.
 
 **Not done yet (next actions):**
-1. A Playwright end-to-end spec for the full core workflow (report → task → collected weight → recovery → passport → rewards → analytics).
-2. A classification review-queue screen; Locations and Zones (needs a backend decision); Marketplace (needs a backend).
+1. Extend the Playwright core-workflow spec beyond collection (recovery, passport). It currently covers report → verified task → assignment (collector and vehicle) → collected weight → reward → analytics, passes locally (21 specs: 20 passed, 1 skipped) and needs `E2E_ADMIN_*` (CI creates the administrator); its CI result is not yet confirmed.
+2. Locations and Zones (needs a backend decision); Marketplace (needs a backend).
 3. Dataset research artifacts under `docs/ml/dataset-research/` (catalog, manifest, selection report) rebuilt from re-fetched, checksummed data,
    and any multi-dataset experiments. Until then, only model 1.0.0 (TrashNet-trained candidate) exists.
 4. Light-theme contrast audit; password reset and email verification; debounce on users search and audit filters.

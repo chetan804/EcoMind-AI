@@ -31,7 +31,7 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 | Audit log | `/settings/audit` | audit | administration | `audit:read` | **Working** |
 | Circular surplus marketplace | `/circular-economy` | none | **no backend** | none | **Planned** ("Soon"; nothing invented) |
 | Locations and zones | none | none | **no backend** (facilities is the closest) | none | **Not built** |
-| Prediction review queue | none | waste-classification | classification | `classification:review` | **Not built** (review is available per prediction on `/classify`) |
+| Prediction review queue | `/classify/review` | waste-classification | classification (+ `GET /predictions/{id}/image`) | `classification:review` | **Working** (photo, suggestion, confirm / correct / reject) |
 | Smart bins and sensor telemetry | none | none | none | none | **Excluded by product decision** |
 
 ## Design references

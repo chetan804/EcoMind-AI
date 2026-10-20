@@ -57,3 +57,8 @@
 .result__prob-value { text-align: right; font-variant-numeric: tabular-nums; }
 .result__caveat { color: var(--color-text-muted); font-size: var(--text-sm); }
 .review { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+
+/* Review queue: photo beside the suggestion and the review form. */
+.review-item { display: grid; grid-template-columns: minmax(0, 16rem) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+.review-item .photo-thumb { width: 100%; height: auto; border-radius: var(--radius-md); }
+@media (max-width: 767px) { .review-item { grid-template-columns: minmax(0, 1fr); } }
