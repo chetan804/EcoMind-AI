@@ -35,7 +35,8 @@ Implemented in `waste_reports/images.py` and `integrations/file_storage/local.py
 ## Transport and browser
 - TLS terminates in front of the backend and frontend (deployment responsibility). The nginx image sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`. ✔
 - CORS restricted to configured origins. ✔ tested
-- A Content-Security-Policy is defined when the frontend deployment host is chosen (pending).
+- The nginx image sends `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and a Content-Security-Policy on every location; the API sends `nosniff`, `Referrer-Policy: no-referrer` and `Cache-Control: no-store` by default. `connect-src` must be narrowed to the deployment's API origin. Details and the verification method: [security-review.md](security-review.md). ✔ tested (API headers); the nginx file itself is untested here.
+- Every route's required permission is listed in the generated [route-permission-matrix.md](route-permission-matrix.md) and guarded by `tests/security/test_route_inventory.py`.
 
 ## Input handling
 - Pydantic validation on all inputs; uploads limited by `MAX_UPLOAD_BYTES`, type allow-list (JPEG/PNG/WebP), pixel-count limit against decompression bombs, EXIF orientation applied, content hashed. ✔ image validation in `ml/common/preprocessing`; upload endpoint pending
