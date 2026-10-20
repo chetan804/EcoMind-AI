@@ -6,6 +6,7 @@ Base path `/api/v1/admin`. User and role management, the audit log and non-secre
 |---|---|---|
 | `GET /admin/users` | `users:read` | Users (`q` on email/name, `role`, `is_active`, `page`, `page_size`) |
 | `GET /admin/users/{id}` | `users:read` | One user with roles |
+| `POST /admin/users/{id}/reset-mfa` | `users:manage` | Remove a user's authenticator (`reason`); signs them out everywhere |
 | `GET /admin/roles` | `users:read` | Roles with their permission codes and holder counts |
 | `PUT /admin/users/{id}/roles` | `users:manage` | Replace a user's roles (`roles`, `reason`) |
 | `POST /admin/users/{id}/deactivate` | `users:manage` | Deactivate (`reason`); revokes every refresh session |
@@ -34,4 +35,4 @@ Never includes the secret key, database URL or filesystem paths. It reports envi
 
 ## Not implemented
 
-Creating users on behalf of others, password reset, email verification, custom roles, editing settings through the API (they are environment variables), and MFA (see `docs/api/auth-api.md` for what exists).
+Creating users on behalf of others, password reset, email verification, custom roles, and editing settings through the API (they are environment variables). Users have an `mfa_enabled` flag; enrolment itself is in `docs/api/auth-api.md`.

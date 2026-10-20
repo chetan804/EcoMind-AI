@@ -12,8 +12,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
+from app.common.enums import QuantityUnit
+from app.modules.anomaly_detection.constants import AlertStatus, AnomalySeverity
+from app.modules.anomaly_detection.models import AnomalyAlert
 from app.modules.collection.constants import CollectionTaskStatus
 from app.modules.collection.models import CollectionTask
+from app.modules.forecasting.series import PLATFORM_REF, REFERENCE_PREFIX
 from tests.fixtures.api import ClientFactory, bearer, create_user, login
 from tests.fixtures.series import monday_of, seed_platform_weeks
 
@@ -133,6 +137,38 @@ def test_open_and_overdue_tasks_are_counted_from_stored_state(env: Env) -> None:
     assert c["open_tasks"] == 4
     assert c["overdue_tasks"] == 2
     assert counts(c["by_status"])["completed"] == 1
+
+
+def test_open_alerts_exclude_public_reference_series(env: Env) -> None:
+    now = dt.datetime.now(dt.UTC)
+
+    def alert(metric: str, severity: AnomalySeverity, status: AlertStatus) -> AnomalyAlert:
+        return AnomalyAlert(
+            metric=metric,
+            unit=QuantityUnit.KILOGRAM,
+            severity=severity,
+            status=status,
+            window_start=now - dt.timedelta(days=7),
+            window_end=now,
+            observed_value=decimal.Decimal(900),
+            expected_value=decimal.Decimal(500),
+            detector_name="test",
+            detector_version="1",
+            explanation="test fixture",
+            detected_at=now,
+        )
+
+    with Session(env.engine) as db:
+        db.add_all(
+            [
+                alert(PLATFORM_REF, AnomalySeverity.CRITICAL, AlertStatus.OPEN),
+                alert(PLATFORM_REF, AnomalySeverity.WARNING, AlertStatus.OPEN),
+                alert(PLATFORM_REF, AnomalySeverity.CRITICAL, AlertStatus.RESOLVED),
+                alert(REFERENCE_PREFIX + "austin", AnomalySeverity.CRITICAL, AlertStatus.OPEN),
+            ]
+        )
+        db.commit()
+    assert env.get("/overview").json()["anomalies"] == {"open_alerts": 2, "critical_open": 1}
 
 
 def test_incident_counts_follow_the_triage_lifecycle(env: Env) -> None:

@@ -78,6 +78,36 @@ Constraints:
 
 - `ck_auth_sessions_expiry_after_creation`: `expires_at > created_at`
 
+### `mfa_factors`
+
+A user's TOTP authenticator (RFC 6238). At most one per user.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `secret_encrypted` | text | NN |  |  |
+| `confirmed_at` | timestamptz | null |  |  |
+| `last_used_step` | bigint | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+### `mfa_recovery_codes`
+
+One single-use recovery code. Only a keyed hash of the code is stored.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `code_hash` | varchar(64) | NN |  |  |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `used_at` | timestamptz | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+
+Constraints:
+
+- `uq_mfa_recovery_codes_user_id_code_hash`: unique (user_id, code_hash)
+
 ## Module `circular_economy`
 
 ### `recovery_records`

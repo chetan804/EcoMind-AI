@@ -50,13 +50,16 @@ def _out(db: Session, user: User) -> UserAdminOut:
 
 
 def _outs(db: Session, rows: list[User]) -> list[UserAdminOut]:
-    roles = users.roles_by_user(db, [u.id for u in rows])
+    ids = [u.id for u in rows]
+    roles = users.roles_by_user(db, ids)
+    with_mfa = auth_repository.users_with_mfa(db, ids)
     return [
         UserAdminOut(
             id=u.id,
             email=u.email,
             full_name=u.full_name,
             is_active=u.is_active,
+            mfa_enabled=u.id in with_mfa,
             roles=roles[u.id],
             created_at=u.created_at,
             last_login_at=u.last_login_at,
@@ -184,6 +187,34 @@ def set_active(
             actor_id=principal.user_id,
             context=context,
             changes={"is_active": active, "reason": reason, "sessions_revoked": revoked},
+        )
+        db.commit()
+    return _out(db, user)
+
+
+def reset_mfa(
+    db: Session,
+    principal: Principal,
+    user_id: uuid.UUID,
+    *,
+    reason: str,
+    context: RequestContext,
+) -> UserAdminOut:
+    """Remove a user's authenticator (lost phone and recovery codes). Signs them out everywhere."""
+    _guard_not_self(principal, user_id)
+    user = _get(db, user_id, lock=True)
+    had_mfa = user_id in auth_repository.users_with_mfa(db, [user_id])
+    if had_mfa:
+        auth_repository.delete_factor(db, user.id)
+        revoked = auth_repository.revoke_all_for_user(db, user.id, dt.datetime.now(dt.UTC))
+        audit.record(
+            db,
+            action="user.mfa_reset",
+            entity_type="user",
+            entity_id=user.id,
+            actor_id=principal.user_id,
+            context=context,
+            changes={"reason": reason, "sessions_revoked": revoked},
         )
         db.commit()
     return _out(db, user)

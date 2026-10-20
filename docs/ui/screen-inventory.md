@@ -59,6 +59,6 @@ Reference list of screens the product needs, mapped to features and API areas. *
 | 19 Waste Intake / Fleet Vehicles | unclear title | waste-reports or fleet; **confirm against the image before building** | Not started |
 | 20 Executive Analytics and Reporting | Analytics and trends | analytics | Not started |
 | 21 Operational System Alerts | Alerts / notifications | anomaly-alerts, notifications | Not started |
-| 22 Security and MFA | Account security | auth (MFA is not in the security baseline yet; needs a decision) | Not started |
+| 22 Security and MFA | Account security | auth (TOTP MFA backend implemented: docs/security/mfa.md) | Backend ready; screen not started |
 
 Visual evidence for the four built screens is in `docs/ui/evidence/`.

@@ -184,7 +184,7 @@ def test_me_requires_a_valid_access_token(client: TestClient, db_engine: Engine)
     )
     assert client.get(ME, headers=bearer(wrong_key)).status_code == 401
 
-    unsigned = jwt.encode({"sub": str(user_id), "type": "access"}, key=None, algorithm="none")
+    unsigned = jwt.encode({"sub": str(user_id), "type": "access"}, key="", algorithm="none")
     assert client.get(ME, headers=bearer(unsigned)).status_code == 401
 
     refresh_like = jwt.encode(

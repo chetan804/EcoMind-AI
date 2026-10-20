@@ -59,7 +59,7 @@ def test_alg_none_token_rejected() -> None:
             "iat": utc_now(),
             "exp": utc_now() + timedelta(minutes=5),
         },
-        key=None,
+        key="",
         algorithm="none",
     )
     with pytest.raises(UnauthenticatedError):

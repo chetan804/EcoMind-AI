@@ -97,6 +97,24 @@ def activate(
     )
 
 
+@router.post("/users/{user_id}/reset-mfa", response_model=UserAdminOut)
+def reset_mfa(
+    user_id: uuid.UUID,
+    payload: ReasonRequest,
+    request: Request,
+    db: DbSession,
+    principal: CanManageUsers,
+) -> UserAdminOut:
+    """Remove a user's authenticator when they lost both the device and the recovery codes."""
+    return service.reset_mfa(
+        db,
+        principal,
+        user_id,
+        reason=payload.reason,
+        context=RequestContext.from_request(request),
+    )
+
+
 @router.get("/roles", response_model=list[RoleOut])
 def list_roles(db: DbSession, _: CanReadUsers) -> list[RoleOut]:
     return service.list_roles(db)

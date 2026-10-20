@@ -34,6 +34,7 @@ from app.modules.facilities.constants import FacilityStatus
 from app.modules.facilities.models import Facility
 from app.modules.fleet.constants import VehicleStatus
 from app.modules.fleet.models import FleetVehicle
+from app.modules.forecasting.series import REFERENCE_PREFIX
 from app.modules.material_passports.constants import PassportStatus
 from app.modules.material_passports.models import MaterialPassport
 from app.modules.rewards import service as rewards
@@ -102,11 +103,14 @@ def overview(db: Session, *, window_days: int, now: dt.datetime | None = None) -
     rec = recovery.summary(db, facility_id=None, date_from=None, date_to=None)
     entries, users, issued, removed, impact = rewards.summary(db)
 
+    # Alerts raised on the public reference series are research output, not operations.
+    operational = ~AnomalyAlert.metric.like(REFERENCE_PREFIX + "%")
     open_alerts = db.execute(
-        select(func.count()).where(AnomalyAlert.status == AlertStatus.OPEN)
+        select(func.count()).where(operational, AnomalyAlert.status == AlertStatus.OPEN)
     ).scalar_one()
     critical = db.execute(
         select(func.count()).where(
+            operational,
             AnomalyAlert.status == AlertStatus.OPEN,
             AnomalyAlert.severity == AnomalySeverity.CRITICAL,
         )
