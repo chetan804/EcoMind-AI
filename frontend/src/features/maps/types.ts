@@ -55,4 +55,5 @@ export interface LegendEntry {
   pathKind?: PathKind;
 }
 
-export type MapsFailureReason = 'missing_key' | 'network' | 'timeout' | 'auth' | 'unsupported';
+/** Why a map could not be drawn. The first five belong to the optional Google provider, the last two to the offline provider. */
+export type MapsFailureReason = 'missing_key' | 'network' | 'timeout' | 'auth' | 'unsupported' | 'no_webgl' | 'load_error';

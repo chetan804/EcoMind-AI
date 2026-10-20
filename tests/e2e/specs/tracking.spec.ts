@@ -11,9 +11,10 @@ import { E2E_EMAIL, E2E_PASSWORD, SESSION_HINT_KEY } from './fixtures';
  *   is accepted only through its own endpoint, is labelled SIMULATED, and never becomes a
  *   vehicle's real position. People without the right permission are refused.
  *
- * No Google Maps key exists in CI, so the screens show the labelled list view of the same data
- * (that fallback is part of what is verified). Rendering on Google's map needs a key and is
- * verified manually; see docs/maps/GOOGLE_MAPS_INTEGRATION.md.
+ * The default map is the built-in offline one (no key). In CI it either draws with WebGL or, if the
+ * browser has none, shows the labelled list of the same data; both are accepted and the same table
+ * is asserted either way. Drawing on Google's map needs a key and is verified manually; see
+ * docs/maps/GOOGLE_MAPS_INTEGRATION.md. Drawing on real tiles needs a tile file (docs/maps/OFFLINE_MAPS.md).
  *
  * Needs E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD (like core-workflow.spec.ts) and fails without them.
  * The administrator acts as the fleet manager and the shared e2e account is the no-role citizen, so
@@ -31,6 +32,17 @@ interface Actor {
   token: string;
 }
 const bearer = (a: Actor) => ({ Authorization: `Bearer ${a.token}` });
+
+/** Interactive map: open the list disclosure. No WebGL: the list is already the map area. */
+async function showLocationList(page: Page): Promise<void> {
+  const disclosure = page.getByText('Show these locations as a list').first();
+  const noWebgl = page.getByText(/Map not available: this browser cannot draw the map/).first();
+  await expect(disclosure.or(noWebgl)).toBeVisible();
+  if (await disclosure.isVisible()) {
+    const opened = await page.locator('details').filter({ has: disclosure }).first().evaluate((el) => (el as HTMLDetailsElement).open);
+    if (!opened) await disclosure.click();
+  }
+}
 
 async function signUp(api: APIRequestContext, email: string, name: string): Promise<Actor> {
   const created = await api.post('/api/v1/auth/register', { data: { email, password: PASSWORD, full_name: name } });
@@ -127,8 +139,9 @@ test('collector shares a real position; the fleet shows LIVE GPS, never-reported
   const rowBOnScreen = vehicleTable.getByRole('row').filter({ hasText: regB });
   await expect(rowAOnScreen.getByText('LIVE GPS', { exact: true })).toBeVisible();
   await expect(rowBOnScreen.getByText('LOCATION UNAVAILABLE', { exact: true })).toBeVisible();
-  // No Google key in CI: the map area is the labelled list of the same data, never a blank box.
-  await expect(managerPage.getByText(/Map not available: Google Maps is not configured/).first()).toBeVisible();
+  // Either an interactive map with the list in a disclosure, or (no WebGL) the labelled list itself;
+  // never a blank box.
+  await showLocationList(managerPage);
   const list = managerPage.getByRole('table', { name: 'Fleet positions: locations' });
   await expect(list.getByRole('rowheader', { name: regA })).toBeVisible();
   await expect(list.getByRole('rowheader', { name: regB })).toHaveCount(0); // never reported: no marker
@@ -151,9 +164,10 @@ test('collector shares a real position; the fleet shows LIVE GPS, never-reported
 
     await managerPage.goto('/fleet');
     await managerPage.getByLabel('Search').fill(`-${run.toUpperCase()}`);
+    await showLocationList(managerPage);
     const simList = managerPage.getByRole('table', { name: 'Fleet positions: locations' });
     await expect(simList.getByRole('rowheader', { name: `${regB} (simulated)` })).toBeVisible();
-    await expect(simList.getByText('SIMULATED', { exact: true })).toBeVisible();
+    await expect(simList.getByRole('row').filter({ hasText: regB }).getByText('SIMULATED', { exact: true })).toBeVisible();
     await expect(managerPage.getByRole('table', { name: 'Fleet vehicles' }).getByRole('row').filter({ hasText: regB }).getByText('LOCATION UNAVAILABLE')).toBeVisible();
 
     const reset = await api.delete(`/api/v1/tracking/simulation/vehicles/${vehicles[regB]}/locations`, { headers: bearer(m) });
