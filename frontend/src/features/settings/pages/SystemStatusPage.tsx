@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { getErrorMessage } from '@/services/error-handler';
+import { SettingsNav } from '../components/SettingsNav';
 import { useSystemStatus } from '../hooks/useSystemStatus';
 
 /** Operator diagnostic: shows what the backend's /health and /ready endpoints report. */
@@ -22,6 +23,8 @@ export function SystemStatusPage() {
           </Button>
         }
       />
+
+      <SettingsNav />
 
       <Card>
         <h2>API (liveness)</h2>

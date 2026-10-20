@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import {
   bootstrapSession,
+  completeMfaSignIn,
   getSessionState,
   signIn,
   signOut,
@@ -13,6 +14,7 @@ export interface Auth extends SessionState {
   /** True when the signed-in user holds the permission. UX only: the server enforces access. */
   can: (permission: string) => boolean;
   signIn: typeof signIn;
+  completeMfaSignIn: typeof completeMfaSignIn;
   signUp: typeof signUp;
   signOut: typeof signOut;
 }
@@ -27,5 +29,5 @@ export function useAuth(): Auth {
     (permission: string) => session.user?.permissions.includes(permission) ?? false,
     [session.user],
   );
-  return { ...session, can, signIn, signUp, signOut };
+  return { ...session, can, signIn, completeMfaSignIn, signUp, signOut };
 }

@@ -118,8 +118,18 @@ export function bootstrapSession(): Promise<void> {
   return bootstrapInFlight;
 }
 
-export async function signIn(email: string, password: string): Promise<SessionUser> {
-  return adopt(await authApi.login(email, password));
+/** Outcome of the password step: signed in, or a second factor is still required. */
+export type SignInResult = { status: 'signed_in'; user: SessionUser } | { status: 'mfa_required'; mfaToken: string };
+
+export async function signIn(email: string, password: string): Promise<SignInResult> {
+  const response = await authApi.login(email, password);
+  if (authApi.isMfaChallenge(response)) return { status: 'mfa_required', mfaToken: response.mfa_token };
+  return { status: 'signed_in', user: adopt(response) };
+}
+
+/** Second step: exchange the challenge and an authenticator or recovery code for a session. */
+export async function completeMfaSignIn(mfaToken: string, code: string): Promise<SessionUser> {
+  return adopt(await authApi.verifyMfa(mfaToken, code));
 }
 
 export async function signUp(input: { email: string; password: string; full_name: string }): Promise<SessionUser> {

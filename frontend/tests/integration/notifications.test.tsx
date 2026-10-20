@@ -34,7 +34,7 @@ describe('notification bell', () => {
 
 describe('notifications page', () => {
   it('lists notifications, marks one as read and refreshes', async () => {
-    let items = [unread, read];
+    let items: Array<Record<string, unknown>> = [unread, read];
     const api = routeApi(
       fetchSpy,
       {

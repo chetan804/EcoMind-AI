@@ -58,7 +58,7 @@ export const alertFixture = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-export const notificationFixture = (over: Record<string, unknown> = {}) => ({
+export const notificationFixture = (over: Record<string, unknown> = {}): Record<string, unknown> & { id: string; read_at: string | null } => ({
   id: '33333333-3333-4333-8333-333333333333',
   category: 'collection',
   title: 'Your pickup was collected',
@@ -79,7 +79,7 @@ const seriesBase = {
   first_period: '2026-01-05',
   last_period: '2026-10-12',
   interpolated_points: 0,
-  provenance: null,
+  provenance: null as Record<string, string> | null,
 };
 export const platformSeries = { ...seriesBase, ref: 'platform:collected_weight_kg', name: 'Collected weight (platform)' };
 export const referenceSeries = {

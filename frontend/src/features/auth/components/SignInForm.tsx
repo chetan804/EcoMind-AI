@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +10,7 @@ import { Input, PasswordInput } from '@/components/ui/Input';
 import { signIn } from '@/services/session/session-store';
 import { signInSchema, type SignInValues } from '../schemas/auth-forms';
 import { describeAuthError } from '../utils/auth-errors';
+import { MfaStep } from './MfaStep';
 import { SocialButtons } from './SocialButtons';
 
 /**
@@ -21,7 +23,25 @@ export function SignInForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<SignInValues>({ resolver: zodResolver(signInSchema), defaultValues: { email: '', password: '' } });
-  const mutation = useMutation({ mutationFn: (values: SignInValues) => signIn(values.email, values.password) });
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const mutation = useMutation({
+    mutationFn: (values: SignInValues) => signIn(values.email, values.password),
+    onSuccess: (result) => {
+      if (result.status === 'mfa_required') setMfaToken(result.mfaToken);
+    },
+  });
+
+  if (mfaToken !== null) {
+    return (
+      <MfaStep
+        mfaToken={mfaToken}
+        onBack={() => {
+          setMfaToken(null);
+          mutation.reset();
+        }}
+      />
+    );
+  }
 
   return (
     <>
