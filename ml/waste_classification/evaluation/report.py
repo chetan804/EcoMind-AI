@@ -334,7 +334,7 @@ Margin over the hand-crafted baseline on test: **{t["margin_over_handcrafted_mac
   hyper-parameter choice did not overfit the data it was tuned on.
 - **There is a real generalisation gap:** the model fits its training images far better than unseen ones
   (train-minus-CV macro-F1 gap {d["chosen_cv"]["train_minus_cv_gap"]:.3f}). This is the usual regime of a high-dimensional linear head on ~1.7k images.
-  It was *not* reducible by regularisation (below): weaker or stronger regularisation made held-out scores worse or no better.
+  Regularisation (below) does not close it: weaker regularisation (C up to 0.3) trains to 1.0 and gains at most about one SE on held-out folds, stronger regularisation (C = 0.003) underfits.
 - **Not underfitting:** train macro-F1 is {r["train_in_sample"]["macro_f1"]:.3f}, and a non-linear RBF-SVM on the same features scores
   {d["capacity_probe"]["rbf_svm_cv_macro_f1"]:.3f} vs {d["capacity_probe"]["linear_head_cv_macro_f1"]:.3f} for the linear head (no augmentation; a difference of about one SE), so head capacity is not what limits accuracy.
 - **Augmentation helps modestly:** CV macro-F1 {d["augmentation_ablation"]["with_augmentation_cv_macro_f1"]:.3f} with vs {d["augmentation_ablation"]["without_augmentation_cv_macro_f1"]:.3f} without.
@@ -343,8 +343,8 @@ Margin over the hand-crafted baseline on test: **{t["margin_over_handcrafted_mac
 
 {regt}
 
-Low C underfits (train and CV both low); high C overfits (train -> 1.0, CV flat or falling). The chosen C sits at the
-bias-variance sweet spot for this head and these features.
+Low C underfits (train and CV both low); high C overfits (train -> 1.0, CV flat or falling). The chosen C = 0.03 is the *most regularised* value within one standard error of the best CV score
+(C = 0.3), the pre-declared 1-SE rule: the same held-out performance with a simpler, less train-fitted head.
 
 ![learning curve]({fig["learning-curve"]})
 
@@ -409,7 +409,7 @@ Background replacement changed little, but it only replaces near-white pixels of
 
 ## 7. Out-of-distribution inputs
 
-{r["ood"]["note"]}. {r["ood"]["flagged_for_review"]} of {r["ood"]["n"]} were routed to review. The same gates flag {pct(r["ood"]["in_distribution_test_flagged_by_novelty_gate"])} of in-distribution test images by novelty alone
+{r["ood"]["note"][:1].upper()}{r["ood"]["note"][1:]}. {r["ood"]["flagged_for_review"]} of {r["ood"]["n"]} were routed to review. The same gates flag {pct(r["ood"]["in_distribution_test_flagged_by_novelty_gate"])} of in-distribution test images by novelty alone
 (and {pct(r["ood"]["in_distribution_test_flagged_by_confidence_gate"])} by confidence).
 
 {ood}
@@ -418,13 +418,15 @@ This does **not** show the model can recognise unsupported *waste* (food scraps,
 
 ## 8. Latency and train/serve parity
 
-Single request, bytes -> decode -> {len(r["selection"]["chosen"])} backbone pass(es) -> head -> calibration -> decision, {lat["hardware"]}, {lat["interpreter_threads"]} interpreter threads, n = {lat["n"]} test files:
+Single request, bytes -> decode -> {r["selection"]["chosen"]["passes"]} backbone pass(es) -> head -> calibration -> decision, {lat["hardware"]}, {lat["interpreter_threads"]} interpreter threads, n = {lat["n"]} test files:
 **p50 {lat["p50_ms"]:.1f} ms, p95 {lat["p95_ms"]:.1f} ms, max {lat["max_ms"]:.1f} ms.** Parity of the serving code against the training-time features on {par["n_images"]} images:
 max |logit difference| = {par["max_abs_logit_difference"]:.1e}; identical predictions: {par["same_predictions"]}.
 
+These timings come from a shared development sandbox (other jobs may have been running), so treat them as an order of magnitude, not a benchmark; the budget is 150 ms. Re-measure on the deployment hardware before relying on them.
+
 ## 9. Provenance
 
-version `{prov["version"]}`, git commit `{prov["git_commit"]}`, trained {prov["trained_at_utc"]}, config SHA-256 `{prov["config_sha256"]}`, dataset content digest `{prov["dataset_files_digest"]}`,
+version `{prov["version"]}`, git commit `{prov["git_commit"]}` (training code tree clean at that commit: {prov["code_tree_clean"]}), trained {prov["trained_at_utc"]}, config SHA-256 `{prov["config_sha256"]}`, dataset content digest `{prov["dataset_files_digest"]}`,
 `model.json` SHA-256 `{prov["artifact_model_json_sha256"]}`, Python {prov["python"]}, numpy {prov["numpy"]}, scikit-learn {prov["scikit_learn"]}.
 Reproduce: `python -m ml.waste_classification.data.fetch && python -m ml.waste_classification.training.train && python -m ml.waste_classification.evaluation.report`.
 """

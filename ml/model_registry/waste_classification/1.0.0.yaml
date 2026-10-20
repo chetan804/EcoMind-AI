@@ -1,0 +1,46 @@
+name: waste-material-classifier
+version: 1.0.0
+status: candidate
+task: material_category
+framework: tflite (frozen backbone) + numpy linear head
+trained_at_utc: '2026-10-20T09:44:42Z'
+git_commit: 000d03af99e11aba4c12ff8c2cf5ab54b3aa3f1f
+code_tree_clean: true
+config_sha256: 5898e145369a0b23868ee2c64be423e7f67fffc5338187dec7a32cd62ce9a4d2
+dataset_manifest: datasets/manifests/trashnet-1.0.yaml
+dataset_files_digest: 73cfe75b6a3e1bf1d19632514006aad5c26944480f9364402003be9e567b5221
+backbones:
+- name: M
+  file: efficientnet-edgetpu-M_quant_embedding_extractor.tflite
+  sha256: c3817dd3c0d1b1e3c222e4997ae28c828eeb97f96b6ed60e350fc295baf5c94b
+artifact_files:
+  head.npz: 0972f2c8e5294a0333f3a87e3a19247f05e9136884a68a9f88383b421aa42c64
+  novelty_reference.npy: 61e60fe12e555cc95b6222df920c48e2ada6fb9e5a8e7ddbe4ac6879865edd77
+artifact_model_json_sha256: a9185187365451653550541324b6fc726fea6717a05f5d9cea295c597cb0b79d
+classes:
+- cardboard
+- glass
+- metal
+- paper
+- plastic
+- trash
+tta_variants:
+- identity
+temperature: 0.9007954762618798
+review:
+  min_confidence: 0.81
+  min_novelty_similarity: 0.5698323249816895
+headline_metrics:
+  split: test (grouped, evaluated once)
+  accuracy: 0.8669833729216152
+  accuracy_ci95:
+  - 0.8129954268292683
+  - 0.9119087788489628
+  macro_f1: 0.8409203393612944
+  macro_f1_ci95:
+  - 0.7806267354539873
+  - 0.8865233364556476
+  ece: 0.031015061084036823
+  latency_p95_ms: 26.218067200761652
+evaluation_report: docs/ml/reports/waste-classification-1.0.0.json
+model_card: docs/ml/model-cards/waste-classification-1.0.0.md
