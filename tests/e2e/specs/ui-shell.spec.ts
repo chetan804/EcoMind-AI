@@ -41,6 +41,14 @@ test('page search is a real modal: focus moves in, Escape closes it and focus re
   await expect(trigger).toBeFocused();
 });
 
+test('a screen whose code fails to load shows the error fallback, not a blank page', async ({ page }) => {
+  // Routes are code-split. Block the dashboard module (dev: its source file; production: its chunk).
+  await page.route(/(assets\/dashboard-.*\.js|src\/features\/dashboard\/index\.ts)/, (route) => route.abort());
+  await page.goto('/dashboard');
+  await expect(page.getByRole('alert')).toContainText('Something went wrong');
+  await expect(page.getByRole('link', { name: 'Go to the start page' })).toBeVisible();
+});
+
 test('the primary navigation never offers Smart Bins & Telemetry', async ({ page }) => {
   await page.goto('/dashboard');
   const nav = page.getByRole('navigation', { name: 'Main' });

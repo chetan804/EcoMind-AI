@@ -35,7 +35,7 @@ for t in cfg["targets"]:
         continue
     shot = out / f"{t['id']}@ref.png"
     meta = json.loads((out / f"{t['id']}@ref.json").read_text())
-    ref = Image.open(root / t["reference"]).convert("RGB")
+    ref = Image.open(root / "docs/ui/reference" / t["reference"]).convert("RGB")
     rw, rh = ref.size
     inner = ref.crop((inset, inset, rw - inset, rh - inset))
     mine = Image.open(shot).convert("RGB").resize(inner.size, Image.Resampling.LANCZOS)

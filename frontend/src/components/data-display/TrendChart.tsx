@@ -66,6 +66,14 @@ export function TrendChart({
       <Legend items={series.map((s) => ({ label: s.label, color: s.color }))} />
       <svg className="chart__svg" width={width} height={HEIGHT} viewBox={`0 0 ${width} ${HEIGHT}`} role="img" aria-labelledby={titleId}>
         <title id={titleId}>{`${ariaLabel} (${unit})`}</title>
+        <defs>
+          {series.map((s) => (
+            <linearGradient key={s.id} id={`${titleId}-area-${s.id}`} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor={s.color} stopOpacity={0.32} />
+              <stop offset="1" stopColor={s.color} stopOpacity={0.02} />
+            </linearGradient>
+          ))}
+        </defs>
         {ticks.map((tick) => (
           <g key={tick}>
             <line className="chart__grid" x1={PAD.left} x2={width - PAD.right} y1={y(tick)} y2={y(tick)} />
@@ -88,7 +96,7 @@ export function TrendChart({
           return (
             <g key={s.id}>
               {s.area && first && last && (
-                <path d={`${line} L${last[0].toFixed(1)} ${y(0)} L${first[0].toFixed(1)} ${y(0)} Z`} fill={s.color} opacity={0.16} />
+                <path d={`${line} L${last[0].toFixed(1)} ${y(0)} L${first[0].toFixed(1)} ${y(0)} Z`} fill={`url(#${titleId}-area-${s.id})`} />
               )}
               <path d={line} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" strokeDasharray={s.dashed ? '5 4' : undefined} />
               {points.map(([px, py], i) => (

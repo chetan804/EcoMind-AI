@@ -7,7 +7,7 @@ React + TypeScript + Vite single-page app. Boundaries and rules: `docs/architect
 ## Layout (`src/`)
 | Path | Responsibility |
 |---|---|
-| `app/` | `App`, `router` (single route table), `providers`, `query-client`, `config` (only reader of `import.meta.env`), `guards/` |
+| `app/` | `App`, `router` (single route table; each screen is code-split with React Router `lazy`), `providers`, `query-client`, `config` (only reader of `import.meta.env`), `guards/` |
 | `components/` | shared UI: `ui/` design-system primitives, `layout/`, `data-display/`, `forms/`, `feedback/`, `navigation/` |
 | `features/<name>/` | feature code (`api/`, `components/`, `hooks/`, `pages/`, `schemas/`, `types/`, `utils/`) exposed only via `index.ts` |
 | `services/` | `api-client.ts` (the one HTTP entry point, structured `ApiError`), `error-handler.ts` |

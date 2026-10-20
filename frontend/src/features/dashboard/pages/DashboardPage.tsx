@@ -52,7 +52,7 @@ export function DashboardPage() {
           <Card className="dash__chart-card" aria-labelledby="trend-title">
             <CardHeader title="Waste generation trend" titleId="trend-title" actions={<span className="dash__range">Last 7 days</span>} />
             <TrendChart
-              height={210}
+              height={195}
               unit={demoTrend.unit}
               xLabels={[...demoTrend.xLabels]}
               ariaLabel="Waste generation trend, observed and forecast (demonstration data)"

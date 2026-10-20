@@ -9,7 +9,8 @@ to the lists below.
 
 from __future__ import annotations
 
-import re
+import hashlib
+import json
 import sys
 from pathlib import Path
 
@@ -97,20 +98,31 @@ ALLOWED_TOP_LEVEL = {
 }  # fmt: skip
 
 
-# Design reference screenshots and their manifest were committed to the repository root on `main`
-# (docs/ui/design-system.md, "Reference material"). They are allowed by exact pattern only, so any
-# other new root entry still fails. Moving them under docs/ui/ would let this exception be removed.
-REFERENCE_ASSET = re.compile(r"^\d{2}_[A-Za-z0-9_]+\.png$")
-REFERENCE_MANIFEST = "manifest.json"
+REFERENCE_DIR = "docs/ui/reference"
+
+
+def reference_problems() -> list[str]:
+    """The design references are immutable originals: each must exist and match its recorded SHA-256."""
+    manifest_path = ROOT / REFERENCE_DIR / "manifest.json"
+    if not manifest_path.is_file():
+        return [f"missing file: {REFERENCE_DIR}/manifest.json"]
+    problems: list[str] = []
+    for screen in json.loads(manifest_path.read_text(encoding="utf-8"))["screens"]:
+        image = ROOT / REFERENCE_DIR / screen["filename"]
+        if not image.is_file():
+            problems.append(f"missing reference image: {REFERENCE_DIR}/{screen['filename']}")
+        elif hashlib.sha256(image.read_bytes()).hexdigest() != screen["sha256"]:
+            problems.append(f"reference image was modified (sha256 differs from manifest): {screen['filename']}")
+    return problems
 
 
 def main() -> int:
     problems: list[str] = []
     problems += [f"missing directory: {d}" for d in REQUIRED_DIRS if not (ROOT / d).is_dir()]
     problems += [f"missing file: {f}" for f in REQUIRED_FILES if not (ROOT / f).is_file()]
+    problems += reference_problems()
     for entry in sorted(ROOT.iterdir()):
-        is_reference = bool(REFERENCE_ASSET.match(entry.name)) or entry.name == REFERENCE_MANIFEST
-        if entry.name not in ALLOWED_TOP_LEVEL and not is_reference:
+        if entry.name not in ALLOWED_TOP_LEVEL:
             problems.append(f"unexpected top-level entry: {entry.name} (see docs/decisions)")
     for module in BACKEND_MODULES:
         if not (ROOT / "backend/app/modules" / module / "README.md").is_file():

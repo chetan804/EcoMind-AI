@@ -42,3 +42,5 @@
 .status-page { display: grid; justify-items: center; gap: var(--space-4); padding: var(--space-16) var(--space-6); text-align: center; }
 .status-page__title { font-size: var(--text-3xl); font-weight: var(--font-weight-bold); }
 .status-page__text { color: var(--color-text-muted); max-width: 48ch; }
+
+.page-loading { display: grid; place-items: center; min-height: 100dvh; background: var(--color-bg); }

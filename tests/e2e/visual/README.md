@@ -1,6 +1,6 @@
 # Visual iteration tooling
 
-Developer tooling for comparing the built screens with the design references. It is **not** part of the product, not run in CI, and does not gate merges. The reference PNGs in the repository root are crops of one blurry AI-generated composite, so these numbers guide iteration; they are not an acceptance test and nothing here claims pixel accuracy.
+Developer tooling for comparing the built screens with the design references. It is **not** part of the product, not run in CI, and does not gate merges. The reference PNGs in `docs/ui/reference/` (with their `manifest.json`) are crops of one blurry AI-generated composite, so these numbers guide iteration; they are not an acceptance test and nothing here claims pixel accuracy.
 
 ## How it works
 
@@ -8,6 +8,14 @@ Developer tooling for comparing the built screens with the design references. It
 2. `compare.py` downscales the screenshot to the **reference's own pixel size** (the reference is never enlarged), ignores the reference's 3 px showcase frame, and prints landmark deltas in design pixels (positive = further right / lower / larger), SSIM, mean colour error and a coarse colour-grid distance. It also writes `out/<id>@sidebyside.png` (reference left, render right) and `out/<id>@diff.png`.
 
 Landmark boxes in `targets.json` were read by eye from the blurry references: expect about +/-5 design px of reading error.
+
+## Other checks in this folder
+
+- `responsive-check.mjs`: overflow, console errors, failed requests, landmarks, names and focus visibility on the four screens at 1440, 1280, 768 and 390 px.
+- `contrast-hero.mjs` + `contrast_hero.py`: per-line WCAG contrast of the landing hero text over the artwork.
+- `route-payload.mjs`: JavaScript downloaded by a cold visit to each route (use `vite preview` on a production build).
+
+Committed results live in `docs/ui/evidence/`.
 
 ## Run it
 
