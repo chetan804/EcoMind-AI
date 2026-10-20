@@ -333,6 +333,7 @@ Constraints:
 | `country_code` | varchar(2) | null |  |  |
 | `daily_capacity_kg` | numeric(14, 3) | null |  |  |
 | `contact_email` | varchar(320) | null |  |  |
+| `zone_id` | uuid | null |  | FK -> `zones.id` |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |
@@ -346,6 +347,25 @@ Constraints:
 - `ck_facilities_latitude_range`: `latitude BETWEEN -90 AND 90`
 - `ck_facilities_longitude_range`: `longitude BETWEEN -180 AND 180`
 - Allowed values: `facility_type` in (processing_center, depot, transfer_station, drop_off_point); `status` in (active, inactive, maintenance)
+
+### `zones`
+
+A named service area (no boundary geometry: the platform has no verified map data).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `code` | varchar(32) | NN |  |  |
+| `name` | varchar(200) | NN |  |  |
+| `zone_type` | varchar(21) | NN |  |  |
+| `description` | text | null |  |  |
+| `is_active` | boolean | NN | `true` |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- Allowed values: `zone_type` in (residential, commercial, industrial, mixed_use, institutional, other)
 
 ## Module `fleet`
 

@@ -19,6 +19,7 @@ from app.modules.classification.router import router as classification_router
 from app.modules.collection.router import router as collection_router
 from app.modules.community_incidents.router import router as incidents_router
 from app.modules.facilities.router import router as facilities_router
+from app.modules.facilities.zone_router import router as zones_router
 from app.modules.fleet.router import router as fleet_router
 from app.modules.forecasting.router import router as forecasting_router
 from app.modules.material_passports.router import router as passports_router
@@ -32,6 +33,7 @@ api_v1_router = APIRouter()
 api_v1_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_v1_router.include_router(waste_reports_router, prefix="/waste-reports", tags=["waste-reports"])
 api_v1_router.include_router(facilities_router, prefix="/facilities", tags=["facilities"])
+api_v1_router.include_router(zones_router, prefix="/zones", tags=["zones"])
 api_v1_router.include_router(
     classification_router, prefix="/classification", tags=["classification"]
 )

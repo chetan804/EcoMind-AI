@@ -34,3 +34,16 @@ Only the fields present in the body change. Nullable fields can be cleared with 
 ## Audit events
 
 `facility.created`, `facility.updated`.
+
+## Zones (`/api/v1/zones`)
+
+Named service areas ("Zone 1 - Commercial"). **No boundary geometry**: the platform has no verified map data, so zones are lists, not polygons; the Locations and Zones screen says so. Same permissions as facilities (`facilities:read` / `facilities:manage`).
+
+| Method and path | Purpose |
+|---|---|
+| `GET /zones` | Paginated list; filters `zone_type`, `active`, `q` (name/code, literal); `sort_by` `name|code|zone_type|created_at` |
+| `POST /zones` | Create (`201`); duplicate code in any case is `409 zone_code_taken` |
+| `GET /zones/{id}` | One zone with `facility_count` |
+| `PATCH /zones/{id}` | Partial update (`name`, `zone_type`, `description`, `is_active`; `code` immutable). No DELETE: retire with `is_active=false` |
+
+`zone_type`: `residential|commercial|industrial|mixed_use|institutional|other`. A facility carries an optional `zone_id` (create/update). It can only be put into an existing, **active** zone (`422` otherwise); leaving a zone, or keeping a retired one, is always allowed. `GET /facilities` accepts `zone_id` and `unzoned=true`. Audit events: `zone.created`, `zone.updated`. Migration `0009`.

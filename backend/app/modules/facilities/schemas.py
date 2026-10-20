@@ -18,7 +18,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.modules.facilities.constants import FacilityStatus, FacilityType
+from app.modules.facilities.constants import FacilityStatus, FacilityType, ZoneType
 
 CODE_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9_-]{1,31}$")
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=200)]
@@ -29,6 +29,16 @@ Latitude = Annotated[decimal.Decimal, Field(ge=-90, le=90, decimal_places=6)]
 Longitude = Annotated[decimal.Decimal, Field(ge=-180, le=180, decimal_places=6)]
 
 SortField = Literal["name", "code", "city", "daily_capacity_kg", "created_at"]
+
+
+def _zone_code(value: str) -> str:
+    code = value.strip().upper()
+    if not CODE_PATTERN.fullmatch(code):
+        raise ValueError(
+            "code must be 2-32 characters: letters, digits, '-' or '_', "
+            "starting with a letter or digit"
+        )
+    return code
 
 
 def _country(value: str | None) -> str | None:
@@ -55,6 +65,7 @@ class FacilityCreate(BaseModel):
     longitude: Longitude | None = None
     daily_capacity_kg: Capacity | None = None
     contact_email: EmailStr | None = None
+    zone_id: uuid.UUID | None = None
 
     @field_validator("code")
     @classmethod
@@ -92,6 +103,7 @@ class FacilityUpdate(BaseModel):
     longitude: Longitude | None = None
     daily_capacity_kg: Capacity | None = None
     contact_email: EmailStr | None = None
+    zone_id: uuid.UUID | None = None
 
     _country_code = field_validator("country_code")(lambda cls, v: _country(v))
 
@@ -118,5 +130,54 @@ class FacilityOut(BaseModel):
     daily_capacity_kg: decimal.Decimal | None
     # Only returned to callers who can manage facilities (it may be a personal address).
     contact_email: str | None
+    zone_id: uuid.UUID | None
+    created_at: dt.datetime
+    updated_at: dt.datetime
+
+
+# -- zones ---------------------------------------------------------------------------------------
+ZoneSortField = Literal["name", "code", "zone_type", "created_at"]
+Description = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+]
+
+
+class ZoneCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: str
+    name: Name
+    zone_type: ZoneType
+    description: Description | None = None
+
+    _code = field_validator("code")(lambda cls, v: _zone_code(v))
+
+
+class ZoneUpdate(BaseModel):
+    """Partial update; ``code`` is immutable. A zone is retired with ``is_active=false``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: Name | None = None
+    zone_type: ZoneType | None = None
+    description: Description | None = None
+    is_active: bool | None = None
+
+    @model_validator(mode="after")
+    def _required_fields_cannot_be_cleared(self) -> Self:
+        for field in ("name", "zone_type", "is_active"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"{field} cannot be null")
+        return self
+
+
+class ZoneOut(BaseModel):
+    id: uuid.UUID
+    code: str
+    name: str
+    zone_type: ZoneType
+    description: str | None
+    is_active: bool
+    facility_count: int
     created_at: dt.datetime
     updated_at: dt.datetime
