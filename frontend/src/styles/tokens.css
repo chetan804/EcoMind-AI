@@ -132,8 +132,8 @@
 
 /*
  * ---- Light theme: content areas of the Forecasting, Anomaly, Route Optimization references ----
- * Values are estimates from those three references and are NOT yet verified against screens
- * (the light screens belong to Stage 2).
+ * Chosen from the references' content areas (05-22 are light); contrast was not audited for every
+ * screen. Users pick it from the account menu (see services/theme).
  */
 [data-theme='light'] {
   color-scheme: light;
@@ -171,6 +171,23 @@
   --shadow-sm: 0 1px 2px rgba(11, 31, 46, 0.08);
   --shadow-md: 0 8px 24px rgba(11, 31, 46, 0.1);
   --shadow-dialog: 0 24px 64px rgba(11, 31, 46, 0.25);
+}
+
+/* The sidebar and the small-screen bar stay dark in the light theme (as in the references). */
+[data-theme='light'] .sidebar,
+[data-theme='light'] .shell__bar {
+  color-scheme: dark;
+  --color-text: #f2f7f8;
+  --color-text-secondary: #b4c3ca;
+  --color-text-muted: #86a0ab;
+  --color-border: #17313b;
+  --color-border-strong: #26485a;
+  --color-divider: rgba(255, 255, 255, 0.07);
+  --color-nav-active: #047a56;
+  --color-nav-hover: rgba(255, 255, 255, 0.06);
+  --color-focus: #7af794;
+  --color-surface-raised: #112631;
+  --color-neutral-bg: rgba(255, 255, 255, 0.08);
 }
 
 @media (prefers-reduced-motion: reduce) {

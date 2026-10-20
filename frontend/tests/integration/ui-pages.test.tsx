@@ -119,7 +119,24 @@ describe('application navigation', () => {
     expect(trigger).not.toHaveTextContent('Guest');
     await userEvent.click(trigger);
     const menu = screen.getByRole('menu');
-    expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['System status', 'Sign out']);
+    expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'System status',
+      'Use light theme',
+      'Sign out',
+    ]);
+  });
+
+  it('the theme choice is stored, applied while signed in, and dropped on public pages', async () => {
+    window.localStorage.removeItem('ecomind.theme');
+    renderAt('/classify');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    await userEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Use light theme' }));
+    expect(window.localStorage.getItem('ecomind.theme')).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+    expect(screen.getByRole('menuitem', { name: 'Use dark theme' })).toBeInTheDocument();
+    window.localStorage.removeItem('ecomind.theme');
   });
 
   it('signing out ends the session, calls the server and returns to sign-in', async () => {

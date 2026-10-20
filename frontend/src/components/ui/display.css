@@ -21,6 +21,8 @@
 .table caption { text-align: left; padding-bottom: var(--space-3); font-weight: var(--font-weight-semibold); }
 .table th, .table td { padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 1px solid var(--color-divider); }
 .table th { font-size: var(--text-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); white-space: nowrap; }
+.table th[scope='row'] p { max-width: 34rem; }
+.table th[scope='row'] { white-space: normal; color: var(--color-text); font-size: var(--text-base); font-weight: var(--font-weight-regular, 400); }
 .table tbody tr:hover { background: var(--color-nav-hover); }
 .table .num { text-align: right; font-variant-numeric: tabular-nums; }
 

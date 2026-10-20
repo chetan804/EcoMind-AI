@@ -4,6 +4,7 @@ import { Menu as MenuIcon } from 'lucide-react';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { IconButton } from '@/components/ui/IconButton';
 import { BrandMark } from './BrandMark';
+import { useApplyTheme } from '@/services/theme/theme';
 import { cx } from '@/utils/cx';
 import './layout.css';
 
@@ -12,6 +13,7 @@ export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const menuButton = useRef<HTMLSpanElement>(null);
   const { pathname } = useLocation();
+  useApplyTheme();
 
   // Close the drawer when the route changes (adjusting state during render, not in an effect).
   const [lastPath, setLastPath] = useState(pathname);

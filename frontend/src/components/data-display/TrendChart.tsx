@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { useElementWidth } from '@/hooks/useElementWidth';
+import { visibleLabelIndexes } from './chart-labels';
 import { Legend } from './Legend';
 import './data-display.css';
 
@@ -82,9 +83,9 @@ export function TrendChart({
             </text>
           </g>
         ))}
-        {xLabels.map((label, i) => (
-          <text key={`${label}-${i}`} x={x(i)} y={HEIGHT - 8} textAnchor={i === 0 ? 'start' : i === xLabels.length - 1 ? 'end' : 'middle'}>
-            {label}
+        {visibleLabelIndexes(xLabels, innerW).map((i) => (
+          <text key={`${xLabels[i]}-${i}`} x={x(i)} y={HEIGHT - 8} textAnchor={i === 0 ? 'start' : i === xLabels.length - 1 ? 'end' : 'middle'}>
+            {xLabels[i]}
           </text>
         ))}
         {series.map((s) => {
@@ -141,5 +142,6 @@ function niceMax(value: number): number {
 }
 
 function formatTick(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value % 1_000_000 ? 1 : 0)}M`;
   return value >= 1000 ? `${(value / 1000).toFixed(value % 1000 ? 1 : 0)}k` : String(Math.round(value));
 }

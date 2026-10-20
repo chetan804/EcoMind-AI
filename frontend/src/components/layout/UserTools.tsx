@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, Bell, LogIn, LogOut, Search } from 'lucide-react';
+import { Activity, Bell, LogIn, LogOut, Moon, Search, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconButton, IconLink } from '@/components/ui/IconButton';
@@ -7,6 +7,7 @@ import { Menu, type MenuItem } from '@/components/ui/Menu';
 import { PageSearch } from '@/components/navigation/PageSearch';
 import { useUnreadCount } from '@/features/notifications';
 import { useAuth } from '@/services/session';
+import { useThemePreference } from '@/services/theme/theme';
 import './layout.css';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -23,11 +24,18 @@ export function UserTools({ showSearch = true }: { showSearch?: boolean }) {
   const { status, user, signOut, can } = useAuth();
   const unread = useUnreadCount(status === 'authenticated' && can('notifications:read_own')).data?.unread ?? 0;
   const navigate = useNavigate();
+  const { theme, setTheme } = useThemePreference();
 
   const items: MenuItem[] =
     status === 'authenticated'
       ? [
           { id: 'status', label: 'System status', to: '/settings/system-status', icon: <Activity size={16} aria-hidden="true" /> },
+          {
+            id: 'theme',
+            label: theme === 'dark' ? 'Use light theme' : 'Use dark theme',
+            icon: theme === 'dark' ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />,
+            onSelect: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
+          },
           {
             id: 'sign-out',
             label: 'Sign out',

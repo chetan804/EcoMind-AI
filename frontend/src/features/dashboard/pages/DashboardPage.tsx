@@ -66,7 +66,7 @@ function OperationsOverview() {
                         icon={<Layers size={28} />}
                         label="Recovery rate"
                         value={formatPercent(o.recovery.recovery_rate)}
-                        note={o.recovery.recovery_rate === null ? 'No verified records yet' : `${o.recovery.verified_records} verified records`}
+                        note={o.recovery.recovery_rate === null ? 'No verified records yet' : `${o.recovery.verified_records} verified record${o.recovery.verified_records === 1 ? '' : 's'}`}
                       />
                     </Card>
                   </li>
