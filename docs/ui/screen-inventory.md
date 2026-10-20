@@ -12,11 +12,11 @@ Reference list of screens the product needs, mapped to features and API areas. *
 | Classify an item (upload, object + material + confidence + guidance) | `/classify` | waste-classification | classification, sorting_guide | citizens, staff | **UI only** (local preview and validation; no model, no result) |
 | Sign out | account menu | auth | auth | all | **Implemented** (revokes the server session, clears the client session and query cache) |
 | Prediction review queue | `/classification/review` | waste-classification | classification | staff | Not started |
-| Waste reports list / detail / create | `/reports`, `/reports/:id`, `/reports/new` | waste-reports | waste_reports | citizens, staff | Not started |
+| Waste reports list / detail / create | `/reports`, `/reports/:id`, `/reports/new` | waste-reports | waste_reports | citizens, staff | Not started (API implemented and tested; no UI yet) |
 | Collection tasks list / detail | `/collection`, `/collection/:id` | collection | collection | managers, collectors | Not started |
 | My tasks (mobile-friendly) | `/collection/mine` | collection | collection | collectors | Not started |
 | Route plans / route detail | `/routes`, `/routes/:id` | route-planning | route_planning | managers, drivers | Not started |
-| Facilities | `/facilities`, `/facilities/:id` | facilities | facilities | managers, operators | Not started |
+| Facilities | `/facilities`, `/facilities/:id` | facilities | facilities | managers, operators | Not started (API implemented and tested; no UI yet) |
 | Fleet | `/fleet` | fleet | fleet | managers | Not started |
 | Recovery records and verification | `/circular-economy` | circular-economy | circular_economy | operators, verifiers | Not started |
 | Analytics and trends | `/analytics` | analytics | analytics | managers | Not started |
@@ -52,7 +52,7 @@ Reference list of screens the product needs, mapped to features and API areas. *
 | 12 Rewards and Impact Ledger | Rewards and impact | rewards | Not started |
 | 13 Waste Intake Records | Waste reports | waste-reports (closest row; titles differ) | Not started |
 | 14 Locations and Zones | Locations and zones | **no dedicated row or module yet**: owner to be decided (facilities is the closest) | Not started |
-| 15 Processing Facilities and Depots | Facilities | facilities | Not started |
+| 15 Processing Facilities and Depots | Facilities | facilities | Not started (API implemented and tested; no UI yet) |
 | 16 Collection Fleet Vehicles | Fleet | fleet | Not started |
 | 17 Smart Bins and Sensor Telemetry | none | **excluded by product decision** (no hardware; no nav item, no simulated telemetry) | Not planned |
 | 18 Collections and Impact | Collection tasks | collection (impact figures come from analytics) | Not started |

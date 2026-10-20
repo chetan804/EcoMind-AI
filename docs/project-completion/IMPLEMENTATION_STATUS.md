@@ -47,10 +47,10 @@ no dataset, no training code, no model.
 | auth | models + migration | register, login, refresh, logout, change-password, me | **Verified** (48 backend tests incl. concurrency + mutation checks; e2e) |
 | users / roles / permissions | models + seed migration `0002` | none (no user-management API yet) | **Partial**: RBAC seeded and enforced (38 permissions, 5 roles, drift-guard test); first admin via CLI; no user-admin endpoints |
 | audit | models | written by auth events; **no read endpoint yet** | **Partial** |
-| waste_reports + media | models | none | Missing |
+| waste_reports + media | models + migration `0003` (idempotency) | create (idempotent), list/filter/search/sort, detail, review workflow, photo upload/download | **Verified locally (backend only)**: 90 tests incl. races and mutation checks; **no UI yet** |
 | classification | models | none | Missing (no model artifact exists) |
 | collection | models | none | Missing |
-| facilities | models | none | Missing |
+| facilities | models | list/filter/search/sort, detail, create, partial update (no delete by design) | **Verified locally (backend only)**: 32 tests; **no UI yet** |
 | fleet | models | none | Missing |
 | route_planning | models | none | Missing |
 | sorting_guide / materials | models | none | Missing |
@@ -127,3 +127,28 @@ Known limitations of this phase (also in `docs/security/security-baseline.md`):
 | **failure** | **GitGuardian Security Checks** (third-party scanner): 2 "Generic Password" findings (incidents 38441416 and 38441417) in `backend/tests/unit/test_password_policy.py`, commit `df0938f` |
 
 GitGuardian analysis: **false positive.** The flagged strings are synthetic inputs of a password-policy unit test and are deliberately weak passwords that the policy under test must reject; they occur only under `backend/tests/` and authenticate to nothing. Nothing needs revoking or rotating. The check stays red for this PR because it is bound to commit `df0938f` and history is not rewritten. **Owner action required** to clear it: mark the two incidents as false positives (or "test credential") in the GitGuardian dashboard. No scanner configuration was changed by the agent. The PR reports `mergeStateStatus=UNSTABLE` solely because of this check.
+
+### Phase C (part 1): waste reports, photo upload, facilities (this branch)
+
+**Scope boundary, stated plainly.** Done: waste-report intake and review, safe photo upload, facilities. **Not done in this increment:** fleet and collection-task APIs (collection depends on assignment and status workflows that belong with Phase E), a separate "locations/zones" module (none exists in the data model; coordinates live on reports and facilities, and screen 14 still has no owner), and every frontend screen for these modules.
+
+Migration: `0003_waste_report_idempotency` (adds `idempotency_key`, `request_fingerprint`, a both-or-neither CHECK, and `UNIQUE (reporter_id, idempotency_key)`). Verified: upgrade, downgrade to `0002` (columns and constraints verified gone via the catalog), re-upgrade, and `alembic check` reports no drift. `docs/database/data-dictionary.md` regenerated (CI fails if stale; it *was* stale before regeneration).
+
+New dependency: `pillow>=11,<14` (installed 13.0.0), used only to validate and re-encode uploads.
+
+| Check | Command (from the directory shown) | Result |
+|---|---|---|
+| Backend lint/format/types | `cd backend && ruff check . && ruff format --check . && mypy` | clean (136 source files) |
+| Backend tests, real PostgreSQL 16.2 | `cd backend && pytest` | **259 passed** (114 + 145 new: images 17, storage 16, search 7, reports 48, media 25, facilities 32) |
+| Schema drift | `cd backend && alembic check` | no new upgrade operations |
+| Data dictionary | `python scripts/database/generate_data_dictionary.py --check` | up to date |
+| Other suites | `cd ml && pytest`; `pytest tests/contract`; `python scripts/quality/check_structure.py` | 7 passed; 5 passed; ok |
+| Mutation checks | break one rule, run the relevant tests | **15/15 caught**: EXIF passthrough, pixel cap, visibility check, idempotency body check, state machine, upload quota, LIKE escaping, storage key allow-list, attaching another user's photo, contact-email visibility, any-of permission check, coordinate-pair check, no-op audit, sensitive value in audit, mutable `code` |
+
+Defects found by testing during this increment (fixed):
+1. Migration `0003` downgrade failed: the metadata naming convention is applied again when dropping a CHECK, so the full name produced `ck_waste_reports_ck_waste_reports_...`. Caught by running the downgrade, not by assumption.
+2. A partial facility update setting only one coordinate would have been a 500; it is now a 422 (found in code review before the test, then pinned by a test).
+3. Mypy found the sort-column map mis-typed and two tests reaching into private re-exports.
+4. `ruff format` also reformats Python blocks inside Markdown READMEs (it failed CI-equivalent checks in Phase B); the same trap was avoided here by running the formatter on docs before committing.
+
+Known limitations of this increment (also in `docs/security/security-baseline.md`): no antivirus scan (images are re-encoded instead); unattached uploads are capped per user but not purged automatically; local single-node storage; orphan files are possible if the process dies between writing a file and committing its row; a reverse proxy in front of the API must allow `MAX_UPLOAD_BYTES`; the web app must load photos through `apiRequest` (an `<img src>` cannot send a bearer token); no classification is attached to uploads yet because no model exists.

@@ -14,6 +14,18 @@ Implemented controls are marked **✔**; the rest are requirements for the featu
 - **Client-side token handling:** the access token lives only in JavaScript memory (never `localStorage`/`sessionStorage`/cookies); `localStorage` holds a single non-secret *hint* that a session probably exists. The refresh token is never visible to JavaScript. The query cache is cleared whenever a signed-in session ends. ✔ unit and e2e tested
 - **Client address behind a proxy:** per-address limits use the direct peer address (`request.client.host`); `X-Forwarded-For` is deliberately not trusted because any client can forge it. Behind a reverse proxy (including the Compose frontend container) every user therefore shares the proxy's address until the ASGI server is configured to trust the proxy's forwarded headers. **Production must configure this** before the per-address limits are meaningful.
 
+## File uploads (waste-report photos)
+
+Implemented in `waste_reports/images.py` and `integrations/file_storage/local.py`; behaviour and limits are in [docs/api/waste-reports-api.md](../api/waste-reports-api.md). Controls, each covered by a test:
+
+- **Never trust the client:** declared content type and file name are ignored; the format is detected by decoding (JPEG/PNG/WebP only; SVG, GIF, PDF, empty and truncated files are refused).
+- **Re-encode every image**, which strips EXIF/GPS (citizen location privacy), trailing data and polyglot payloads.
+- **Resource limits:** byte cap enforced while streaming, 40-megapixel decoded cap (decompression bomb), 32 px minimum side, 20 unattached uploads per user.
+- **No path control:** storage keys are generated (`<hex>/<uuid>.<ext>`) and re-validated against an allow-list on every operation, resolved paths must stay inside the storage root (symlink escape tested), writes are atomic and files are 0600.
+- **Safe delivery:** `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`, generated `Content-Disposition`, `Cache-Control: private`.
+- **Authorization:** only the uploader or `waste_reports:read_all`; others get 404 (no probing).
+- **Known gaps:** no antivirus scan (images are re-encoded instead); no automated purge of unattached uploads; storage is a local volume (single node); orphan files can remain if the process dies between writing a file and committing its row.
+
 ## Configuration and secrets
 - All secrets from environment variables, validated at startup (`core/config.py`): `SECRET_KEY` ≥ 32 chars and not the template placeholder; production requires `REFRESH_COOKIE_SECURE=true` and no `*` in CORS origins. ✔ tested
 - `.env` files are git-ignored; templates contain placeholders only; `scripts/quality/check_env_templates.py` fails CI on real-looking values or tracked `.env` files. ✔
