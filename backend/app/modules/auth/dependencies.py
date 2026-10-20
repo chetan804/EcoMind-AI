@@ -86,6 +86,24 @@ def require_permissions(*required: str) -> Callable[[Principal], Principal]:
     return dependency
 
 
+def require_any_permission(*accepted: str) -> Callable[[Principal], Principal]:
+    """Dependency factory: the caller must hold *at least one* of the listed permissions.
+
+    Use it where two permissions grant different scopes of the same operation (for example
+    ``read_own`` / ``read_all``); the handler then decides the scope from ``principal.has(...)``.
+    """
+    if not accepted:
+        raise ValueError("require_any_permission needs at least one permission")
+
+    def dependency(principal: CurrentPrincipal) -> Principal:
+        if not any(principal.has(code) for code in accepted):
+            # Same message as require_permissions: never reveal which permission was needed.
+            raise ForbiddenError("You do not have permission to perform this action")
+        return principal
+
+    return dependency
+
+
 def require_csrf_header(request: Request) -> None:
     """Guard for the cookie-authenticated endpoints (refresh, logout); see core/security.py."""
     if request.headers.get(CSRF_HEADER) != CSRF_HEADER_VALUE:

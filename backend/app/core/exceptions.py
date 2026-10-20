@@ -74,6 +74,18 @@ class PayloadTooLargeError(AppError):
     code = "payload_too_large"
 
 
+class UnsupportedMediaTypeError(AppError):
+    status_code = 415
+    code = "unsupported_media_type"
+
+
+class UnprocessableError(AppError):
+    """422 for a well-formed request that breaks a business rule (not a schema error)."""
+
+    status_code = 422
+    code = "unprocessable"
+
+
 _STATUS_CODES = {
     400: "bad_request",
     401: "unauthenticated",
@@ -82,6 +94,7 @@ _STATUS_CODES = {
     405: "method_not_allowed",
     409: "conflict",
     413: "payload_too_large",
+    415: "unsupported_media_type",
     422: "validation_error",
     429: "rate_limited",
 }
