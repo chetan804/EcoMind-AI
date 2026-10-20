@@ -7,7 +7,7 @@ approved for unattended use. Full evidence: `docs/ml/reports/waste-classificatio
 - **Task:** assign one of six *material* categories (cardboard, glass, metal, paper, plastic, trash) to a photograph of a single waste item, with a calibrated confidence and a `needs_review` flag. It does **not** identify the object (no object label is produced).
 - **Architecture:** frozen ImageNet-pretrained EfficientNet-EdgeTPU-M embedding extractor (TFLite, uint8; Apache-2.0, google-coral/test_data @ `104342d2`) -> logistic-regression head (numpy) -> temperature scaling.
 - **Runtime:** `ai-edge-litert` + numpy + Pillow on CPU. No GPU, no PyTorch/TensorFlow. Artifact files are verified by SHA-256 before loading.
-- **Owner/contact:** project maintainers (repository `chetan804/EcoMind-AI`). **Version/date:** 1.0.0, 2026-10-20T09:44:42Z.
+- **Owner/contact:** project maintainers (repository `chetan804/EcoMind-AI`). **Version/date:** 1.0.0, 2026-10-20T10:07:18Z.
 
 ## Intended use
 Decision support for triaging citizen waste reports: suggest a material category and tell a reviewer when to look. Reviewer
@@ -29,7 +29,7 @@ Class counts: cardboard 403, glass 501, metal 410, paper 594, plastic 482, trash
 | Calibration (ECE) | 0.031; mean confidence 0.869 vs accuracy 0.867 |
 | With the review rule | 74% auto-accepted at 96.1% accuracy; 79% of errors sent to review |
 | Best baseline (hand-crafted features) | macro-F1 0.592 |
-| Latency (2 CPU cores, bytes to decision) | p50 24 ms, p95 26 ms |
+| Latency (2 CPU cores, bytes to decision) | p50 23 ms, p95 30 ms |
 
 **Review rule:** needs review when calibrated confidence < 0.81 or similarity to the training images < 0.570.
 
@@ -51,5 +51,5 @@ Collect and label local field images (with consent), route low-confidence cases 
 for drift, re-estimate the review threshold on field data before relying on it, and retrain from reviewed corrections.
 
 ## Provenance
-git `000d03af99e1`; config SHA-256 `5898e145369a0b23...`; dataset digest `73cfe75b6a3e1bf1...`; `model.json` SHA-256 `a918518736545165...`.
+git `12c93a5475d6`; config SHA-256 `5898e145369a0b23...`; dataset digest `73cfe75b6a3e1bf1...`; `model.json` SHA-256 `389d431647131968...`.
 Registry entry: `ml/model_registry/waste_classification/1.0.0.yaml`.

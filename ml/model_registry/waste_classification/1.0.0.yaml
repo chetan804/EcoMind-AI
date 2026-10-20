@@ -3,8 +3,8 @@ version: 1.0.0
 status: candidate
 task: material_category
 framework: tflite (frozen backbone) + numpy linear head
-trained_at_utc: '2026-10-20T09:44:42Z'
-git_commit: 000d03af99e11aba4c12ff8c2cf5ab54b3aa3f1f
+trained_at_utc: '2026-10-20T10:07:18Z'
+git_commit: 12c93a5475d688407a14f5e8d5a0b1b4caaf965e
 code_tree_clean: true
 config_sha256: 5898e145369a0b23868ee2c64be423e7f67fffc5338187dec7a32cd62ce9a4d2
 dataset_manifest: datasets/manifests/trashnet-1.0.yaml
@@ -16,7 +16,7 @@ backbones:
 artifact_files:
   head.npz: 0972f2c8e5294a0333f3a87e3a19247f05e9136884a68a9f88383b421aa42c64
   novelty_reference.npy: 61e60fe12e555cc95b6222df920c48e2ada6fb9e5a8e7ddbe4ac6879865edd77
-artifact_model_json_sha256: a9185187365451653550541324b6fc726fea6717a05f5d9cea295c597cb0b79d
+artifact_model_json_sha256: 389d43164713196882f34480f94504f7cb57b8f68e73828ee49db29d91963102
 classes:
 - cardboard
 - glass
@@ -41,6 +41,6 @@ headline_metrics:
   - 0.7806267354539873
   - 0.8865233364556476
   ece: 0.031015061084036823
-  latency_p95_ms: 26.218067200761652
+  latency_p95_ms: 29.621550849969932
 evaluation_report: docs/ml/reports/waste-classification-1.0.0.json
 model_card: docs/ml/model-cards/waste-classification-1.0.0.md

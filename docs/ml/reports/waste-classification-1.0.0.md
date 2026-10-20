@@ -41,15 +41,15 @@ the train split only; **C** by the one-standard-error rule (most regularised C w
 | S | none | 0.830 | 0.016 | 8 | yes |
 | S | flip | 0.837 | 0.017 | 17 | yes |
 | S | flip4 | 0.845 | 0.015 | 34 | yes |
-| M | none | 0.843 | 0.018 | 28 | yes |
-| M | flip | 0.840 | 0.018 | 56 | yes |
-| M | flip4 | 0.851 | 0.012 | 111 | yes |
-| L | none | 0.839 | 0.010 | 60 | yes |
-| L | flip | 0.843 | 0.013 | 120 | yes |
-| L | flip4 | 0.849 | 0.014 | 239 | no |
-| M+L | none | 0.855 | 0.013 | 46 | yes |
-| M+L | flip | 0.850 | 0.016 | 93 | yes |
-| M+L | flip4 | 0.852 | 0.010 | 186 | no |
+| M | none | 0.843 | 0.018 | 13 | yes |
+| M | flip | 0.840 | 0.018 | 26 | yes |
+| M | flip4 | 0.851 | 0.012 | 52 | yes |
+| L | none | 0.839 | 0.010 | 36 | yes |
+| L | flip | 0.843 | 0.013 | 72 | yes |
+| L | flip4 | 0.849 | 0.014 | 145 | yes |
+| M+L | none | 0.855 | 0.013 | 45 | yes |
+| M+L | flip | 0.850 | 0.016 | 90 | yes |
+| M+L | flip4 | 0.852 | 0.010 | 179 | no |
 
 Selected: **backbone M, C = 0.03, TTA = none** (CV macro-F1 0.843 +/- 0.018).
 Larger or combined backbones score slightly higher in CV, but the differences are about one standard error. The rule
@@ -235,13 +235,13 @@ This does **not** show the model can recognise unsupported *waste* (food scraps,
 ## 8. Latency and train/serve parity
 
 Single request, bytes -> decode -> 1 backbone pass(es) -> head -> calibration -> decision, x86_64, 2 CPU cores, no GPU, 2 interpreter threads, n = 120 test files:
-**p50 23.9 ms, p95 26.2 ms, max 31.0 ms.** Parity of the serving code against the training-time features on 25 images:
+**p50 23.1 ms, p95 29.6 ms, max 33.3 ms.** Parity of the serving code against the training-time features on 25 images:
 max |logit difference| = 4.8e-06; identical predictions: True.
 
 These timings come from a shared development sandbox (other jobs may have been running), so treat them as an order of magnitude, not a benchmark; the budget is 150 ms. Re-measure on the deployment hardware before relying on them.
 
 ## 9. Provenance
 
-version `1.0.0`, git commit `000d03af99e11aba4c12ff8c2cf5ab54b3aa3f1f` (training code tree clean at that commit: True), trained 2026-10-20T09:44:42Z, config SHA-256 `5898e145369a0b23868ee2c64be423e7f67fffc5338187dec7a32cd62ce9a4d2`, dataset content digest `73cfe75b6a3e1bf1d19632514006aad5c26944480f9364402003be9e567b5221`,
-`model.json` SHA-256 `a9185187365451653550541324b6fc726fea6717a05f5d9cea295c597cb0b79d`, Python 3.11.2, numpy 2.4.6, scikit-learn 1.9.1.
+version `1.0.0`, git commit `12c93a5475d688407a14f5e8d5a0b1b4caaf965e` (training code tree clean at that commit: True), trained 2026-10-20T10:07:18Z, config SHA-256 `5898e145369a0b23868ee2c64be423e7f67fffc5338187dec7a32cd62ce9a4d2`, dataset content digest `73cfe75b6a3e1bf1d19632514006aad5c26944480f9364402003be9e567b5221`,
+`model.json` SHA-256 `389d43164713196882f34480f94504f7cb57b8f68e73828ee49db29d91963102`, Python 3.11.2, numpy 2.4.6, scikit-learn 1.9.1.
 Reproduce: `python -m ml.waste_classification.data.fetch && python -m ml.waste_classification.training.train && python -m ml.waste_classification.evaluation.report`.
