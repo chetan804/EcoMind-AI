@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
+import { MetricTile } from '@/components/data-display/MetricTile';
 import { AuthImage } from '@/components/data-display/AuthImage';
 import { Alert } from '@/components/feedback/Alert';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -53,11 +54,7 @@ export function IncidentsPage() {
       />
       {triage && summary.data && (
         <div className="grid-3">
-          <div>
-            <p className="muted">Open</p>
-            <p className="analytics-figure">{summary.data.open_incidents}</p>
-            <p className="muted">{summary.data.unassigned_open} unassigned</p>
-          </div>
+          <MetricTile icon={<ShieldAlert size={22} />} tone="amber" label="Open incidents" value={String(summary.data.open_incidents)} note={`${summary.data.unassigned_open} unassigned`} />
           <div>
             <p className="muted">By status</p>
             <CountList items={summary.data.by_status} label="Incidents by status" />

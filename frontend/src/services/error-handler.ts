@@ -7,7 +7,9 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 0) return 'Cannot reach the server. Check your connection and try again.';
     if (error.status === 401) return 'Your session has expired. Please sign in again.';
-    if (error.status === 403) return 'You do not have permission to do that.';
+    // A plain 403 is a permission failure. A 403 with a specific code is a business rule (for example
+    // self-verification), whose message explains what to do instead.
+    if (error.status === 403) return error.code === 'forbidden' || error.code === 'http_error' ? 'You do not have permission to do that.' : error.message || 'You do not have permission to do that.';
     if (error.status >= 500) return FALLBACK_MESSAGE;
     return error.message || FALLBACK_MESSAGE;
   }
