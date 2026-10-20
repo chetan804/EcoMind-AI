@@ -1,12 +1,27 @@
 # Feature: auth
 
-Sign in (`/sign-in`) and sign up (`/sign-up`) screens.
+The sign-in (`/sign-in`) and sign-up (`/sign-up`) screens.
 
-**Status:** UI implemented (Stage 1 UI milestone). **There is no authentication.** The forms validate input, but a valid submission sends nothing and shows a "not available yet" message. There are no sessions, tokens, guards or role checks.
+**Status:** implemented and wired to the backend (`/api/v1/auth/*`). Session handling is not in this feature: it is shared infrastructure in `src/services/session/` (see below).
 
-- **Backend module (future):** `auth` (see `docs/security/security-baseline.md`).
-- **Schemas:** `schemas/auth-forms.ts` (React Hook Form + Zod). The 12-character password minimum is **provisional**: the security baseline leaves the password policy to the sign-up milestone, and it must be confirmed there.
-- **Unavailable controls:** Google and Microsoft sign-in and "Forgot password?" are disabled with reasons (`unavailableReason`). No provider has been chosen or configured.
-- **Layout:** `AuthCard` (illustration panel + form panel), `AuthIllustration` (original SVG), `SocialButtons`, `SignInForm`, `SignUpForm`. Control sizes are larger than the app default by design (~66 px, from the reference).
-- **When the backend exists:** add `api/` and mutation hooks, put the single authentication implementation in this feature plus `app/guards`, and remove the unavailable notices that no longer apply.
+- **Forms:** `SignInForm`, `SignUpForm` (React Hook Form + Zod, `useMutation`). Server errors map to specific messages: wrong credentials, rate limiting (with the `Retry-After` wait), duplicate email (on the email field), password-policy messages (on the password field), unreachable server. The submit button shows a busy state and ignores clicks while a request is in flight.
+- **Redirects:** `RedirectIfSignedIn` keeps signed-in users off these pages and returns them to the page they originally requested. `utils/auth-errors.ts#safeRedirectTarget` accepts only same-site paths (open-redirect protection) and never an auth page.
+- **Schemas:** `schemas/auth-forms.ts`. The 12-character minimum mirrors the server policy for early feedback only; the server decides.
+- **Unavailable controls:** Google and Microsoft sign-in and "Forgot password?" stay disabled with a reason (`unavailableReason`). No identity provider or password-reset flow exists.
+- **Layout:** `AuthCard` (illustration panel + form panel), `AuthIllustration` (original SVG), `SocialButtons`.
 - **Public interface:** `import { SignInPage, SignUpPage } from '@/features/auth'`.
+
+## Where the session lives
+
+| Piece | Location |
+|---|---|
+| Session store (token in memory, single-flight refresh, sign-in/up/out) | `src/services/session/session-store.ts` |
+| `useAuth()` (status, user, `can(permission)`) | `src/services/session/useAuth.ts` |
+| Typed auth API calls | `src/services/session/auth-api.ts` |
+| Route guards | `src/app/guards/RequireAuth.tsx`, `RequirePermission.tsx` |
+| 401 → refresh → retry once | `src/services/api-client.ts` (`configureAuthHooks`) |
+
+Security properties (tested in `tests/unit/session-store.test.ts` and `tests/e2e/specs/auth.spec.ts`):
+the access token is kept in memory only; the refresh token is an HttpOnly cookie JavaScript cannot read; concurrent refreshes share one request; a 401 is retried exactly once; the query cache is cleared when a session ends; a sign-out in one tab signs out the others.
+
+`can()` and `RequirePermission` are a usability layer. The server authorises every request.

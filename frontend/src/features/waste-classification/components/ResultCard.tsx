@@ -1,69 +1,119 @@
-import { useId } from 'react';
-import { Droplets, ScanSearch } from 'lucide-react';
+import { useId, type ReactNode } from 'react';
+import { ScanSearch } from 'lucide-react';
 import { Alert } from '@/components/feedback/Alert';
-import { DemoDataNotice } from '@/components/feedback/DemoDataNotice';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { Spinner } from '@/components/feedback/Loading';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { sampleResult } from '../fixtures/sample-layout';
+import type { ActiveModel, Prediction } from '../api/schemas';
+import { PredictionResult } from './PredictionResult';
+import { ReviewPanel } from './ReviewPanel';
 
 export type ResultView =
+  | { kind: 'model-loading' }
+  | { kind: 'model-error'; message: string; onRetry: () => void }
+  | { kind: 'no-model' }
   | { kind: 'empty' }
-  | { kind: 'unavailable'; fileName: string }
-  | { kind: 'sample' };
+  | { kind: 'ready'; fileName: string; unavailableReason?: string; onClassify: () => void }
+  | { kind: 'analysing'; fileName: string }
+  | { kind: 'error'; title: string; detail: string; onRetry: () => void }
+  | { kind: 'result'; prediction: Prediction; model: ActiveModel['active']; canReview: boolean; onReviewed: (p: Prediction) => void };
 
-/**
- * The classification result panel. There is no classification service or model yet, so a real
- * upload ends in the `unavailable` state. `sample` renders the layout with a labelled sample.
- */
+/** The result panel. Every state shown here comes from the real API; nothing is a placeholder result. */
 export function ResultCard({ view, onReset }: { view: ResultView; onReset: () => void }) {
   const titleId = useId();
-  return (
-    <Card aria-labelledby={titleId} className="result">
-      <CardHeader title="Classification result" titleId={titleId} actions={view.kind === 'sample' ? <DemoDataNotice>Sample layout</DemoDataNotice> : undefined} />
-
-      {view.kind === 'empty' && (
-        <EmptyState icon={<ScanSearch size={24} />} title="No image yet" description="Choose an image to begin. Results will appear here once classification is available." />
-      )}
-
-      {view.kind === 'unavailable' && (
+  let body: ReactNode;
+  switch (view.kind) {
+    case 'model-loading':
+      body = (
+        <div className="result__stack" aria-busy="true">
+          <Spinner label="Checking the classification model" />
+          <p>Checking whether a classification model is active…</p>
+        </div>
+      );
+      break;
+    case 'model-error':
+      body = (
         <div className="result__stack">
-          <Alert tone="warning" title="Classification is not available yet">
-            The classification service is not implemented and no model has been trained, so “{view.fileName}” was
-            checked and previewed locally but not analysed. Nothing was uploaded.
+          <Alert tone="danger" title="Could not check the classification model">
+            {view.message}
           </Alert>
-          <Button variant="secondary" onClick={onReset}>
-            Try another image
+          <Button variant="secondary" onClick={view.onRetry}>
+            Try again
           </Button>
         </div>
-      )}
-
-      {view.kind === 'sample' && (
+      );
+      break;
+    case 'no-model':
+      body = (
+        <Alert tone="warning" title="No classification model is active">
+          Images cannot be analysed until an administrator activates a trained model. You can still choose an image to preview it;
+          nothing is uploaded.
+        </Alert>
+      );
+      break;
+    case 'empty':
+      body = <EmptyState icon={<ScanSearch size={24} />} title="No image yet" description="Choose an image, then select Classify image." />;
+      break;
+    case 'ready':
+      body = (
         <div className="result__stack">
-          <div className="result__class">
-            <span className="result__tile" aria-hidden="true">
-              <Droplets size={36} />
-            </span>
-            <div>
-              <p className="result__name">{sampleResult.className}</p>
-              <p className="result__caption">Sample output for layout review, not a model result</p>
-            </div>
-          </div>
-          <ProgressBar label="Confidence bar (sample, not a measurement)" value={sampleResult.fill * 100} />
-          <dl className="result__facts">
-            <div><dt>Model</dt><dd>Not connected</dd></div>
-            <div><dt>Evaluation</dt><dd>Not evaluated</dd></div>
-            <div><dt>Source</dt><dd>Sample illustration</dd></div>
-          </dl>
+          <p>
+            “{view.fileName}” is ready. Classifying uploads the image to the server (location metadata is removed) and stores the
+            result with it.
+          </p>
           <div className="result__actions">
-            <Button unavailableReason="Review needs the classification service, which is not built yet.">Verify result</Button>
+            <Button unavailableReason={view.unavailableReason} onClick={view.onClassify}>
+              Classify image
+            </Button>
             <Button variant="secondary" onClick={onReset}>
-              Try another image
+              Choose another image
             </Button>
           </div>
         </div>
-      )}
+      );
+      break;
+    case 'analysing':
+      body = (
+        <div className="result__stack" aria-busy="true">
+          <Spinner label="Analysing the image" />
+          <p role="status">Analysing “{view.fileName}”…</p>
+        </div>
+      );
+      break;
+    case 'error':
+      body = (
+        <div className="result__stack">
+          <Alert tone="danger" title={view.title}>
+            {view.detail}
+          </Alert>
+          <div className="result__actions">
+            <Button onClick={view.onRetry}>Try again</Button>
+            <Button variant="secondary" onClick={onReset}>
+              Choose another image
+            </Button>
+          </div>
+        </div>
+      );
+      break;
+    case 'result':
+      body = (
+        <div className="result__stack">
+          <PredictionResult prediction={view.prediction} model={view.model} />
+          {view.canReview && view.prediction.review.status === 'unreviewed' && (
+            <ReviewPanel prediction={view.prediction} onReviewed={view.onReviewed} />
+          )}
+          <Button variant="secondary" onClick={onReset}>
+            Classify another image
+          </Button>
+        </div>
+      );
+      break;
+  }
+  return (
+    <Card aria-labelledby={titleId} className="result">
+      <CardHeader title="Classification result" titleId={titleId} />
+      {body}
     </Card>
   );
 }

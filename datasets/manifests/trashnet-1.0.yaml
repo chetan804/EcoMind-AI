@@ -1,0 +1,69 @@
+# Dataset manifest: TrashNet (resized), as used by the waste material classifier v1.0.0.
+# The image files are NOT in this repository (datasets/external/ is git-ignored). Run
+#   python -m ml.waste_classification.data.fetch
+# to obtain exactly this content; the fetch step verifies the hashes below.
+name: trashnet
+version: "1.0"
+description: >
+  Photographs of single waste items on a plain (mostly white) background, in six material
+  classes. The 'dataset-resized' variant (512x384 JPEG) distributed in the TrashNet repository.
+source:
+  url: https://github.com/garythung/trashnet
+  commit: 6fa2b878c6c1b4304b91109070ce0edf9279bb31
+  file: data/dataset-resized.zip
+  archive_bytes: 42834870
+  archive_sha256: 0bf472790f8b20e5c950d5b5012a9d38af0d3392efd65f8ce171334fc16b07c2
+  # SHA-256 over the sorted "<class>/<file> <sha256-of-file>" lines of the 2,527 extracted images.
+  # The value recorded for a trained model is in its evaluation report (provenance.dataset_files_digest).
+licence:
+  spdx: MIT
+  holder: "Copyright (c) 2017 Gary Thung"
+  licence_file_sha256: e33347ae1589c1c7d7de5cf2e433e6c8060256273c7287a29d7c6e1e45c466f1
+  note: >
+    The licence file in the repository covers the repository. It does not describe the
+    provenance of the photographs themselves beyond the authors' statement that they collected them.
+citation: >
+  The authors ask users of the dataset to cite the repository: Gary Thung and Mindy Yang,
+  TrashNet, https://github.com/garythung/trashnet. Their Stanford CS 229 project paper,
+  "Classification of Trash for Recyclability Status" (2016), is at
+  https://cs229.stanford.edu/proj2016/report/ThungYang-ClassificationOfTrashForRecyclabilityStatus-report.pdf
+collection: >
+  Per the repository README: objects were placed on a white posterboard and photographed in
+  sunlight and/or room lighting with an Apple iPhone 7 Plus, iPhone 5S and iPhone SE, then resized
+  to 512x384. The authors report about 75% test accuracy for their own CNN (70/13/17 split).
+images:
+  total: 2527
+  format: JPEG
+  size_px: [512, 384]
+  excluded_files: ["__MACOSX/*", ".DS_Store"]   # macOS archive junk, skipped by the loader
+labels:
+  scope: material_category          # one label per image; there is NO object-level label
+  classes:
+    - {name: cardboard, count: 403, material_category_code: cardboard}
+    - {name: glass,     count: 501, material_category_code: glass}
+    - {name: metal,     count: 410, material_category_code: metal}
+    - {name: paper,     count: 594, material_category_code: paper}
+    - {name: plastic,   count: 482, material_category_code: plastic}
+    - {name: trash,     count: 137, material_category_code: trash}
+  class_balance: imbalanced (trash is 5.4% of images); handled with balanced class weights
+personal_data:
+  contains: false
+  note: >
+    Photographs of waste objects; no people are intended to be present. This was not exhaustively
+    audited image by image.
+split:
+  method: group-aware stratified 6-fold (sklearn StratifiedGroupKFold), seed 42
+  assignment: fold 0 = test, fold 1 = validation, folds 2-5 = train
+  groups: >
+    Near-duplicate images (several photos of one object) are clustered per class by
+    average-linkage on frozen-backbone embeddings at cosine similarity >= 0.70, so one object never
+    appears on both sides of a split. The persisted split is written to
+    ml/artifacts/waste_classification/split.json by the training run.
+  config: ml/configs/waste_classification.yaml
+known_limitations:
+  - "Studio-like images: one object, plain background, controlled lighting. Field images (clutter, bins, mixed waste, shadows, partial views) are out of distribution; expect lower accuracy."
+  - "Only six material classes. No organic/food waste, e-waste, textiles, hazardous waste or multi-layer packaging; such inputs cannot be recognised and must be routed to human review."
+  - "'trash' is a heterogeneous catch-all with 137 images."
+  - "Several photographs per physical object; random splits leak and overstate accuracy (quantified in the evaluation report)."
+  - "Collected at one site in 2016; geography, packaging styles and regulations differ from Indian municipal waste streams."
+  - "Labels were assigned by the dataset authors and were not independently audited."

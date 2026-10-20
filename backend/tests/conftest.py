@@ -13,7 +13,7 @@ import pytest
 
 from app.core.config import Settings
 
-pytest_plugins = ["tests.fixtures.database"]
+pytest_plugins = ["tests.fixtures.database", "tests.fixtures.api"]
 
 TEST_SECRET_KEY = "test-only-secret-key-0123456789abcdef"
 

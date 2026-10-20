@@ -24,6 +24,11 @@ export type ButtonProps = ButtonStyleProps &
      * `disabled`) so keyboard and screen-reader users can read the reason; clicks are ignored.
      */
     unavailableReason?: string;
+    /**
+     * An action is in progress: shows a spinner, sets aria-busy and ignores clicks (so a form
+     * cannot be submitted twice) while staying focusable.
+     */
+    loading?: boolean;
   };
 
 export function Button({
@@ -35,13 +40,14 @@ export function Button({
   children,
   type = 'button',
   unavailableReason,
+  loading = false,
   onClick,
   ...rest
 }: ButtonProps) {
   const reasonId = useId();
   const unavailable = unavailableReason !== undefined;
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    if (unavailable) {
+    if (unavailable || loading) {
       event.preventDefault();
       return;
     }
@@ -52,13 +58,14 @@ export function Button({
       <button
         {...rest}
         type={type}
-        className={classes({ variant, size, fullWidth }, className)}
-        aria-disabled={unavailable || undefined}
+        className={classes({ variant, size, fullWidth }, cx(loading && 'btn--loading', className))}
+        aria-disabled={unavailable || loading || undefined}
+        aria-busy={loading || undefined}
         aria-describedby={unavailable ? reasonId : rest['aria-describedby']}
         title={unavailable ? unavailableReason : rest.title}
         onClick={handleClick}
       >
-        {icon}
+        {loading ? <span className="btn__spinner" aria-hidden="true" /> : icon}
         {children}
       </button>
       {unavailable && (

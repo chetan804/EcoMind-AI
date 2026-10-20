@@ -6,7 +6,17 @@ import datetime as dt
 import decimal
 import uuid
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, Integer, Numeric, String, Text, func
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import (
@@ -27,6 +37,12 @@ class WasteReport(UUIDPrimaryKeyMixin, TimestampMixin, GeoPointMixin, Base):
         CheckConstraint(
             "estimated_weight_kg IS NULL OR estimated_weight_kg >= 0", name="weight_non_negative"
         ),
+        CheckConstraint(
+            "(idempotency_key IS NULL) = (request_fingerprint IS NULL)",
+            name="idempotency_complete",
+        ),
+        # NULLs are distinct in PostgreSQL, so reports created without a key never collide.
+        UniqueConstraint("reporter_id", "idempotency_key"),
         *geo_point_constraints(),
     )
 
@@ -44,6 +60,11 @@ class WasteReport(UUIDPrimaryKeyMixin, TimestampMixin, GeoPointMixin, Base):
     reported_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
+    # Client-supplied ``Idempotency-Key`` (scoped to the reporter) and a SHA-256 of the request
+    # payload, so a retry returns the original report and a reused key with a different payload
+    # is rejected instead of silently ignored.
+    idempotency_key: Mapped[str | None] = mapped_column(String(64))
+    request_fingerprint: Mapped[str | None] = mapped_column(String(64))
 
 
 class MediaAsset(UUIDPrimaryKeyMixin, TimestampMixin, Base):

@@ -2,7 +2,7 @@
 
 User accounts, roles and the permission catalogue. Source of truth for who a person is and what they may do.
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** roles, permissions and grants are seeded and used for authorization (`rbac.py`, migration `0002`); `repository.py` provides lookups. **No user-management endpoints yet** (list, deactivate, change roles): not implemented.
 
 ## Ownership
 - **Tables owned:** `users`, `roles`, `permissions`, `user_roles`, `role_permissions`
@@ -12,12 +12,8 @@ User accounts, roles and the permission catalogue. Source of truth for who a per
 - **Depends on (via services / foreign keys):** no other module
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
+## Roles
+`citizen` (default for self-registration), `collector`, `facility_operator`, `manager`, `administrator`. The catalog (38 permissions, 5 roles) is in `rbac.py`; a test compares it with the seeded database. First administrator: `python -m app.cli create-admin --email … --name …` (password from `ECOMIND_ADMIN_PASSWORD` or an interactive prompt, never an argument).
+
 ## API (planned, not implemented)
-`/api/v1/users`, `/api/v1/roles` (administration), registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
-
-## Notes
-Passwords are stored only as Argon2id hashes (`core/security.py`). Roles are plain data; the seed set is defined in the first auth milestone.
-
-## Tests
-The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. When endpoints are added, add API tests in `backend/tests/api/` and authorization tests in `backend/tests/security/`.
-Run: `make test-backend`.
+`/api/v1/users` (list, view, deactivate, assign roles), requiring `users:read` / `users:manage`.

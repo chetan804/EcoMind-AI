@@ -1,0 +1,48 @@
+# Waste material classification: every tunable value of the training pipeline.
+# Changing this file changes the experiment; the registry manifest records its SHA-256.
+name: waste-material-classifier
+version: 1.0.0
+seed: 42
+
+dataset:
+  manifest: datasets/manifests/trashnet-1.0.yaml
+  classes: [cardboard, glass, metal, paper, plastic, trash]
+
+# Near-duplicates (several photos of one object) must not straddle splits. Images are grouped
+# per class by average-linkage clustering of backbone embeddings at this cosine similarity.
+# 0.70 is just above the 99th percentile (0.686) of random same-class pairs: deliberately strict.
+grouping:
+  backbone: S
+  min_cosine_similarity: 0.70
+
+# Group-aware stratified folds. fold 0 = test, fold 1 = validation, the rest = train.
+split:
+  n_folds: 6
+  test_fold: 0
+  validation_fold: 1
+
+backbones:            # frozen ImageNet-pretrained feature extractors (Apache-2.0)
+  S: {file: efficientnet-edgetpu-S_quant_embedding_extractor.tflite}
+  M: {file: efficientnet-edgetpu-M_quant_embedding_extractor.tflite}
+  L: {file: efficientnet-edgetpu-L_quant_embedding_extractor.tflite}
+
+# Training-time augmentation = extra embeddings of transformed copies (labels unchanged).
+augmentations: [identity, hflip, vflip, rot90]
+tta_candidates: {none: [identity], flip: [identity, hflip], flip4: [identity, hflip, vflip, rot90]}
+
+selection:            # model selection on the TRAIN split only, grouped CV
+  cv_folds: 5
+  candidates: [S, M, L, M+L]
+  # Head: multinomial logistic regression on L2-normalised features x10. The grid spans the
+  # underfitting (<=0.003) to overfitting (>=1) regimes found in exploratory train-only CV.
+  c_grid: [0.003, 0.01, 0.03, 0.1, 0.3, 1]
+  rule: one_standard_error      # most regularised C within 1 SE of the best CV macro-F1
+  max_p95_latency_ms: 150       # "real-time" budget on a 2-core CPU, per image incl. TTA
+
+calibration: {method: temperature, fit_on: validation}
+
+review:               # decided on the validation split
+  target_precision: 0.95        # accuracy required of auto-accepted predictions
+  novelty_quantile: 0.02        # flag the 2% least familiar in-distribution validation images
+
+bootstrap: {resamples: 2000, confidence: 0.95, unit: group}

@@ -4,23 +4,23 @@ import { Alert } from '@/components/feedback/Alert';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/utils/cx';
 import { ACCEPTED_IMAGE_TYPES } from '../schemas/image-file';
-import { SampleBottle } from './SampleBottle';
 
 /**
- * Image picker with drag and drop. It validates and previews the file locally; it does not upload
- * anything. `previewUrl` is an object URL owned by the page.
+ * Image picker with drag and drop. It validates and previews the file locally; uploading happens only
+ * when the user selects Classify image. `previewUrl` is an object URL owned by the page.
  */
 export function UploadDropzone({
   previewUrl,
   fileName,
   error,
-  showSample,
+  busy,
   onFile,
 }: {
   previewUrl: string | null;
   fileName: string | null;
   error: string | null;
-  showSample: boolean;
+  /** An analysis is running: choosing another image is paused. */
+  busy: boolean;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -31,7 +31,7 @@ export function UploadDropzone({
     event.preventDefault();
     setDragging(false);
     const file = event.dataTransfer.files[0];
-    if (file) onFile(file);
+    if (file && !busy) onFile(file);
   };
 
   return (
@@ -47,8 +47,6 @@ export function UploadDropzone({
       <div className="dropzone__stage">
         {previewUrl ? (
           <img className="dropzone__preview" src={previewUrl} alt={`Selected image: ${fileName ?? 'upload'}`} />
-        ) : showSample ? (
-          <SampleBottle />
         ) : (
           <span className="dropzone__placeholder" aria-hidden="true">
             <ImagePlus size={56} />
@@ -71,7 +69,13 @@ export function UploadDropzone({
           event.target.value = ''; // allow choosing the same file again
         }}
       />
-      <Button size="lg" fullWidth icon={<Upload size={20} aria-hidden="true" />} onClick={() => inputRef.current?.click()}>
+      <Button
+        size="lg"
+        fullWidth
+        icon={<Upload size={20} aria-hidden="true" />}
+        unavailableReason={busy ? 'An image is being analysed.' : undefined}
+        onClick={() => inputRef.current?.click()}
+      >
         {previewUrl ? 'Choose another image' : 'Choose image'}
       </Button>
       {error && <Alert tone="danger">{error}</Alert>}

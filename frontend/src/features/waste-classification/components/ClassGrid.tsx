@@ -1,35 +1,34 @@
-import { Apple, Container, Cylinder, Newspaper, Smartphone, Wine, type LucideIcon } from 'lucide-react';
+import { Box, Container, Cylinder, Newspaper, Trash2, Wine, type LucideIcon } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/Card';
-import { plannedClasses } from '../fixtures/sample-layout';
 
-const icons: Record<(typeof plannedClasses)[number]['id'], { icon: LucideIcon; tone: string }> = {
-  plastic: { icon: Container, tone: 'var(--color-info)' },
-  paper: { icon: Newspaper, tone: 'var(--color-text-secondary)' },
-  glass: { icon: Wine, tone: 'var(--color-teal)' },
-  metal: { icon: Cylinder, tone: 'var(--color-warning)' },
-  organic: { icon: Apple, tone: 'var(--color-success)' },
-  'e-waste': { icon: Smartphone, tone: 'var(--color-danger)' },
-};
+/** The six material categories model 1.0.0 was trained on (see docs/ml/model-cards/waste-classification-1.0.0.md). */
+const CATEGORIES: { id: string; label: string; icon: LucideIcon; tone: string }[] = [
+  { id: 'plastic', label: 'Plastic', icon: Container, tone: 'var(--color-info)' },
+  { id: 'paper', label: 'Paper', icon: Newspaper, tone: 'var(--color-text-secondary)' },
+  { id: 'cardboard', label: 'Cardboard', icon: Box, tone: 'var(--color-warning)' },
+  { id: 'glass', label: 'Glass', icon: Wine, tone: 'var(--color-teal)' },
+  { id: 'metal', label: 'Metal', icon: Cylinder, tone: 'var(--color-primary)' },
+  { id: 'trash', label: 'Other waste', icon: Trash2, tone: 'var(--color-danger)' },
+];
 
-/** The label set the classifier is planned to use. Says so, because no model supports it yet. */
 export function ClassGrid() {
   return (
     <Card aria-labelledby="classes-title" className="classes">
-      <CardHeader title="Planned waste classes" titleId="classes-title" />
+      <CardHeader title="Material categories" titleId="classes-title" />
       <ul className="classes__grid">
-        {plannedClasses.map((item) => {
-          const { icon: Icon, tone } = icons[item.id];
-          return (
-            <li key={item.id} className="classes__item">
-              <span className="classes__icon" style={{ color: tone }} aria-hidden="true">
-                <Icon size={28} />
-              </span>
-              {item.label}
-            </li>
-          );
-        })}
+        {CATEGORIES.map(({ id, label, icon: Icon, tone }) => (
+          <li key={id} className="classes__item">
+            <span className="classes__icon" style={{ color: tone }} aria-hidden="true">
+              <Icon size={28} />
+            </span>
+            {label}
+          </li>
+        ))}
       </ul>
-      <p className="classes__note">Label set for the planned classifier. No model has been trained yet.</p>
+      <p className="classes__note">
+        The model predicts these six material categories only. It does not recognise organic waste, e-waste or hazardous
+        items; such images should be flagged for review.
+      </p>
     </Card>
   );
 }

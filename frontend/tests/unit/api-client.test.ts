@@ -28,6 +28,15 @@ describe('apiRequest', () => {
     expect(init.headers).toMatchObject({ 'Content-Type': 'application/json' });
   });
 
+  it('sends a File as the raw body with its own content type, not as JSON', async () => {
+    const fetchMock = mockFetch(Response.json({ id: 'm1' }, { status: 201 }));
+    const file = new File(['pixels'], 'a.png', { type: 'image/png' });
+    await apiRequest('/waste-reports/media', { method: 'POST', body: file });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.body).toBe(file);
+    expect(init.headers).toMatchObject({ 'Content-Type': 'image/png' });
+  });
+
   it('maps the structured backend error envelope onto ApiError', async () => {
     mockFetch(
       Response.json(

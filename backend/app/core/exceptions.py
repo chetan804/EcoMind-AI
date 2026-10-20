@@ -24,10 +24,17 @@ class AppError(Exception):
     status_code = 500
     code = "internal_error"
 
-    def __init__(self, message: str, *, details: list[dict[str, Any]] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        details: list[dict[str, Any]] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.details = details
+        self.headers = headers
 
 
 class BadRequestError(AppError):
@@ -55,6 +62,30 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class TooManyRequestsError(AppError):
+    """429. Pass ``headers={"Retry-After": "<seconds>"}`` so clients know when to retry."""
+
+    status_code = 429
+    code = "rate_limited"
+
+
+class PayloadTooLargeError(AppError):
+    status_code = 413
+    code = "payload_too_large"
+
+
+class UnsupportedMediaTypeError(AppError):
+    status_code = 415
+    code = "unsupported_media_type"
+
+
+class UnprocessableError(AppError):
+    """422 for a well-formed request that breaks a business rule (not a schema error)."""
+
+    status_code = 422
+    code = "unprocessable"
+
+
 _STATUS_CODES = {
     400: "bad_request",
     401: "unauthenticated",
@@ -63,6 +94,7 @@ _STATUS_CODES = {
     405: "method_not_allowed",
     409: "conflict",
     413: "payload_too_large",
+    415: "unsupported_media_type",
     422: "validation_error",
     429: "rate_limited",
 }
@@ -86,7 +118,9 @@ def error_response(
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(request: Request, exc: AppError) -> JSONResponse:
-        return error_response(request, exc.status_code, exc.code, exc.message, exc.details)
+        return error_response(
+            request, exc.status_code, exc.code, exc.message, exc.details, headers=exc.headers
+        )
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:

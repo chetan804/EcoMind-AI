@@ -1,0 +1,19 @@
+{
+  "backbone": "M",
+  "C": 0.03,
+  "split": "train only, grouped 5-fold CV, no augmentation",
+  "results": {
+    "centre-crop (shared preprocessing)": {
+      "cv_macro_f1": 0.8360532547558508,
+      "cv_sem": 0.015448755657151413
+    },
+    "squash (distorting resize)": {
+      "cv_macro_f1": 0.8238550193152548,
+      "cv_sem": 0.0201579834535646
+    },
+    "pad to square (white)": {
+      "cv_macro_f1": 0.8015414112160016,
+      "cv_sem": 0.020278690340471126
+    }
+  }
+}

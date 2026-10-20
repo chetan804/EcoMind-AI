@@ -130,6 +130,7 @@ Constraints:
 Constraints:
 
 - `uq_classification_model_versions_name_version`: unique (name, version)
+- `uq_classification_model_versions_one_active`: unique index WHERE `status = 'active'`
 - Allowed values: `status` in (candidate, active, retired)
 
 ### `classification_predictions`
@@ -142,6 +143,11 @@ Constraints:
 | `object_confidence` | numeric(5, 4) | null |  |  |
 | `material_category_id` | uuid | NN |  | FK -> `material_categories.id` |
 | `material_confidence` | numeric(5, 4) | NN |  |  |
+| `needs_review` | boolean | NN | `false` |  |
+| `review_reasons` | jsonb | NN | `'[]'::jsonb` |  |
+| `class_probabilities` | jsonb | NN | `'{}'::jsonb` |  |
+| `novelty_similarity` | numeric(5, 4) | null |  |  |
+| `inference_ms` | numeric(8, 1) | null |  |  |
 | `review_status` | varchar(18) | NN | `unreviewed` |  |
 | `reviewed_material_category_id` | uuid | null |  | FK -> `material_categories.id` |
 | `reviewed_by_id` | uuid | null |  | FK -> `users.id` |
@@ -625,6 +631,8 @@ Constraints:
 | `address_text` | varchar(500) | null |  |  |
 | `estimated_weight_kg` | numeric(12, 3) | null |  |  |
 | `reported_at` | timestamptz | NN | `now()` |  |
+| `idempotency_key` | varchar(64) | null |  |  |
+| `request_fingerprint` | varchar(64) | null |  |  |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |
@@ -634,7 +642,9 @@ Constraints:
 Constraints:
 
 - `ck_waste_reports_geo_point_complete`: `(latitude IS NULL) = (longitude IS NULL)`
+- `ck_waste_reports_idempotency_complete`: `(idempotency_key IS NULL) = (request_fingerprint IS NULL)`
 - `ck_waste_reports_latitude_range`: `latitude BETWEEN -90 AND 90`
 - `ck_waste_reports_longitude_range`: `longitude BETWEEN -180 AND 180`
 - `ck_waste_reports_weight_non_negative`: `estimated_weight_kg IS NULL OR estimated_weight_kg >= 0`
+- `uq_waste_reports_reporter_id_idempotency_key`: unique (reporter_id, idempotency_key)
 - Allowed values: `status` in (submitted, under_review, verified, rejected, closed)

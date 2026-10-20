@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 /**
- * Client-side validation for the sign-in and sign-up forms.
- * PROVISIONAL: the password rules (minimum length, breach checks) are defined by the
- * authentication milestone (docs/security/security-baseline.md). 12 characters is a placeholder.
+ * Client-side validation for the sign-in and sign-up forms: early feedback only. The server
+ * enforces the real password policy (backend/app/modules/auth/policy.py: 12 to 128 characters,
+ * no common or personal passwords) and its messages are shown when it rejects a password.
  */
-export const PROVISIONAL_MIN_PASSWORD_LENGTH = 12;
+export const MIN_PASSWORD_LENGTH = 12;
 
 const email = z.string().trim().min(1, 'Enter your email address.').pipe(z.email('Enter a valid email address.'));
 
@@ -20,7 +20,7 @@ export const signUpSchema = z
     email,
     password: z
       .string()
-      .min(PROVISIONAL_MIN_PASSWORD_LENGTH, `Use at least ${PROVISIONAL_MIN_PASSWORD_LENGTH} characters.`),
+      .min(MIN_PASSWORD_LENGTH, `Use at least ${MIN_PASSWORD_LENGTH} characters.`),
     confirmPassword: z.string().min(1, 'Repeat your password.'),
   })
   .refine((values) => values.password === values.confirmPassword, {

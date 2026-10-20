@@ -10,4 +10,4 @@ Data used to train and evaluate models. **Data files are never committed**: `raw
 | `external/` | Third-party datasets, with their licence recorded in a manifest. |
 | `manifests/` | **Tracked** YAML manifests, one per dataset version: source/URL, licence, collection date, size, file hashes, label mapping, split definition, known limitations and whether it contains personal data. |
 
-Rules: record provenance and licence before using any dataset; do not store personal or private data here; large data goes to external storage referenced by its manifest (and hash). No datasets have been added yet.
+Rules: record provenance and licence before using any dataset; do not store personal or private data here; large data goes to external storage referenced by its manifest (and hash). Registered datasets: `manifests/trashnet-1.0.yaml` (TrashNet, MIT; fetched on demand by `python -m ml.waste_classification.data.fetch`).

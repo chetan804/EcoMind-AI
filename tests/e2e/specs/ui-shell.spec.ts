@@ -1,9 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, publicTest, test } from './fixtures';
 
-// These specs need only the frontend (no API, no database): the screens under test render
-// demonstration or "not available yet" content and never call the backend.
+// Public pages use `publicTest`. Everything behind sign-in uses `test`, whose page is signed in
+// as a real account through the real backend (see fixtures.ts).
 
-test('landing page leads to sign-up and sign-in', async ({ page }) => {
+publicTest('landing page leads to sign-up and sign-in', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: /Waste Management/ })).toBeVisible();
   await page.getByRole('link', { name: 'Get started' }).click();
@@ -13,7 +13,7 @@ test('landing page leads to sign-up and sign-in', async ({ page }) => {
   await expect(page).toHaveURL(/\/sign-in$/);
 });
 
-test('sign-in validates, and a valid submission is honestly reported as unavailable', async ({ page }) => {
+publicTest('sign-in validates locally and sends nothing until the form is valid', async ({ page }) => {
   const apiCalls: string[] = [];
   page.on('request', (request) => {
     // fetch/XHR only: the dev server also serves source modules whose paths contain "/api/".
@@ -22,10 +22,7 @@ test('sign-in validates, and a valid submission is honestly reported as unavaila
   await page.goto('/sign-in');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByText('Enter your email address.')).toBeVisible();
-  await page.getByLabel(/Email address/).fill('someone@example.org');
-  await page.getByLabel(/^Password/).fill('anything');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('Sign-in is not available yet')).toBeVisible();
+  await expect(page.getByText('Enter your password.')).toBeVisible();
   expect(apiCalls).toEqual([]);
 });
 
@@ -59,7 +56,16 @@ test('the primary navigation never offers Smart Bins & Telemetry', async ({ page
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  for (const path of ['/', '/sign-in', '/sign-up', '/dashboard', '/classify']) {
+  for (const path of ['/', '/sign-in', '/sign-up']) {
+    publicTest(`${path} does not scroll horizontally`, async ({ page }) => {
+      await page.goto(path);
+      await page.waitForLoadState('networkidle');
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow).toBe(0);
+    });
+  }
+
+  for (const path of ['/dashboard', '/classify']) {
     test(`${path} does not scroll horizontally`, async ({ page }) => {
       await page.goto(path);
       await page.waitForLoadState('networkidle');
