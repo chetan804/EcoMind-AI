@@ -118,4 +118,12 @@ Known limitations of this phase (also in `docs/security/security-baseline.md`):
 - Per-address limits use the direct peer address; behind a proxy they are shared until the ASGI server is configured to trust the proxy.
 - Password policy is a length rule plus a small denylist, not a breached-password corpus check.
 - Docker/Compose could not be run in this sandbox; Compose cookie configuration was checked statically only.
-- CI results for this branch are not yet known (see the final report).
+
+**CI on PR #6, head `46bb072` (from the GitHub check-runs API, not inferred):**
+
+| Result | Checks |
+|---|---|
+| success (all 9 project jobs, on both the push and pull_request runs) | Backend: Lint and type-check; Tests (Python 3.11, PostgreSQL 16); Tests (Python 3.12, PostgreSQL 16). Frontend: Lint, type-check, test, build. Quality gates: Structure/templates/Compose; ML tests; Contract tests and generated docs; Docker images build; **End-to-end (Compose stack + Playwright)** |
+| **failure** | **GitGuardian Security Checks** (third-party scanner): 2 "Generic Password" findings (incidents 38441416 and 38441417) in `backend/tests/unit/test_password_policy.py`, commit `df0938f` |
+
+GitGuardian analysis: **false positive.** The flagged strings are synthetic inputs of a password-policy unit test and are deliberately weak passwords that the policy under test must reject; they occur only under `backend/tests/` and authenticate to nothing. Nothing needs revoking or rotating. The check stays red for this PR because it is bound to commit `df0938f` and history is not rewritten. **Owner action required** to clear it: mark the two incidents as false positives (or "test credential") in the GitGuardian dashboard. No scanner configuration was changed by the agent. The PR reports `mergeStateStatus=UNSTABLE` solely because of this check.
