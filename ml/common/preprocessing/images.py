@@ -19,6 +19,16 @@ class InvalidImageError(ValueError):
     """The bytes are not a supported, safely decodable image."""
 
 
+def upright(image: Image.Image) -> Image.Image:
+    """Apply the EXIF orientation. Damaged EXIF metadata (PNG/WebP/JPEG files exist whose
+    metadata block is not a valid TIFF structure) only means the orientation is unknown, so the
+    pixels are used as stored instead of rejecting an otherwise decodable image."""
+    try:
+        return ImageOps.exif_transpose(image)
+    except (SyntaxError, ValueError, TypeError, KeyError, OSError):
+        return image
+
+
 def load_rgb_image(data: bytes) -> Image.Image:
     """Decode bytes into an upright RGB image, validating format and size."""
     try:
@@ -29,8 +39,7 @@ def load_rgb_image(data: bytes) -> Image.Image:
             if width * height > MAX_PIXELS:
                 raise InvalidImageError("Image has too many pixels")
             image.load()
-            upright = ImageOps.exif_transpose(image)  # honour camera orientation
-            return upright.convert("RGB")
+            return upright(image).convert("RGB")  # honours camera orientation
     except (UnidentifiedImageError, OSError) as exc:
         raise InvalidImageError("Data is not a readable image") from exc
 
