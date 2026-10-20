@@ -45,9 +45,12 @@ Transport = Callable[[str, dict[str, str], bytes, float], tuple[int, bytes]]
 def urllib_transport(
     url: str, headers: dict[str, str], body: bytes, timeout: float
 ) -> tuple[int, bytes]:
+    if not url.startswith("https://"):
+        raise ValueError("the routing request must use https")
     request = urllib.request.Request(url, data=body, headers=headers, method="POST")  # noqa: S310
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+        # The scheme is checked above and the URL is a constant, so this cannot open a file: URL.
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310  # nosec B310
             return int(response.status), bytes(response.read())
     except urllib.error.HTTPError as exc:
         return int(exc.code), bytes(exc.read())

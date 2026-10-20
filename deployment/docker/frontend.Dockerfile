@@ -18,9 +18,14 @@ ARG VITE_API_BASE_URL=""
 # Public, referrer-restricted browser key for the Maps JavaScript API (optional; empty = no maps).
 ARG VITE_GOOGLE_MAPS_API_KEY=""
 ARG VITE_GOOGLE_MAPS_MAP_ID=""
+# Map engine: "offline" (default, no key) or "google"; tile file URL for the offline engine.
+ARG VITE_MAP_PROVIDER=""
+ARG VITE_MAP_TILES_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
     VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY} \
-    VITE_GOOGLE_MAPS_MAP_ID=${VITE_GOOGLE_MAPS_MAP_ID}
+    VITE_GOOGLE_MAPS_MAP_ID=${VITE_GOOGLE_MAPS_MAP_ID} \
+    VITE_MAP_PROVIDER=${VITE_MAP_PROVIDER} \
+    VITE_MAP_TILES_URL=${VITE_MAP_TILES_URL}
 COPY frontend/ ./
 RUN npm run build
 

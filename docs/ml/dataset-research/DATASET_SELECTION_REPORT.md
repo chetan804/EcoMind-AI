@@ -13,7 +13,7 @@ Raw results: `experiments/cross-dataset-realwaste.json`, `experiments/multi-data
 | Does more real-world data help? | **Yes, a lot** (+28 points on real photos) — but the only reachable labelled real-world set (RealWaste) is non-commercial | §4 |
 | Is a RealWaste-trained model released? | **No.** Experiment only; no artifact written; never auto-activated | licence in the manifest |
 | New taxonomy classes (organic, textile, e-waste, medical, battery)? | **None added.** No legitimately licensed, reachable labelled data. They stay `unsupported`→ review | §5 |
-| What closes the gap legitimately? | Local, consented field photos labelled through the app's own **review queue** (`/classify/review`) plus a licensed external set (TACO images if reachable, or TrashBox with the authors' permission) | §6 |
+| What closes the gap legitimately? | Local, consented field photos labelled through the app's own **review queue** (`/classify/review`) plus a licensed external set (TACO images whose licences are verified at source, see `TACO_LICENCE_AUDIT.md`; TrashBox only with a written licence from its authors) | §6 |
 
 The product therefore behaves honestly today: predictions carry a calibrated confidence, 64% of real-world images go to a
 person, and the model card states the measured field result.

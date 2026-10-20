@@ -87,6 +87,11 @@ const fake = vi.hoisted(() => {
   return { maps, markers, lines, clusterers, api, FakeClusterer };
 });
 
+// This file tests the opt-in Google provider; the default (offline) provider is covered in offline-map.test.tsx.
+vi.mock('@/app/config', async (importOriginal) => {
+  const actual = await importOriginal<{ config: Record<string, unknown> }>();
+  return { ...actual, config: { ...actual.config, mapProvider: 'google' as const } };
+});
 vi.mock('@googlemaps/markerclusterer', () => ({ MarkerClusterer: fake.FakeClusterer }));
 
 let mapsState: MapsState = { status: 'failed', reason: 'missing_key' };

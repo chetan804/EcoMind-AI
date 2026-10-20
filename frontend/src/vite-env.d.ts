@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_MAPS_API_KEY?: string;
   /** Optional Google Maps map ID (cloud styling); defaults to DEMO_MAP_ID. */
   readonly VITE_GOOGLE_MAPS_MAP_ID?: string;
+  readonly VITE_MAP_PROVIDER?: string;
+  readonly VITE_MAP_TILES_URL?: string;
 }
 
 interface ImportMeta {

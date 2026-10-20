@@ -63,3 +63,7 @@ ml/notebooks/**/*.parquet
 *.onnx
 *.joblib
 *.pkl
+
+# --- Offline map tiles: only the README is tracked ---
+deployment/map-data/*
+!deployment/map-data/README.md

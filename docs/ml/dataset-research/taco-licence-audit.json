@@ -1,0 +1,28 @@
+{
+  "dataset": "TACO (official annotations.json)",
+  "input_sha256": "812c2e3f0d336b437f276597715de2abb08bb8a641599c45f593d233ec66457b",
+  "policy": "Eligible only if the licence is CC BY, CC BY-SA, CC0 or public domain, from the annotation file or from an owner-recorded check at the image source. NC, ND, ODbL (unless --allow-odbl), bare 'CC', empty and unknown are excluded.",
+  "allow_odbl": false,
+  "images_total": 1500,
+  "annotations_total": 4784,
+  "images_by_category": {
+    "odbl": 466,
+    "unknown": 715,
+    "unspecified_cc": 319
+  },
+  "objects_by_category": {
+    "odbl": 1456,
+    "unknown": 2152,
+    "unspecified_cc": 1176
+  },
+  "source_licence_strings": {
+    "None": 715,
+    "ODBL (c) OpenLitterMap & Contributors": 466,
+    "CC": 319
+  },
+  "owner_verified_images": 0,
+  "eligible_images": 0,
+  "eligible_objects": 0,
+  "attribution_required_for_eligible": 0,
+  "audited_on": "2026-10-20"
+}

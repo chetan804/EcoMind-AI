@@ -1,5 +1,10 @@
 # Google Maps integration and vehicle tracking
 
+> **Google is now optional.** The default map is the built-in offline OpenStreetMap map that needs no key
+> (`docs/maps/OFFLINE_MAPS.md`). Google Maps is used only when `VITE_MAP_PROVIDER=google` or a browser key is
+> set. Road routing is chosen with `ROUTING_PROVIDER=none|google|osrm` (`docs/maps/ROUTING_PROVIDERS.md`).
+> Everything below describes the Google option.
+
 Status at 2026-10-21: **implemented and tested with a mocked Google Maps and a mocked Routes transport.
 Not verified against live Google services** (no key was available and the build sandbox cannot reach
 Google). Every check that needs a key is listed under "Pending live verification" below.
@@ -14,8 +19,8 @@ Google). Every check that needs a key is listed under "Pending live verification
 | Stop **ordering** | the platform's own optimiser (`route-order 1.0.0`, straight-line distances) | none | `route_planning` |
 | Geocoding, Places, Route Optimization | **not integrated** (addresses are typed, coordinates are picked on the map) | n/a | |
 
-Without a key the product works: every map becomes a labelled list of the same locations, route plans
-show straight lines labelled as such, and nothing is requested from Google.
+Without a key the product works: the offline map is used (or, in a browser without WebGL, a labelled list of
+the same locations), route plans show straight lines labelled as such, and nothing is requested from Google.
 
 ## Keys (placeholders only in `.env.example`; never commit a real key)
 

@@ -18,10 +18,11 @@ const adminPassword = process.env.ADMIN_PASSWORD;
 if (!adminEmail || !adminPassword) throw new Error('Set ADMIN_EMAIL and ADMIN_PASSWORD');
 const out = process.env.MAPS_OUT ?? new URL('./out/maps/', import.meta.url).pathname;
 mkdirSync(out, { recursive: true });
+const MAP_WAIT = Number(process.env.MAPS_WAIT ?? 800); // ms for tiles to draw (software WebGL is slow)
 const run = Date.now().toString(36).toUpperCase();
 const PASSWORD = 'maps capture passphrase 2026';
 
-const browser = await chromium.launch({ executablePath: exe, args: ['--no-sandbox', '--font-render-hinting=none'] });
+const browser = await chromium.launch({ executablePath: exe, args: ['--no-sandbox', '--font-render-hinting=none', '--use-angle=swiftshader', '--use-gl=angle', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const api = (await import('playwright-core')).request;
 const http = await api.newContext({ baseURL: base });
 const call = async (method, path, token, data) => {
@@ -91,24 +92,24 @@ await shot('command-center');
 
 await go('/fleet');
 await page.getByLabel('Search').fill(run);
-await page.waitForTimeout(800);
+await page.waitForTimeout(MAP_WAIT);
 await shot('fleet');
 
 await go('/collection');
 await page.getByRole('button', { name: new RegExp(`Open task: Demo stop Banjara Hills ${run}`) }).click();
 await page.getByRole('region', { name: 'Location and tracking' }).waitFor();
-await page.waitForTimeout(800);
+await page.waitForTimeout(MAP_WAIT);
 await shot('collection-tracking', page.getByRole('dialog', { name: 'Collection task' }));
 
 await go('/routes');
 await page.getByRole('button', { name: new RegExp(`Demo route ${run}`) }).click();
 await page.getByRole('dialog', { name: 'Route plan' }).getByText(/No road route|Road route/).first().waitFor();
-await page.waitForTimeout(800);
+await page.waitForTimeout(MAP_WAIT);
 await shot('route-optimization', page.getByRole('dialog', { name: 'Route plan' }));
 
 await go('/locations');
 await page.getByLabel('Search').first().fill(run).catch(() => undefined);
-await page.waitForTimeout(800);
+await page.waitForTimeout(MAP_WAIT);
 await page.getByRole('button', { name: new RegExp(`Show facilities in Demo zone ${run}`) }).click();
 await page.getByRole('table', { name: `Facilities in Demo zone ${run}`, exact: true }).waitFor();
 await page.waitForTimeout(500);

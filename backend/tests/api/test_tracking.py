@@ -472,6 +472,14 @@ def test_config_reports_policy_without_secrets(env: Env, make_client: ClientFact
     head = bearer(login(keyed, "manager@example.org")["access_token"])
     body = keyed.get(f"{BASE}/config", headers=head)
     assert body.json()["road_routing_configured"] is True
+    osrm = make_client(routing_provider="osrm", osrm_base_url="http://osrm.internal:5000")
+    osrm_head = bearer(login(osrm, "manager@example.org")["access_token"])
+    assert osrm.get(f"{BASE}/config", headers=osrm_head).json()["road_routing_configured"] is True
+    off = make_client(
+        routing_provider="none", google_maps_server_api_key="server-key-value-1234567890"
+    )
+    off_head = bearer(login(off, "manager@example.org")["access_token"])
+    assert off.get(f"{BASE}/config", headers=off_head).json()["road_routing_configured"] is False
     assert "server-key-value" not in body.text
 
 

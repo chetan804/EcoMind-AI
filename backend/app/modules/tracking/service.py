@@ -189,7 +189,7 @@ def tracking_config(settings: Settings) -> TrackingConfig:
         retention_days=settings.tracking_retention_days,
         simulator_enabled=settings.simulator_enabled,
         max_events_per_minute=settings.tracking_max_events_per_minute,
-        road_routing_configured=settings.google_maps_server_api_key is not None,
+        road_routing_configured=settings.effective_routing_provider != "none",
     )
 
 

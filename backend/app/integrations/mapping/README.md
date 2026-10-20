@@ -1,8 +1,10 @@
-# Integration: Mapping (Google Routes API)
+# Integration: Mapping (road routing providers)
 
 Road-routing adapter used by `route_planning` (`GET /api/v1/route-planning/plans/{id}/road-route`).
 
 * `base.py`: `RoadRouteProvider` protocol and result types (`RoadRoute`, `RoadRouteUnavailable`).
+* `factory.py`: chooses the provider from `ROUTING_PROVIDER` (`none|google|osrm`).
+* `osrm.py`: optional adapter for an OSRM server the operator runs (`OSRM_BASE_URL`), off by default, mocked tests only.
 * `google_routes.py`: Google Routes API `computeRoutes` adapter. Server-side key only
   (`GOOGLE_MAPS_SERVER_API_KEY`), `TRAFFIC_UNAWARE`, field-masked, chunked to 10 intermediate
   waypoints per request, nothing cached or stored, injectable transport for tests.

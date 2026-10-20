@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Alert } from '@/components/feedback/Alert';
 import { Button } from '@/components/ui/Button';
-import { retryGoogleMaps } from '../lib/google-loader';
 import { formatCoordinate, pathLengthM } from '../lib/geo';
 import type { LegendEntry, MapMarker, MapPath, MapsFailureReason } from '../types';
 
@@ -30,6 +29,16 @@ const MESSAGES: Record<MapsFailureReason, { tone: 'info' | 'warning' | 'danger';
     tone: 'warning',
     title: 'Map could not start',
     body: 'Google Maps loaded without the libraries this page needs. The same locations are listed below.',
+  },
+  no_webgl: {
+    tone: 'info',
+    title: 'Map not available: this browser cannot draw the map',
+    body: 'The built-in map needs WebGL, which is turned off or unsupported here (hardware acceleration disabled, a very old browser or a remote session). The same locations are listed below.',
+  },
+  load_error: {
+    tone: 'warning',
+    title: 'Map could not be loaded',
+    body: 'The built-in map code could not be loaded (the connection dropped or the file is missing from this deployment). The same locations are listed below.',
   },
 };
 
@@ -77,16 +86,27 @@ export function MarkerList({ markers, paths, caption }: { markers: MapMarker[]; 
   );
 }
 
-export function MapFallback({ reason, label, markers, paths, legend = [], footer }: { reason: MapsFailureReason; label: string; markers: MapMarker[]; paths: MapPath[]; legend?: LegendEntry[]; footer?: ReactNode }) {
+export interface MapFallbackProps {
+  reason: MapsFailureReason;
+  label: string;
+  markers: MapMarker[];
+  paths: MapPath[];
+  legend?: LegendEntry[];
+  footer?: ReactNode;
+  /** Retry action for transient failures (network, timeout, load error). */
+  onRetry?: () => void;
+}
+
+export function MapFallback({ reason, label, markers, paths, legend = [], footer, onRetry }: MapFallbackProps) {
   const message = MESSAGES[reason];
-  const retryable = reason === 'network' || reason === 'timeout';
+  const retryable = (reason === 'network' || reason === 'timeout' || reason === 'load_error') && onRetry !== undefined;
   return (
     <div className="map-panel" role="region" aria-label={`${label} (list view)`}>
       <Alert tone={message.tone} title={message.title}>
         {message.body}
         {retryable && (
           <div>
-            <Button variant="secondary" onClick={retryGoogleMaps}>
+            <Button variant="secondary" onClick={onRetry}>
               Try loading the map again
             </Button>
           </div>

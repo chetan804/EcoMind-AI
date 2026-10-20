@@ -9,6 +9,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal, Self
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -52,6 +53,14 @@ class Settings(BaseSettings):
     google_maps_server_api_key: SecretStr | None = None
     google_routes_timeout_seconds: float = Field(default=8.0, gt=0, le=30)
 
+    # Optional road routing (the default is none: straight-line fallback, labelled as such).
+    # ROUTING_PROVIDER=none|google|osrm. Unset keeps the earlier behaviour: google when a server
+    # key is set, otherwise none. osrm calls an OSRM server YOU run (OSRM_BASE_URL); it is the
+    # only external service the platform can use besides Google and is off unless chosen.
+    routing_provider: Literal["none", "google", "osrm"] | None = None
+    osrm_base_url: str | None = None
+    osrm_timeout_seconds: float = Field(default=8.0, gt=0, le=30)
+
     # Vehicle tracking. Thresholds are operational policy, not physical constants.
     tracking_live_within_seconds: int = Field(default=120, ge=10, le=3600)
     tracking_stale_after_seconds: int = Field(default=900, ge=60, le=86400)
@@ -69,6 +78,32 @@ class Settings(BaseSettings):
         if isinstance(value, str) and not value.strip():
             return None
         return value
+
+    @field_validator("routing_provider", "osrm_base_url", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("osrm_base_url")
+    @classmethod
+    def _osrm_url_shape(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        parts = urlsplit(value)
+        if parts.scheme not in ("http", "https") or not parts.hostname:
+            raise ValueError("OSRM_BASE_URL must be an http(s) URL such as http://osrm:5000")
+        if parts.username or parts.password or parts.query or parts.fragment:
+            raise ValueError("OSRM_BASE_URL must not contain credentials, a query or a fragment")
+        return value.rstrip("/")
+
+    @property
+    def effective_routing_provider(self) -> Literal["none", "google", "osrm"]:
+        """The routing provider in force (the legacy key-only configuration still means google)."""
+        if self.routing_provider is not None:
+            return self.routing_provider
+        return "google" if self.google_maps_server_api_key is not None else "none"
 
     @field_validator("cors_allowed_origins", mode="before")
     @classmethod
@@ -100,6 +135,10 @@ class Settings(BaseSettings):
             raise ValueError(
                 "TRACKING_STALE_AFTER_SECONDS must exceed TRACKING_LIVE_WITHIN_SECONDS"
             )
+        if self.routing_provider == "osrm" and self.osrm_base_url is None:
+            raise ValueError("ROUTING_PROVIDER=osrm requires OSRM_BASE_URL")
+        if self.routing_provider == "google" and self.google_maps_server_api_key is None:
+            raise ValueError("ROUTING_PROVIDER=google requires GOOGLE_MAPS_SERVER_API_KEY")
         if self.refresh_cookie_samesite == "none" and not self.refresh_cookie_secure:
             raise ValueError("REFRESH_COOKIE_SAMESITE=none requires REFRESH_COOKIE_SECURE=true")
         return self
