@@ -87,13 +87,13 @@ no travel-time estimate is made.
 
 | Check | Result |
 |---|---|
-| Backend tests (real PostgreSQL 16) | 525 passed, 0 skipped (local full run; CI result is recorded in `IMPLEMENTATION_STATUS.md`) |
+| Backend tests (real PostgreSQL 16) | 525 passed, 0 skipped (local full run; CI on commit `137e9fa`: both backend jobs pass) |
 | Frontend tests | 220 tests in 27 files |
 | ML tests | 57 passed |
 | End-to-end (Playwright, local) | 21 passed, 1 skipped (local; the skip is the no-model test) |
 | Mutation checks | every deliberately broken rule was caught by a test; two incident-module survivors are behaviour-equivalent mutations |
 | Dependency audit | `npm audit` 0; `pip-audit` clean for runtime dependencies after the `cryptography` range change |
-| Real GitHub CI | everything green except GitGuardian, whose one finding is a reviewed false positive on a test credential |
+| Real GitHub CI | on commit `137e9fa` every workflow job passes except GitGuardian, whose one finding is a reviewed false positive on a test credential |
 
 ## 7. Limitations (summary; full list in `docs/project-completion/LIMITATIONS.md`)
 Classifier accuracy outside its training domain; frozen backbone; no organic, textile, e-waste or battery
