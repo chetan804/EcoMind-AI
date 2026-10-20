@@ -24,10 +24,17 @@ class AppError(Exception):
     status_code = 500
     code = "internal_error"
 
-    def __init__(self, message: str, *, details: list[dict[str, Any]] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        details: list[dict[str, Any]] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.details = details
+        self.headers = headers
 
 
 class BadRequestError(AppError):
@@ -53,6 +60,18 @@ class NotFoundError(AppError):
 class ConflictError(AppError):
     status_code = 409
     code = "conflict"
+
+
+class TooManyRequestsError(AppError):
+    """429. Pass ``headers={"Retry-After": "<seconds>"}`` so clients know when to retry."""
+
+    status_code = 429
+    code = "rate_limited"
+
+
+class PayloadTooLargeError(AppError):
+    status_code = 413
+    code = "payload_too_large"
 
 
 _STATUS_CODES = {
@@ -86,7 +105,9 @@ def error_response(
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(request: Request, exc: AppError) -> JSONResponse:
-        return error_response(request, exc.status_code, exc.code, exc.message, exc.details)
+        return error_response(
+            request, exc.status_code, exc.code, exc.message, exc.details, headers=exc.headers
+        )
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:

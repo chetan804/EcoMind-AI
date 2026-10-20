@@ -15,6 +15,7 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import REQUEST_ID_HEADER, RequestContextMiddleware
+from app.core.security import CSRF_HEADER
 from app.health.router import router as health_router
 
 API_PREFIX = "/api"
@@ -32,12 +33,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url=None if settings.is_production else f"{API_PREFIX}/v1/openapi.json",
         responses={"default": {"model": ErrorResponse}},
     )
+    app.state.settings = settings
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", REQUEST_ID_HEADER],
+        allow_headers=["Authorization", "Content-Type", REQUEST_ID_HEADER, CSRF_HEADER],
         expose_headers=[REQUEST_ID_HEADER],
     )
     app.add_middleware(RequestContextMiddleware)

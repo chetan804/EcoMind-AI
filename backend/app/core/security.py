@@ -24,6 +24,10 @@ from app.core.exceptions import UnauthenticatedError
 
 ACCESS_TOKEN_TYPE = "access"  # noqa: S105 - token type label, not a secret
 _ISSUER = "ecomind-ai"
+# Cookie-authenticated endpoints (refresh, logout) require this request header. A cross-site page
+# cannot add a custom header without a CORS preflight, which only configured origins pass.
+CSRF_HEADER = "X-CSRF-Protection"
+CSRF_HEADER_VALUE = "1"
 _hasher = PasswordHasher()
 
 
