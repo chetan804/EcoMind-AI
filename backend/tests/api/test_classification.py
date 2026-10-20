@@ -78,7 +78,7 @@ def test_model_endpoint_requires_login_and_reports_no_active_model(s: Setup) -> 
     assert s.client.get(f"{CLS}/model").status_code == 401
     body = s.client.get(f"{CLS}/model", headers=s.owner).json()
     assert body["active"] is None and body["scope"] == "material_category"
-    assert "field accuracy has not been measured" in body["note"]
+    assert "real-world dataset" in body["note"] and "suggestion" in body["note"]
 
 
 def test_predict_without_an_active_model_is_503_and_stores_nothing(s: Setup) -> None:

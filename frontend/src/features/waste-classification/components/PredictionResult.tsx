@@ -104,8 +104,8 @@ export function PredictionResult({ prediction, model }: { prediction: Prediction
         </div>
       </dl>
       <p className="result__caveat">
-        This is a suggestion from a model trained on studio photographs; it has not been measured on real-world
-        photos{reviewed ? '' : ', so treat it as a starting point'}.
+        This is a suggestion from a model trained on studio photographs. On a public set of real facility photos it
+        was right only about 45% of the time, so a person should check it{reviewed ? '' : ' before anything is acted on'}.
       </p>
     </div>
   );

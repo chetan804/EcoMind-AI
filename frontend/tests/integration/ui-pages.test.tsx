@@ -456,7 +456,7 @@ describe('classification', () => {
     expect(screen.getByRole('progressbar', { name: 'glass probability' })).toHaveAttribute('aria-valuenow', '4');
     expect(screen.getByText(/waste-material-classifier 1\.0\.0/)).toBeInTheDocument();
     expect(screen.getByText(/87% accuracy on 421 held-out studio photos/)).toBeInTheDocument();
-    expect(screen.getByText(/not been measured on real-world/)).toBeInTheDocument();
+    expect(screen.getByText(/right only about 45% of the time/)).toBeInTheDocument();
     expect(screen.queryByRole('form', { name: 'Review this result' })).not.toBeInTheDocument();
   });
 
