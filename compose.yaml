@@ -1,0 +1,87 @@
+# Local development stack: PostgreSQL -> migrations -> backend -> frontend.
+# Startup order is enforced with health checks (see docs/operations/runbook.md).
+# Not a production deployment: see docs/architecture/deployment-architecture.md.
+name: ecomind-ai
+
+x-backend-environment: &backend-environment
+  ENVIRONMENT: local
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:?set POSTGRES_DB in .env}
+  SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+  FILE_STORAGE_LOCAL_PATH: /var/lib/ecomind/storage
+  MODEL_ARTIFACTS_DIR: /var/lib/ecomind/artifacts
+
+x-backend-build: &backend-build
+  context: .
+  dockerfile: deployment/docker/backend.Dockerfile
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - ecomind_pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  migrate:
+    image: ecomind-backend:dev
+    build: *backend-build
+    command: ["alembic", "upgrade", "head"]
+    environment: *backend-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    image: ecomind-backend:dev
+    build: *backend-build
+    command: ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment: *backend-environment
+    volumes:
+      - ./backend/app:/srv/backend/app
+      - ecomind_storage:/var/lib/ecomind/storage
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deployment/docker/frontend.Dockerfile
+      target: dev
+    environment:
+      DEV_PROXY_TARGET: http://backend:8000
+      DEV_ALLOWED_HOSTS: ${DEV_ALLOWED_HOSTS:-}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  ecomind_pgdata:
+  ecomind_storage:
