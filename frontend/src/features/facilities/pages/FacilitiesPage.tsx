@@ -13,6 +13,7 @@ import { Input, SearchInput, Select } from '@/components/ui/Input';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Pagination, Table } from '@/components/ui/Table';
 import { getErrorMessage } from '@/services/error-handler';
+import { useZoneOptions } from '@/features/locations';
 import { useAuth } from '@/services/session';
 import { formatNumber, humanize } from '@/utils/format';
 import { FACILITY_STATUSES, FACILITY_TYPES, type Facility } from '../api/facilities-api';
@@ -113,6 +114,7 @@ export function FacilitiesPage() {
 
 function FacilityDialog({ facility, onClose }: { facility: Facility | null; onClose: () => void }) {
   const save = useSaveFacility();
+  const zones = useZoneOptions();
   const { values, bind } = useFields({
     code: facility?.code ?? '',
     name: facility?.name ?? '',
@@ -126,6 +128,7 @@ function FacilityDialog({ facility, onClose }: { facility: Facility | null; onCl
     longitude: facility?.longitude?.toString() ?? '',
     daily_capacity_kg: facility?.daily_capacity_kg?.toString() ?? '',
     contact_email: facility?.contact_email ?? '',
+    zone_id: facility?.zone_id ?? '',
   });
   const valid = values.name.trim().length >= 2 && (facility !== null || values.code.trim().length >= 2);
 
@@ -142,6 +145,7 @@ function FacilityDialog({ facility, onClose }: { facility: Facility | null; onCl
       longitude: optional(values.longitude) ?? null,
       daily_capacity_kg: optional(values.daily_capacity_kg) ?? null,
       contact_email: optional(values.contact_email) ?? null,
+      zone_id: optional(values.zone_id) ?? null,
     };
     if (!facility) body.code = values.code.trim();
     save.mutate({ id: facility?.id, body }, { onSuccess: onClose });
@@ -174,6 +178,15 @@ function FacilityDialog({ facility, onClose }: { facility: Facility | null; onCl
           {(c) => (
             <Select {...c} {...bind('status')}>
               {FACILITY_STATUSES.map((s) => <option key={s} value={s}>{humanize(s)}</option>)}
+            </Select>
+          )}
+        </Field>
+        <Field label="Zone" hint={zones.isError ? 'Zones could not be loaded' : undefined}>
+          {(c) => (
+            <Select {...c} {...bind('zone_id')}>
+              <option value="">No zone</option>
+              {(zones.data ?? []).map((z) => <option key={z.id} value={z.id}>{z.name} ({z.code})</option>)}
+              {facility?.zone_id && !(zones.data ?? []).some((z) => z.id === facility.zone_id) && <option value={facility.zone_id}>Current zone (retired)</option>}
             </Select>
           )}
         </Field>

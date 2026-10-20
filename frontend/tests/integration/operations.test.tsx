@@ -35,7 +35,7 @@ const taskDetail = (over: Record<string, unknown> = {}) => ({
 });
 const facility = (over: Record<string, unknown> = {}) => ({
   id: id(4), code: 'DEP1', name: 'North Depot', facility_type: 'depot', status: 'active', address_line: null, city: 'Hyderabad', region: null, country_code: 'IN',
-  latitude: '17.5', longitude: '78.5', daily_capacity_kg: '5000.000', contact_email: null, created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z', ...over,
+  latitude: '17.5', longitude: '78.5', daily_capacity_kg: '5000.000', contact_email: null, zone_id: null, created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z', ...over,
 });
 
 describe('waste reports', () => {
@@ -240,6 +240,7 @@ describe('fleet and facilities', () => {
   it('a manager edits a facility (code is immutable) and sees the server validation message', async () => {
     const api = routeApi(fetchSpy, {
       'GET /api/v1/facilities': page([facility()]),
+      'GET /api/v1/zones': page([{ id: id(5), code: 'Z-1', name: 'Zone 1', zone_type: 'commercial', description: null, is_active: true, facility_count: 0 }]),
       [`PATCH /api/v1/facilities/${id(4)}`]: errorReply(422, 'validation_error', 'latitude and longitude must be provided together'),
     }, manager);
     renderAt('/facilities');
@@ -249,7 +250,7 @@ describe('fleet and facilities', () => {
     await userEvent.clear(within(dialog).getByLabelText('Latitude'));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
     expect(await within(dialog).findByText(/latitude and longitude must be provided together/)).toBeInTheDocument();
-    expect(api.calls.find((c) => c.key.startsWith('PATCH'))?.body).toMatchObject({ latitude: null, longitude: '78.5' });
+    expect(api.calls.find((c) => c.key.startsWith('PATCH'))?.body).toMatchObject({ latitude: null, longitude: '78.5', zone_id: null });
     expect(api.calls.find((c) => c.key.startsWith('PATCH'))?.body).not.toHaveProperty('code');
   });
 

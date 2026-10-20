@@ -88,6 +88,7 @@ export const routes: RouteObject[] = [
           { path: 'collection', lazy: guardedPage(['collection:read'], () => import('@/features/collection'), 'CollectionsPage') },
           { path: 'routes', lazy: guardedPage(['routes:read'], () => import('@/features/route-planning'), 'RoutesPage') },
           { path: 'fleet', lazy: guardedPage(['fleet:read'], () => import('@/features/fleet'), 'FleetPage') },
+          { path: 'locations', lazy: guardedPage(['facilities:read'], () => import('@/features/locations'), 'LocationsPage') },
           { path: 'facilities', lazy: guardedPage(['facilities:read'], () => import('@/features/facilities'), 'FacilitiesPage') },
           { path: 'incidents', lazy: guardedAnyPage(['incidents:create', 'incidents:read_own', 'incidents:triage'], () => import('@/features/community-incidents'), 'IncidentsPage') },
           { path: 'sorting-guide', lazy: guardedPage(['sorting_guide:read'], () => import('@/features/sorting-guide'), 'SortingGuidePage') },

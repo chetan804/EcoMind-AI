@@ -88,5 +88,11 @@
     "ssim": 0.578,
     "mean_abs_colour_error": 14.8,
     "theme": "dark"
+  },
+  "locations": {
+    "reference": "14_Locations_and_Zones.png",
+    "ssim": 0.297,
+    "mean_abs_colour_error": 80.7,
+    "theme": "light"
   }
 }

@@ -19,6 +19,7 @@ export const facilitySchema = z.object({
   longitude: nullableDecimal,
   daily_capacity_kg: nullableDecimal,
   contact_email: z.string().nullable(),
+  zone_id: uuid.nullable(),
 });
 export type Facility = z.infer<typeof facilitySchema>;
 

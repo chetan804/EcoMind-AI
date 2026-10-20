@@ -15,7 +15,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 const category = { id: id(1), code: 'glass', name: 'Glass', description: null, is_active: true, guidance_count: 1 };
-const facility = { id: id(4), code: 'MRF1', name: 'City MRF', facility_type: 'processing_center', status: 'active', address_line: null, city: null, region: null, country_code: null, latitude: null, longitude: null, daily_capacity_kg: null, contact_email: null };
+const facility = { id: id(4), code: 'MRF1', name: 'City MRF', facility_type: 'processing_center', status: 'active', address_line: null, city: null, region: null, country_code: null, latitude: null, longitude: null, daily_capacity_kg: null, contact_email: null, zone_id: null };
 const guidance = (over: Record<string, unknown> = {}) => ({
   id: id(2), material_category_id: id(1), category_code: 'glass', category_name: 'Glass', disposal_method: 'recycle', title: 'Rinse glass jars', instructions: 'Remove lids and rinse.',
   preparation_notes: null, source_reference: null, has_source: false, is_active: true, updated_at: '2026-10-01T00:00:00Z', ...over,

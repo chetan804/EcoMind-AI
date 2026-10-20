@@ -1,6 +1,6 @@
 # Screen inventory
 
-Reference list of screens the product needs, mapped to features, routes and API areas. Every screen below marked **Working** renders only data returned by the backend (no mock arrays, no demonstration numbers) and shows an explicit empty, error or "not available" state otherwise. Navigation entries are filtered by the signed-in user's permissions (a UX nicety; the server enforces access). **Marketplace** and **Locations and zones** have no backend and are not built; the marketplace entry stays tagged "Soon". Smart Bins & Telemetry is intentionally absent from navigation.
+Reference list of screens the product needs, mapped to features, routes and API areas. Every screen below marked **Working** renders only data returned by the backend (no mock arrays, no demonstration numbers) and shows an explicit empty, error or "not available" state otherwise. Navigation entries are filtered by the signed-in user's permissions (a UX nicety; the server enforces access). **Marketplace** has no backend and is not built; its entry stays tagged "Soon". **Locations and zones** is built over named zones without map geometry (see the table). Smart Bins & Telemetry is intentionally absent from navigation.
 
 Test coverage: `frontend/tests/integration/{security,operations,circular,...}.test.tsx` plus component and unit tests (see `docs/project-completion/IMPLEMENTATION_STATUS.md` for counts). Screenshot-versus-reference comparisons are **not yet produced** for the screens added after the first four; do not read "Working" as visual fidelity.
 
@@ -30,7 +30,7 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 | Users and roles | `/settings/users` | users | administration | `users:read`; `users:manage` | **Working** |
 | Audit log | `/settings/audit` | audit | administration | `audit:read` | **Working** |
 | Circular surplus marketplace | `/circular-economy` | none | **no backend** | none | **Planned** ("Soon"; nothing invented) |
-| Locations and zones | none | none | **no backend** (facilities is the closest) | none | **Not built** |
+| Locations and zones | `/locations` | locations | facilities (`/api/v1/zones`, `GET /facilities?zone_id=`) | `facilities:read`; manage with `facilities:manage` | **Working** (zones table, facilities per zone, create/edit/retire; **no map or boundaries**: the platform holds no verified map data, and the page says so) |
 | Prediction review queue | `/classify/review` | waste-classification | classification (+ `GET /predictions/{id}/image`) | `classification:review` | **Working** (photo, suggestion, confirm / correct / reject) |
 | Smart bins and sensor telemetry | none | none | none | none | **Excluded by product decision** |
 
@@ -53,7 +53,7 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 | 11 Chain of Custody Passports | Passports | material-passports | **Working** |
 | 12 Rewards and Impact Ledger | Rewards | rewards | **Working** |
 | 13 Waste Intake Records | Waste reports | waste-reports | **Working** |
-| 14 Locations and Zones | none | no module (facilities is closest) | **Not built** |
+| 14 Locations and Zones | `locations` | zones in the facilities module | **Built without map geometry** (evidence: `docs/ui/evidence/screens/locations-*.png`) |
 | 15 Processing Facilities and Depots | Facilities | facilities | **Working** |
 | 16 Collection Fleet Vehicles | Fleet | fleet | **Working** |
 | 17 Smart Bins and Sensor Telemetry | none | excluded by product decision | **Not planned** |

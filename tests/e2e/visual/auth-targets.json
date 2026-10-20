@@ -52,6 +52,11 @@
       "path": "/reports"
     },
     {
+      "id": "locations",
+      "reference": "14_Locations_and_Zones.png",
+      "path": "/locations"
+    },
+    {
       "id": "facilities",
       "reference": "15_Processing_Facilities_and_Depots.png",
       "path": "/facilities"

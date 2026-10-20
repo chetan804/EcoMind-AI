@@ -16,7 +16,7 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 ## 1. Where the project stands (branch `arena/39c812ff-ecomind-ai`, PR #9 against `main`)
 
 `main` is at `4474bfb` (PR #7). PR #9 adds community incidents, analytics, administration, MFA and every
-remaining frontend screen. Alembic head is `0008`.
+remaining frontend screen. Alembic head is `0009` (zones).
 
 Latest local results on this branch (run in this sandbox; CI results are listed in the verification log):
 
@@ -24,7 +24,7 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 |---|---|
 | Backend pytest (real PostgreSQL 16.2) | 477 passed, 1 skipped (2 further tests for the review-queue image endpoint are green in CI; the skip is the classification parity test, which needs the git-ignored model artifact that is not in this sandbox) |
 | Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
-| Frontend vitest | 23 files, 207 tests passed |
+| Frontend vitest | 24 files, 212 tests passed |
 | Frontend `tsc -b`, ESLint, production build | clean |
 | `scripts/quality/check_structure.py` | passes |
 
@@ -51,11 +51,11 @@ Latest local results on this branch (run in this sandbox; CI results are listed 
 | community_incidents | **Verified** | 9 tests; 6 mutations (2 equivalent survivors). |
 | analytics | **Verified** | Query-based; `recovery_rate` is null without verified input. |
 | circular surplus marketplace | **Planned** | No backend; the nav item says "Soon". |
-| locations and zones | **Missing** | No module; facilities is the closest concept. |
+| locations and zones | **Verified** (named zones only) | Zones live in the facilities module (`/api/v1/zones`, migration 0009, 11 tests, 4/4 mutations caught). No geometry: no verified map data. Collection tasks are not linked to zones (future). |
 
 ### Frontend screens (see `docs/ui/screen-inventory.md` for routes and permissions)
 
-Every reference screen except 08 (Marketplace, planned), 14 (Locations and Zones, not built), 17 and 19 (Smart bins /
+Every reference screen except 08 (Marketplace, planned), 17 and 19 (Smart bins /
 telemetry, excluded by product decision) has a working React screen over the real API. Real-browser renders, side-by-sides
 and diffs for 05–22 are in `docs/ui/evidence/screens/`; their similarity numbers are low and are **not** a fidelity claim
 (`docs/ui/evidence/README.md`). A stored light theme exists because those references are light screens; its contrast is not
@@ -204,7 +204,7 @@ Backend (see each `docs/api/*-api.md`): fleet, collection, forecasting, anomaly 
 passports, rewards, notifications (PRs #7/#8, merged or green earlier); community incidents, analytics, administration and MFA with migration
 `0008` (PR #9). Each module's tests include at least one round of deliberate mutation (break one rule, confirm a test fails); the counts are in §2.
 
-Frontend: every screen listed in `docs/ui/screen-inventory.md`, over the real API, with shared components, form and dialog helpers, and 207 vitest
+Frontend: every screen listed in `docs/ui/screen-inventory.md`, over the real API, with shared components, form and dialog helpers, and 212 vitest
 tests. Visual comparison for screens 05–22: `docs/ui/evidence/screens/` (demonstration data only, seeded by `scripts/demo/seed_demo.py`; real
 public reference series imported from the pinned `msw-src` commit).
 
@@ -222,7 +222,7 @@ incident as a false positive in the GitGuardian dashboard.
 
 **Not done yet (next actions):**
 1. Extend the Playwright core-workflow spec beyond collection (recovery, passport). It currently covers report → verified task → assignment (collector and vehicle) → collected weight → reward → analytics, passes locally (21 specs: 20 passed, 1 skipped) and needs `E2E_ADMIN_*` (CI creates the administrator); its CI result is not yet confirmed.
-2. Locations and Zones (needs a backend decision); Marketplace (needs a backend).
+2. Marketplace (needs a backend). Locations and Zones is done as named zones without geometry.
 3. (Done) Dataset research artifacts. Remaining there: the two owner decisions above; forecasting/anomaly datasets beyond the five ingested
    series were not found.
 4. Light-theme contrast audit; password reset and email verification; debounce on users search and audit filters.
