@@ -186,8 +186,9 @@ def test_lifecycle_notifications_and_audit(env: Env) -> None:
     body = done.json()
     assert body["status"] == "resolved" and body["resolved_at"] is not None
     assert body["resolution_notes"] == "Mattress collected by crew 4"
-    for target in ("dismissed", "acknowledged", "in_progress"):
+    for target in ("dismissed", "resolved", "acknowledged", "in_progress"):
         assert env.move(iid, target, "x notes").status_code == 409  # final
+    assert env.move(iid, "open", "reopen").status_code == 422  # reopening is not offered
     assert (
         env.client.post(
             f"{BASE}/{uuid.uuid4()}/status",

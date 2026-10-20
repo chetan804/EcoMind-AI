@@ -2,22 +2,22 @@
 
 Incidents reported by the community (illegal dumping, overflowing bins, ...) and their resolution.
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** implemented (report, list, summary, assign, lifecycle, notifications, audit). See docs/api/community-incidents-api.md.
 
 ## Ownership
 - **Tables owned:** `community_incidents`
-- **Files present:** `models.py`, `constants.py`. Add `router.py`, `schemas.py`, `repository.py`, `service.py` and the other files of the module contract only when they are needed (docs/architecture/component-boundaries.md).
+- **Files present:** `models.py`, `constants.py`, `schemas.py`, `repository.py`, `service.py`, `router.py`.
 
 ## Relationships
-- **Depends on (via services / foreign keys):** `users`, `waste_reports`
+- **Depends on (via services / foreign keys):** `users`, `waste_reports` (photo uploads), `notifications`, `audit`
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
-## API (planned, not implemented)
+## API
 `/api/v1/community-incidents`, registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
 
 ## Notes
 -
 
 ## Tests
-The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. When endpoints are added, add API tests in `backend/tests/api/` and authorization tests in `backend/tests/security/`.
+The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. API behaviour: `backend/tests/api/test_community_incidents.py` (permissions, privacy, photo ownership, lifecycle, notifications, audit).
 Run: `make test-backend`.

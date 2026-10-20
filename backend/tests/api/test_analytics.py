@@ -94,6 +94,7 @@ def test_collected_weight_and_weekly_trend_equal_stored_events(env: Env) -> None
     # a one-day window sees none of the old events, while the total is unchanged
     narrow = env.get("/overview", window_days=1).json()
     assert decimal.Decimal(narrow["collection"]["collected_weight_kg_in_window"]) == 0
+    assert narrow["collection"]["completed_in_window"] == 0
     assert decimal.Decimal(narrow["collection"]["collected_weight_kg_total"]) == decimal.Decimal(
         "350.5"
     )
