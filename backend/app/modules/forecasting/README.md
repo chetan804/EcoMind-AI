@@ -1,19 +1,19 @@
 # Waste forecasting (`forecasting`)
 
-Stores and serves waste-generation forecasts produced by `ml/forecasting`.
+Stores and serves waste-generation forecasts produced by `ml/time_series` (algorithms loaded by name, see `engine.py`).
 
-**Status:** database models and migration exist; no router, service or repository yet (not implemented).
+**Status:** implemented (router, schemas, repository, service, tests). See `docs/api/forecasting-api.md`.
 
 ## Ownership
 - **Tables owned:** `forecast_results`
-- **Files present:** `models.py`, `constants.py`. Add `router.py`, `schemas.py`, `repository.py`, `service.py` and the other files of the module contract only when they are needed (docs/architecture/component-boundaries.md).
+- **Files present:** the full module contract (`models`, `constants`, `schemas`, `repository`, `service`, `router`, `engine`, `series`, `importer`).
 
 ## Relationships
 - **Depends on (via services / foreign keys):** `facilities`, `sorting_guide`
 - Other modules must use this module's `service.py` to change its data; never write to its tables directly.
 
-## API (planned, not implemented)
-`/api/v1/forecasts`, registered in `app/api/v1/router.py`. See docs/api/api-conventions.md.
+## API
+`/api/v1/forecasting`, registered in `app/api/v1/router.py`; documented in `docs/api/forecasting-api.md`.
 
 ## Notes
 Reads historical observations through the collection/analytics service interfaces, never from their tables.

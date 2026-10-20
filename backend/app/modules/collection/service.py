@@ -546,3 +546,8 @@ def reschedule(
     db.commit()
     db.refresh(task)
     return _detail(db, task)
+
+
+def weekly_collected_weight_kg(db: Session) -> list[tuple[dt.date, decimal.Decimal]]:
+    """Read interface for other modules (forecasting, analytics): weekly collected kg."""
+    return repository.weekly_collected_weight(db)

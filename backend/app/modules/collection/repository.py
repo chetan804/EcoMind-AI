@@ -7,7 +7,7 @@ import decimal
 import uuid
 from typing import Any
 
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import Date, case, func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import SQLColumnExpression
 
@@ -218,3 +218,18 @@ def list_page(
         .offset(params.offset)
     )
     return list(db.execute(page).scalars()), total
+
+
+def weekly_collected_weight(db: Session) -> list[tuple[dt.date, decimal.Decimal]]:
+    """Total collected kg per ISO week (Monday start, UTC), weeks with events only, ascending."""
+    week = func.date_trunc("week", func.timezone("UTC", CollectionEvent.occurred_at))
+    stmt = (
+        select(func.cast(week, Date), func.sum(CollectionEvent.collected_weight_kg))
+        .where(
+            CollectionEvent.event_type == CollectionEventType.COLLECTED,
+            CollectionEvent.collected_weight_kg.is_not(None),
+        )
+        .group_by(week)
+        .order_by(week)
+    )
+    return [(day, total) for day, total in db.execute(stmt).all()]

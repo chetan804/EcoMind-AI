@@ -2,7 +2,7 @@
 #   docker build -f deployment/docker/backend.Dockerfile -t ecomind-backend .
 FROM python:3.12-slim
 
-ENV PYTHONPATH=/srv/backend \
+ENV PYTHONPATH=/srv/backend:/srv \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -17,6 +17,12 @@ COPY backend/pyproject.toml backend/README.md ./
 COPY backend/app ./app
 COPY backend/alembic.ini ./
 COPY backend/migrations ./migrations
+# The forecasting / anomaly algorithms are developed and benchmarked in the isolated ml/
+# capability. Only the pure-numpy module is shipped (loaded by name at run time); nothing else
+# from ml/ is needed in the image.
+COPY ml/__init__.py /srv/ml/__init__.py
+COPY ml/time_series/__init__.py /srv/ml/time_series/__init__.py
+COPY ml/time_series/algorithms.py /srv/ml/time_series/algorithms.py
 # Installs the dependencies; PYTHONPATH makes /srv/backend/app (which also holds alembic.ini and
 # migrations next to it) the package that is imported, so mounted dev code wins in compose.
 RUN pip install .
