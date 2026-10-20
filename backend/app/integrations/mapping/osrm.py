@@ -47,6 +47,8 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def urllib_transport(url: str, timeout: float) -> tuple[int, bytes]:
+    if not url.startswith(("http://", "https://")):
+        raise ValueError("the OSRM base URL must be http(s)")
     opener = urllib.request.build_opener(_NoRedirect)
     request = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")  # noqa: S310
     try:

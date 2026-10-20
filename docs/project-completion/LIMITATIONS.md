@@ -1,6 +1,6 @@
 # Known limitations
 
-Everything below is a real, current limitation as of 2026-10-21 (branch `arena/483a088d-ecomind-ai`).
+Everything below is a real, current limitation as of 2026-10-21 (branch `arena/cb4875bc-ecomind-ai`).
 Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree with this list.
 
 ## Machine learning
@@ -9,8 +9,13 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - Frozen backbone with a linear head; no fine-tuning (no GPU or deep-learning framework available here).
 - Six material classes only. Organic, textile, e-waste, battery and medical waste are unsupported and go to
   review. Object or product identification is a different task and is not attempted.
-- RealWaste (CC BY-NC-SA 4.0) and TrashBox (no licence) are not used for any released model. TACO was not
-  ingested (segmentation labels; images not reachable from the build environment).
+- RealWaste (CC BY-NC-SA 4.0) and TrashBox (no licence) are not used for any released model (RealWaste only
+  evaluates it, and any model trained on it may exist only as a labelled, inactive research artefact).
+  **TACO was audited and no image qualifies:** its annotation file records no licence for 715 images, a bare
+  "CC" for 319 and ODbL for 466, so none is provably CC BY / BY-SA / CC0 (`docs/ml/dataset-research/TACO_LICENCE_AUDIT.md`).
+  Images can be admitted only after the owner runs the source-licence check and import scripts; the label
+  conversion from TACO's 60 object categories to the six material classes is not defined yet. The classifier
+  therefore still rests on TrashNet alone.
 - Forecasting: the platform series starts empty; the two public series are reference data. Holt-Winters
   beat the baseline on two of four usable series. Anomaly detection has no labels, so no precision/recall.
 
@@ -18,12 +23,14 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - **Marketplace** (reference 08) is a matching board only: no price, payment, delivery, photos, chat, expiry, partial fulfilment or link to recovery records. Its notifications use the `system` category. **Smart bins and telemetry** (17, 19):
   excluded by product decision; no sensor integration.
 - **Zones** have no boundary geometry (no verified boundary data), so no polygon or coverage figure is drawn. Collection tasks are not linked to zones.
-- Route plans are ordered by straight-line distance and store no ETA. A road route (geometry, distance, duration, no live traffic) is fetched on demand from the Google Routes API only when `GOOGLE_MAPS_SERVER_API_KEY` is set; it is not stored and the order is not re-optimised for roads.
+- Route plans are ordered by straight-line distance and store no ETA. A road route (geometry, distance, duration, no live traffic) is fetched on demand only when a routing provider is enabled (`ROUTING_PROVIDER`: Google Routes with a server key, or an OSRM server the operator runs); it is not stored and the order is not re-optimised for roads. Both providers are tested with mocked transports only.
 - Rewards have no redemption. Impact is reported as recovered weight; no emission coefficients are used.
 - No e-mail verification and no password reset. No notification delivery beyond in-app.
 
-## Maps and tracking (details: `docs/maps/GOOGLE_MAPS_INTEGRATION.md`)
-- **Google integration is not verified live.** No key was available and the build sandbox cannot reach Google. Maps, advanced markers, clustering, the Routes API call and the CSP allowances are tested only with a fake `google.maps` and a mocked HTTP transport. The screenshots in `docs/ui/evidence/maps/` therefore show the labelled fallback, not Google tiles.
+## Maps and tracking (details: `docs/maps/OFFLINE_MAPS.md`, `ROUTING_PROVIDERS.md`, `GOOGLE_MAPS_INTEGRATION.md`)
+- **The default offline map has only been rendered with synthetic tiles.** The basemap needs an owner-prepared PMTiles file from OpenStreetMap data (`scripts/maps/prepare_offline_maps.py tiles`, needs the `pmtiles` CLI and network); without it the screens draw markers and routes on a plain background and say "Base map not installed". How a real OSM region looks with this style, labels in non-Latin scripts (only Latin glyph ranges are shipped) and city-scale performance are unverified. It is an original OSM-based style, not a copy of Google Maps. No geocoding or turn-by-turn navigation.
+- OSM data is a snapshot that the owner must refresh; ODbL attribution is shown on the map.
+- **The optional Google integration is not verified live.** No key was available and the build sandbox cannot reach Google. Maps, advanced markers, clustering, the Routes API call and the CSP allowances are tested only with a fake `google.maps` and a mocked HTTP transport. The screenshots in `docs/ui/evidence/maps/` therefore show the labelled fallback, not Google tiles.
 - **No real GPS source is connected.** The only real producer is the "Share my position" button of the collector's task dialog (browser geolocation, only while the tab is open, at most one report per 15 s, no background tracking, no native mobile app). Hardware trackers would post as the assigned collector's account: there are no per-device credentials or tokens (`gps_device` is accepted from a `fleet:track` user only).
 - Positions update by polling every 15 s (backing off to 120 s); there is no SSE or WebSocket.
 - Retention is a manual or cron job (`purge-location-events`); the platform has no scheduler.

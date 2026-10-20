@@ -171,3 +171,12 @@ def test_osrm_url_must_be_plain_http(url: str) -> None:
 def test_blank_values_mean_unset() -> None:
     blank = settings(routing_provider="", osrm_base_url="  ")
     assert blank.routing_provider is None and blank.osrm_base_url is None
+
+
+def test_default_transports_refuse_non_http_urls() -> None:
+    from app.integrations.mapping import google_routes, osrm
+
+    with pytest.raises(ValueError, match="http"):
+        osrm.urllib_transport("file:///etc/passwd", 1.0)
+    with pytest.raises(ValueError, match="https"):
+        google_routes.urllib_transport("http://routes.example/x", {}, b"{}", 1.0)

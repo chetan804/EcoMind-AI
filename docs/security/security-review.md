@@ -76,3 +76,20 @@ remains open.
 - **Privacy.** Positions are personal data about a driver's movements. Only an authorised, assigned account can write them; retention defaults to 90 days (`purge-location-events`); sharing is started by the collector and stops when the tab closes. Map labels and URLs carry no reporter identity or free text, and the directions link contains only a facility's public coordinates. A privacy notice and legal basis for tracking staff are the operator's responsibility.
 - **Residual risks.** No per-device credentials (a tracker must use a collector account); polling load is proportional to open fleet screens; the Routes API is a billable dependency (budget alerts recommended); Google scripts run in the page, so the key restrictions and CSP are the only containment.
 
+## Offline map and optional routing (added 2026-10-21)
+
+- **Offline map CSP check (local, real Chromium, production build).** The `/fleet` map (MapLibre, PMTiles over
+  Range requests, blob/own-origin worker, vendored fonts and sprites) was loaded with the exact CSP string from
+  `deployment/docker/nginx.conf` applied to the document: 0 `securitypolicyviolation` events and no console
+  errors; a negative control with `worker-src 'none'` did report the worker violation, so the check can fail.
+  The map needs no host beyond `'self'` (no Google host), and still no `'unsafe-eval'`. The check used the Vite
+  preview server with the header injected by the test browser, **not nginx** (none available): the nginx
+  `/map-assets/` location is untested until CI builds the image and a real deployment is exercised.
+- **Third parties.** The default provider sends nothing to third parties from the browser. Map data is an
+  OpenStreetMap snapshot (ODbL, attribution displayed).
+- **OSRM adapter.** Operator-set base URL only (http/https, no credentials/query/fragment, validated at
+  startup), no redirects followed, 5 MB response cap, nothing stored, off by default. Run OSRM on a private
+  network; do not expose it publicly. Tested with a mocked transport only.
+- **Static analysis.** After this change `bandit -r backend/app -ll` reported one Medium (B310 on the Google
+  Routes `urlopen`, a constant https URL; a false positive that the added scheme guard and a `nosec B310` with
+  its reason now document); the earlier "13 Low, none Medium/High" figure predates the Routes adapter.

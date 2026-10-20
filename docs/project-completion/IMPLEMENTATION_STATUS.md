@@ -13,10 +13,11 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Where the project stands (branch `arena/483a088d-ecomind-ai`, started from `main` at `aa117c3`)
+## 1. Where the project stands (branch `arena/cb4875bc-ecomind-ai`, started from `main` at `4b805ec`)
 
-`main` is at `aa117c3` (PR #9 merged: incidents, analytics, administration, MFA, marketplace, all screens). This branch
-adds **Google Maps integration and vehicle tracking** (master prompt section 27). Alembic head is `0011`
+`main` is at `4b805ec` (PR #10 merged: Google Maps integration and vehicle tracking, master prompt section 27). This branch
+makes the **offline OpenStreetMap map the default (no key)**, adds an **optional OSRM routing adapter** and records the **TACO licence audit** (Phase I below). The earlier branch (`arena/483a088d-ecomind-ai`, PR #10)
+added **Google Maps integration and vehicle tracking**. Alembic head is `0011`
 (`vehicle_location_events`); 42 permissions (new: `fleet:track`, `fleet:simulate`); about 125 API operations.
 
 **Baseline at the start of this branch (before any change, same sandbox):** backend 524 passed / 1 skipped, vitest 220 passed, `tsc` clean.
@@ -25,16 +26,17 @@ Latest local results on this branch (run in this sandbox; remote CI is reported 
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 595 passed, 1 skipped (the classification parity test needs the git-ignored model artifact) |
+| Backend pytest (real PostgreSQL 16.2) | 623 passed, 1 skipped (the classification parity test needs the git-ignored model artifact); one more test (transport scheme guard) was added after that run and passes in the re-run of the affected files (58 passed) |
 | Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
-| Frontend vitest | 282 tests passed |
-| Playwright e2e (local, real stack, fresh database) | 22 passed, 1 skipped (the no-model classification test, which does not apply while a model is active) |
+| Frontend vitest | 301 tests passed |
+| Playwright e2e (local, real stack) | 21 passed, 1 skipped on the full suite plus the tracking spec failing on the new provider; after adapting the spec (list view reached through the map's disclosure) the tracking spec passes on its own (1 passed). **The full suite was not re-run after that spec change.** |
+| Contract tests (`pytest tests/contract`) | 37 passed (map script 5, TACO scripts 27, others 5) |
 | Frontend `tsc -b`, ESLint, production build | clean; no `AIza` key material in the bundle |
 | Generated docs (data dictionary, ER diagram, route matrix) `--check` | up to date at `5542389` |
 | `scripts/quality/check_structure.py` | passes |
 
 **Not verified (needs credentials or network the sandbox lacks):** rendering with a real Google Maps key, the live Routes API, the CSP with Google
-loaded, any real GPS source. See `docs/maps/GOOGLE_MAPS_INTEGRATION.md` ("Pending live verification").
+loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only synthetic tiles were rendered), a live OSRM server, the nginx `/map-assets/` location, the TACO source-licence scripts against Flickr. See `docs/maps/GOOGLE_MAPS_INTEGRATION.md` ("Pending live verification").
 
 ## 2. Capability matrix
 
@@ -50,7 +52,8 @@ loaded, any real GPS source. See `docs/maps/GOOGLE_MAPS_INTEGRATION.md` ("Pendin
 | collection | **Verified** | Lifecycle with transitions, weights, events, reschedule. |
 | facilities, fleet | **Verified** | |
 | tracking (vehicle positions) | **Verified with mocks; no live GPS source** | Migration 0011, append-only `vehicle_location_events`, ingestion with validation/authorisation/rate limit, out-of-order and duplicate handling, derived LIVE/DELAYED/STALE/HISTORICAL/SIMULATED status, labelled simulator, retention CLI; 42 API tests plus road-route tests; `docs/api/tracking-api.md`. Real source shipped: browser sharing by the assigned collector (e2e-verified with emulated geolocation). Not a connected GPS fleet. |
-| mapping integration (Google Routes) | **Implemented, mocked, not live-verified** | `backend/app/integrations/mapping`, `GET /route-planning/plans/{id}/road-route`; no key was available. |
+| mapping integration (road routing) | **Implemented, mocked, not live-verified** | `backend/app/integrations/mapping`: `ROUTING_PROVIDER=none\|google\|osrm` (default none), Google Routes and OSRM adapters, `GET /route-planning/plans/{id}/road-route`; no key and no OSRM server were available. |
+| offline map (default provider) | **Verified with synthetic tiles only** | MapLibre + PMTiles, no key; rendering, clustering, paths, worker, fonts, sprites and CSP checked in real Chromium on invented tiles; needs an owner-prepared real tile file (`docs/maps/OFFLINE_MAPS.md`). |
 | route_planning | **Verified** | Deterministic ordering (`route-order 1.0.0`), no stored ETA, no live traffic. Mutation checks 5/5. Optional on-demand road route from the provider (not stored). |
 | forecasting, anomaly_detection | **Verified** | `ts-1.0.0`; honest labels for platform vs public reference data. Mutation checks 5/5. |
 | sorting_guide | **Verified** | Ships no rules; entries are created by managers. |
@@ -261,3 +264,18 @@ Defects found and fixed along the way: the e2e Playwright registration budget (1
 
 CI for PR #10 at head `bdd4c15` (`gh pr checks 10`, 2026-10-21): all 10 checks pass (Backend lint/type-check, tests on Python 3.11 and 3.12, frontend, ML, structure/Compose, contract/generated docs, Docker images, end-to-end with the tracking spec, GitGuardian). The first run on `563b18a` failed one frontend test (`operations.test.tsx`, the first test of the file, which waits for a lazily loaded page); the cause is believed to be slow cold imports on the runner (not reproduced locally), and the wait/timeout in `tests/setup.ts` and `vite.config.ts` was raised; this attribution is a diagnosis, not a proven root cause.
 
+### Phase I: offline map, optional OSRM routing, TACO licence audit (branch `arena/cb4875bc-ecomind-ai`)
+
+Production-grade, licence-clean choices (decision: `docs/decisions/ADR-0002-optional-routing-and-map-services.md`).
+
+| Area | What exists | Evidence |
+|---|---|---|
+| Offline map (default) | `features/maps` provider dispatcher (`VITE_MAP_PROVIDER`), `OfflineMapPanel`/`MapLibreSurface` (MapLibre 6.15, PMTiles 4.5, `@protomaps/basemaps` style with an original palette, supercluster), own-origin web worker, vendored Noto Sans Latin glyphs + sprites (864 KB, OFL/MIT, `frontend/public/map-assets/README.md`), states for no tile file / no WebGL / load error with the list view always available; Google kept as the optional provider | vitest 301 (new: `offline-map` 13, `offline-loader` 4, config, Google tests mocked to the Google provider) |
+| Tile preparation and serving | `scripts/maps/prepare_offline_maps.py` (`assets`, `tiles` wrapping `pmtiles extract`), git-ignored `deployment/map-data/`, Vite dev/preview range server (`MAP_DATA_DIR`), nginx `/map-assets/` location, compose mount, env templates | `tests/contract/test_map_scripts.py` (5); the `assets` step was run (9 glyph files copied); the `tiles` step needs the owner's network |
+| Browser verification | Chromium + SwiftShader: PMTiles Range requests, worker, glyphs, sprites, markers, clusters, planned/recorded/simulated paths in dev and production builds; CSP with the nginx policy: 0 violations (negative control reports one) | `docs/ui/evidence/maps-offline/` (synthetic tiles, **not a real map**), `tests/e2e/visual/make-synthetic-tiles.py`, `capture-maps.mjs` |
+| Defects found by that run | MapLibre 6 looks for its worker next to its own module, so no tile or overlay drew until the worker URL was set through `?worker&url` (jsdom tests could not see this); the tracking e2e spec assumed the Google fallback text | fixed; spec accepts either state |
+| Optional OSRM routing | `integrations/mapping/osrm.py`, `factory.py`, settings `ROUTING_PROVIDER`/`OSRM_BASE_URL`/`OSRM_TIMEOUT_SECONDS` validated at startup; off by default; `road_routing_configured` follows the provider | `backend/tests/unit/test_osrm.py` (29), tracking config API test; mocked transport only |
+| TACO licence audit | `scripts/ml/taco_licence.py` (audit, owner-run import), `taco_flickr_verify.py` (owner-run Flickr licence check), report `docs/ml/dataset-research/taco-licence-audit.json`: **0 of 1,500 images eligible** (715 no licence, 319 bare "CC", 466 ODbL) | `tests/contract/test_taco_scripts.py` (27); `docs/ml/dataset-research/TACO_LICENCE_AUDIT.md` |
+| Dataset policy | RealWaste (NC) and TrashBox (no licence) are not used for any released model; the only model remains the TrashNet candidate (non-default) | `datasets/README.md`, manifests |
+
+Remote CI for this branch: not yet checked at the time of writing (see the verification log of the pull request).
