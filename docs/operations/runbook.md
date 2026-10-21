@@ -51,6 +51,7 @@ make compose-config        # validate compose.yaml
 ```
 
 ## Deploying (outline; no production environment exists yet)
+For a supervised demonstration instead, use [`supervised-demo.md`](supervised-demo.md).
 1. Build images: `docker build -f deployment/docker/backend.Dockerfile -t ecomind-backend .` and `docker build -f deployment/docker/frontend.Dockerfile --target production --build-arg VITE_API_BASE_URL=https://<api-origin> -t ecomind-frontend .`
 2. Provision PostgreSQL (backups on), persistent file storage, secret store.
 3. Set backend environment (see `backend/.env.example`) with `ENVIRONMENT=production`, strong `SECRET_KEY`, `REFRESH_COOKIE_SECURE=true`, explicit `CORS_ALLOWED_ORIGINS` (the frontend origin).
