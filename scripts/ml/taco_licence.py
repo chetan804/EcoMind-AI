@@ -23,7 +23,11 @@ Two subcommands (stdlib only, no network except where stated):
           An owner who checked an image's licence AT ITS SOURCE (for example the original Flickr page)
           can record that in datasets/external/taco/verification.csv
           (image_id,licence,evidence_url,verified_on,verified_by). A verified licence replaces the
-          annotation value only if the evidence URL and date are filled in.
+          annotation value only if the evidence URL and date are filled in. Rows written by
+          scripts/ml/taco_flickr_verify.py (they carry a `source` column) must ALSO pass the checks in
+          scripts/ml/taco_evidence.py (right image, licence derived from its URL, author named, and
+          identical to the saved raw Flickr answer when datasets/external/taco/flickr_raw/ exists);
+          rows that fail are ignored and counted in the report.
   import  Download the eligible images (OWNER-RUN: needs network access to the image hosts, which the
           build sandbox does not have) into datasets/external/taco/images/ with SHA-256 and licence
           provenance in import_manifest.json, plus a COCO subset restricted to those images.
@@ -47,9 +51,12 @@ import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import taco_evidence as ev  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 TACO_ZIP = "https://codeload.github.com/pedropro/TACO/zip/refs/heads/master"
@@ -105,13 +112,33 @@ class Verification:
     evidence_url: str
     verified_on: str
     verified_by: str
+    owner: str = ""
+    photo_url: str = ""
 
 
-def load_verifications(path: Path) -> dict[int, Verification]:
-    """Owner-recorded source checks. Rows without evidence URL and date are ignored on purpose."""
+def load_verification_report(
+    path: Path,
+    images: Mapping[int, Mapping[str, Any]] | None = None,
+    raw_dir: Path | None = None,
+    today: date | None = None,
+) -> tuple[dict[int, Verification], dict[int, list[str]], bool]:
+    """(accepted rows, rejected rows with reasons, whether raw Flickr answers were compared).
+
+    Owner-recorded source checks. Rows without evidence URL and date are ignored on purpose. Rows written by
+    taco_flickr_verify.py (they carry a `source` value) are accepted only if `images` is given and the row
+    passes taco_evidence.validate_row."""
     if not path.exists():
-        return {}
+        return {}, {}, False
+    table = None
+    use_raw = raw_dir is not None and raw_dir.is_dir()
+    if use_raw and raw_dir is not None:
+        try:
+            table = ev.parse_licence_table((raw_dir / ev.LICENCE_TABLE_FILE).read_bytes())
+        except (OSError, ValueError):
+            table = None
     found: dict[int, Verification] = {}
+    rejected: dict[int, list[str]] = {}
+    when = today or datetime.now(UTC).date()
     with path.open(newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
             try:
@@ -123,10 +150,36 @@ def load_verifications(path: Path) -> dict[int, Verification]:
                 evidence_url=(row.get("evidence_url") or "").strip(),
                 verified_on=(row.get("verified_on") or "").strip(),
                 verified_by=(row.get("verified_by") or "").strip(),
+                owner=(row.get("owner") or "").strip(),
+                photo_url=(row.get("photo_url") or "").strip(),
             )
-            if item.licence and item.evidence_url.startswith("https://") and item.verified_on:
-                found[image_id] = item
-    return found
+            if not (item.licence and item.evidence_url.startswith("https://") and item.verified_on):
+                continue
+            if row.get("source"):
+                problems = (
+                    ["tool-written row, but no annotation file was given to check it against"]
+                    if images is None
+                    else ev.validate_row(
+                        row,
+                        images.get(image_id),
+                        today=when,
+                        raw_dir=raw_dir if use_raw else None,
+                        table=table,
+                    )
+                )
+                if image_id in found or image_id in rejected:
+                    problems = [*problems, "the image appears more than once"]
+                if problems:
+                    rejected[image_id] = problems
+                    found.pop(image_id, None)
+                    continue
+            found[image_id] = item
+    return found, rejected, use_raw
+
+
+def load_verifications(path: Path) -> dict[int, Verification]:
+    """Accepted rows only, without the image-level checks (legacy entry point)."""
+    return load_verification_report(path)[0]
 
 
 @dataclass(frozen=True)
@@ -139,6 +192,8 @@ class Decision:
     basis: str  # "annotations" or "owner_verification"
     eligible: bool
     url: str
+    owner: str = ""  # author named by the source check (needed to credit CC BY / CC BY-SA photographs)
+    photo_url: str = ""
 
 
 def audit_images(
@@ -159,7 +214,16 @@ def audit_images(
         url = str(image.get("flickr_url") or image.get("flickr_640_url") or "")
         decisions.append(
             Decision(
-                image_id, str(image.get("file_name", "")), source, licence, category, basis, eligible, url
+                image_id,
+                str(image.get("file_name", "")),
+                source,
+                licence,
+                category,
+                basis,
+                eligible,
+                url,
+                override.owner if override else "",
+                override.photo_url if override else "",
             )
         )
     return decisions
@@ -201,9 +265,9 @@ def write_eligible_csv(decisions: Iterable[Decision], path: Path) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["image_id", "file_name", "licence", "basis", "url"])
+        writer.writerow(["image_id", "file_name", "licence", "basis", "url", "owner", "photo_url"])
         for d in rows:
-            writer.writerow([d.image_id, d.file_name, d.licence, d.basis, d.url])
+            writer.writerow([d.image_id, d.file_name, d.licence, d.basis, d.url, d.owner, d.photo_url])
     return len(rows)
 
 
@@ -231,9 +295,14 @@ def load_annotations(path: Path | None, download: bool) -> tuple[dict[str, Any],
 
 def run_audit(args: argparse.Namespace) -> int:
     data, digest = load_annotations(Path(args.annotations) if args.annotations else None, args.download)
-    verifications = load_verifications(Path(args.verification))
+    images = {int(i["id"]): i for i in data.get("images", [])}
+    verifications, rejected, raw_compared = load_verification_report(
+        Path(args.verification), images, Path(args.raw_dir) if args.raw_dir else None
+    )
     decisions = audit_images(data, verifications=verifications, allow_odbl=args.allow_odbl)
     summary = summarise(data, decisions, allow_odbl=args.allow_odbl, input_sha256=digest)
+    summary["verification_rows_rejected"] = len(rejected)
+    summary["verification_compared_with_raw_flickr_answers"] = raw_compared
     summary["audited_on"] = datetime.now(UTC).date().isoformat()
     Path(args.report).parent.mkdir(parents=True, exist_ok=True)
     Path(args.report).write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
@@ -243,6 +312,10 @@ def run_audit(args: argparse.Namespace) -> int:
             {k: summary[k] for k in ("images_total", "images_by_category", "eligible_images")}, indent=2
         )
     )
+    for image_id, problems in list(rejected.items())[:20]:
+        print(f"verification row for image {image_id} ignored: {'; '.join(problems)}", file=sys.stderr)
+    if rejected:
+        print(f"{len(rejected)} verification row(s) failed validation and were ignored", file=sys.stderr)
     print(f"Report: {args.report}\nEligible list ({count} images): {args.eligible}")
     if count == 0:
         print(
@@ -369,6 +442,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--download", action="store_true", help="fetch annotations.json from codeload.github.com"
     )
     audit.add_argument("--verification", default=str(EXTERNAL / "verification.csv"))
+    audit.add_argument(
+        "--raw-dir",
+        default=str(EXTERNAL / "flickr_raw"),
+        help="saved raw Flickr answers; used to check tool-written rows when the folder exists",
+    )
     audit.add_argument("--report", default=str(REPORT))
     audit.add_argument("--eligible", default=str(EXTERNAL / "eligible_images.csv"))
     audit.add_argument(

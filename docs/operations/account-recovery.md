@@ -65,9 +65,29 @@ make demo-mail-down
 This path uses `SMTP_SECURITY=none` inside the Compose network, which the backend refuses when
 `ENVIRONMENT=production`; that is intended, because Mailpit is a demonstration tool. Not verified in
 this repository: running the Mailpit container itself (the build environment has no Docker). What was
-verified: the SMTP settings reach the adapter, and the adapter against an independent SMTP server
+verified: the SMTP settings reach the adapter, the browser suite's Mailpit client logic (see below), and the adapter against an independent SMTP server
 (`scripts/demo/verify_smtp_local.py`: STARTTLS and mandatory AUTH succeed; a wrong password and an
 untrusted certificate are both refused).
+
+### How the browser tests read the mail
+
+`tests/e2e/specs/account-recovery.spec.ts` takes the one-time links from a mail source chosen by environment
+variable (`tests/e2e/specs/mail.ts`):
+
+| Variable | Source | Used by |
+|---|---|---|
+| `E2E_MAILPIT_URL` (e.g. `http://localhost:8025`) | The Mailpit inbox API (`/api/v1/search`, `/api/v1/message/{ID}`) | CI: the e2e job starts the stack with `--profile demo-mail` |
+| `E2E_MAIL_LOG_COMMAND` (e.g. `docker compose logs --no-color backend`) | The backend's console log | Local runs with plain `make up` |
+
+With Mailpit the suite also asserts what the log cannot show: the message really arrived over SMTP from a
+client that authenticated (`Username` is non-empty), the sender is the configured `EMAIL_FROM`, the token is in
+the `#token=` fragment and not the query string, the "password was changed" notice arrives and contains no link,
+and an unknown address receives nothing at all. The spec is skipped (and says why) if neither variable is set.
+
+Verification status of this path: the client logic and the spec were run locally against a small stand-in that
+speaks SMTP with mandatory AUTH and serves the Mailpit REST shapes from its published OpenAPI document (the real
+backend sent through it; both mail sources passed 4/4). **The real Mailpit container has never been run by me**
+(no Docker, no download access here); its first execution is the CI e2e job.
 
 ### Verified against a real mail server?
 

@@ -24,5 +24,7 @@
   "eligible_images": 0,
   "eligible_objects": 0,
   "attribution_required_for_eligible": 0,
-  "audited_on": "2026-10-20"
+  "verification_rows_rejected": 0,
+  "verification_compared_with_raw_flickr_answers": false,
+  "audited_on": "2026-10-21"
 }

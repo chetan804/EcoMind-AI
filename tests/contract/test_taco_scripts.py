@@ -1,4 +1,4 @@
-"""TACO licence audit, owner-run import and Flickr verification helper (no network)."""
+"""TACO licence audit and owner-run import (no network). The Flickr evidence tool is in test_taco_evidence.py."""
 
 from __future__ import annotations
 
@@ -26,7 +26,6 @@ def load(name: str) -> ModuleType:
 
 
 audit = load("taco_licence")
-flickr = load("taco_flickr_verify")
 
 JPEG = b"\xff\xd8\xff\xe0" + b"0" * 32
 
@@ -221,67 +220,3 @@ def test_import_dry_run_makes_no_request(tmp_path: Path) -> None:
 def test_http_fetch_only_accepts_https() -> None:
     with pytest.raises(ValueError, match="https"):
         audit.http_fetch("http://example.org/a.jpg")
-
-
-def test_flickr_photo_id_and_licence_lookup() -> None:
-    assert flickr.photo_id("https://img.tacodataset.org/img/33978196618.jpg") == "33978196618"
-    assert (
-        flickr.photo_id("https://farm5.staticflickr.com/4864/31761220157_927fea50b6_o.png") == "31761220157"
-    )
-    assert flickr.photo_id("https://olm-s3.s3.eu-west-1.amazonaws.com/1048/vPr8VJAbWN8OV") is None
-
-    def ok(licence: str) -> flickr.Get:
-        return lambda url: json.dumps({"stat": "ok", "photo": {"license": licence}}).encode()
-
-    assert flickr.lookup("1", "k", ok("4")) == "CC BY 2.0"
-    assert flickr.lookup("1", "k", ok("2")) == "CC BY-NC 2.0"
-    assert flickr.lookup("1", "k", ok("12")) == "unmapped Flickr licence id 12"
-    assert flickr.lookup("1", "k", lambda url: b'{"stat":"fail","code":1}') is None
-    assert flickr.lookup("1", "k", lambda url: b"not json") is None
-
-
-def test_flickr_helper_needs_a_key_and_records_only_returned_photos(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    data = coco()
-    data["images"] = [  # type: ignore[assignment]
-        {
-            "id": 7,
-            "file_name": "a.jpg",
-            "license": "CC",
-            "flickr_url": "https://img.tacodataset.org/img/111111111.jpg",
-        },
-        {
-            "id": 8,
-            "file_name": "b.jpg",
-            "license": "CC",
-            "flickr_url": "https://img.tacodataset.org/img/222222222.jpg",
-        },
-        {"id": 9, "file_name": "c.jpg", "license": None, "flickr_url": "https://olm-s3.example/1048/xyz"},
-    ]
-    annotations = tmp_path / "a.json"
-    annotations.write_text(json.dumps(data), encoding="utf-8")
-    out = tmp_path / "verification.csv"
-    args = argparse.Namespace(
-        annotations=str(annotations), output=str(out), verified_by="owner", limit=0, pause=0.0
-    )
-    monkeypatch.delenv("FLICKR_API_KEY", raising=False)
-    assert flickr.run(args) == 2
-    monkeypatch.setenv("FLICKR_API_KEY", "test-key")
-
-    def get(url: str) -> bytes:
-        if "photo_id=111111111" in url:
-            return json.dumps({"stat": "ok", "photo": {"license": "5"}}).encode()
-        return b'{"stat":"fail"}'
-
-    assert flickr.run(args, get=get) == 0
-    rows = list(csv.DictReader(out.open()))
-    assert [(r["image_id"], r["licence"]) for r in rows] == [("7", "CC BY-SA 2.0")]
-    assert rows[0]["evidence_url"].endswith("id=111111111") and rows[0]["verified_by"] == "owner"
-    calls: list[str] = []
-    flickr.run(args, get=lambda url: calls.append(url) or b'{"stat":"fail"}')
-    assert all("photo_id=111111111" not in c for c in calls)  # already recorded: not asked again
-    # the audit accepts the helper's output as owner verification
-    found = audit.load_verifications(out)
-    assert found[7].licence == "CC BY-SA 2.0"
-    assert audit.classify(found[7].licence) == "allowed"

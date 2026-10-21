@@ -31,6 +31,10 @@ jobs:
           scripts/dependencies/lock_backend.sh --check
       - name: Docker Compose configuration is valid
         run: docker compose --env-file .env.example config --quiet
+      - name: Docker Compose configuration is valid with the Mailpit and OSRM profiles
+        run: |
+          python scripts/setup/init_demo_mail.py
+          docker compose --env-file .env.example --env-file .env.demo-mail --profile demo-mail --profile osrm config --quiet
 
   ml:
     name: ML tests
@@ -103,17 +107,25 @@ jobs:
           # The suite registers a dozen throw-away accounts (more on a retry) from one address, which
           # the production limit of 10 per hour refuses. Only this disposable stack is relaxed.
           printf "\nREGISTRATION_LIMIT_PER_IP_PER_HOUR=200\n" >> .env
-      - name: Start stack (db -> migrate -> backend -> frontend)
-        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Create demo mail credentials (Mailpit catcher)
+        # The backend delivers every e-mail to the Mailpit container over real SMTP with AUTH, and the
+        # browser suite reads the one-time links back out of Mailpit's inbox API.
+        run: python scripts/setup/init_demo_mail.py
+      - name: Start stack (db -> migrate -> backend -> frontend, plus Mailpit)
+        run: docker compose --env-file .env --env-file .env.demo-mail --profile demo-mail up -d --build --wait --wait-timeout 300
+      - name: Mailpit answers on its API
+        # Delivery itself is proven by the account-recovery spec: it asserts that each message sits
+        # in this inbox and was sent by an SMTP-authenticated client (the console backend cannot do that).
+        run: curl -fsS http://localhost:8025/api/v1/info
       - name: Smoke test
         run: python tests/smoke/smoke.py --api http://localhost:8000 --web http://localhost:5173 --wait 60
       - name: Load the starter help articles for the support spec
-        run: docker compose exec -T backend python -m app.cli seed-support-knowledge
+        run: docker compose --env-file .env --env-file .env.demo-mail --profile demo-mail exec -T backend python -m app.cli seed-support-knowledge
       - name: Create a throw-away administrator for the core-workflow spec
         run: |
           password="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"
           echo "::add-mask::$password"
-          docker compose exec -T -e ECOMIND_ADMIN_PASSWORD="$password" backend \
+          docker compose --env-file .env --env-file .env.demo-mail --profile demo-mail exec -T -e ECOMIND_ADMIN_PASSWORD="$password" backend \
             python -m app.cli create-admin --email e2e.admin@example.org --name "E2E Administrator"
           echo "E2E_ADMIN_EMAIL=e2e.admin@example.org" >> "$GITHUB_ENV"
           echo "E2E_ADMIN_PASSWORD=$password" >> "$GITHUB_ENV"
@@ -131,9 +143,9 @@ jobs:
         working-directory: tests/e2e
         env:
           E2E_BASE_URL: http://localhost:5173
-          # The local stack mails through the console backend; the account-recovery spec reads
-          # the one-time links back out of the backend log.
-          E2E_MAIL_LOG_COMMAND: docker compose logs --no-color backend
+          # The account-recovery spec reads the e-mailed one-time links from the Mailpit inbox
+          # (real SMTP delivery from the backend), not from the backend log.
+          E2E_MAILPIT_URL: http://localhost:8025
         run: npx playwright test
       - name: Upload Playwright report
         if: failure()
@@ -144,7 +156,7 @@ jobs:
           if-no-files-found: ignore
       - name: Compose logs
         if: failure()
-        run: docker compose logs --no-color
+        run: docker compose --env-file .env --env-file .env.demo-mail --profile demo-mail logs --no-color
       - name: Stop stack
         if: always()
-        run: docker compose down
+        run: docker compose --env-file .env --env-file .env.demo-mail --profile demo-mail down

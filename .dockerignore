@@ -16,3 +16,5 @@ tests
 backend/var
 
 deployment/map-data
+deployment/osrm-data
+deployment/map-build

@@ -32,15 +32,21 @@ const OSM =
   '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>';
 const MAPTILER =
   '© <a href="https://www.maptiler.com/copyright/" target="_blank" rel="noopener noreferrer">MapTiler</a>';
+const OPENMAPTILES =
+  '© <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener noreferrer">OpenMapTiles</a>';
 
 /**
  * Attribution for an OpenMapTiles-schema file. The text is built here, never copied as HTML from the
- * file: OpenStreetMap is always credited (ODbL) and MapTiler is credited when the file says it is
- * MapTiler data (its terms require that credit).
+ * file: OpenStreetMap is always credited (ODbL); MapTiler is credited when the file says it is
+ * MapTiler data (its terms require that credit); OpenMapTiles is credited when the file says it was
+ * built with the OpenMapTiles schema (as the Planetiler build in scripts/maps/build_region_data.py does).
  */
 export function openMapTilesAttribution(metadata: unknown): string {
   const declared =
     typeof metadata === 'object' && metadata !== null ? (metadata as { attribution?: unknown }).attribution : undefined;
   const fromMapTiler = typeof declared === 'string' && /maptiler/i.test(declared);
-  return fromMapTiler ? `${MAPTILER} ${OSM}` : OSM;
+  // "© OpenMapTiles" would also match a MapTiler file's "OpenMapTiles"; MapTiler's own credit covers that case.
+  const fromOpenMapTiles = !fromMapTiler && typeof declared === 'string' && /openmaptiles/i.test(declared);
+  if (fromMapTiler) return `${MAPTILER} ${OSM}`;
+  return fromOpenMapTiles ? `${OPENMAPTILES} ${OSM}` : OSM;
 }
