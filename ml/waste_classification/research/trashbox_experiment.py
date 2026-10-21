@@ -359,7 +359,7 @@ def main() -> None:
         external = Pool(
             emb(backbone, samples, False),
             np.array([s.label_index for s in samples]),
-            groups + int(pools["TB"].group.max()) + 1,
+            groups + int(np.max(pools["TB"].group)) + 1,
             {},
         )
 
@@ -397,8 +397,8 @@ def main() -> None:
             "undecodable_dropped": undecodable,
             "near_duplicates_vs_other_datasets": near_dup_audit,
             "images_used": len(tb),
-            "groups": int(tb_group.max()) + 1,
-            "largest_group": int(np.bincount(tb_group).max()),
+            "groups": int(np.max(tb_group)) + 1,
+            "largest_group": int(np.max(np.bincount(tb_group))),
             "split_sizes": {k: {s: len(v) for s, v in d.items()} for k, d in ds.items()},
         },
         "realwaste_external_images": len(rw_files),
