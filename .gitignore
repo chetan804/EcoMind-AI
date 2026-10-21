@@ -67,3 +67,8 @@ ml/notebooks/**/*.parquet
 # --- Offline map tiles: only the README is tracked ---
 deployment/map-data/*
 !deployment/map-data/README.md
+
+# OSRM routing data built by scripts/maps/build_region_data.py (large, derived from OpenStreetMap; never committed)
+deployment/osrm-data/
+# Planetiler/Geofabrik working files (multi-GB; kept outside deployment/map-data, which is served)
+deployment/map-build/

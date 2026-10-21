@@ -40,6 +40,10 @@ same data.
 
 ## Installing real tiles (owner-run, once per region)
 
+Building Hyderabad tiles (and OSRM routing data) from OpenStreetMap with Geofabrik and Planetiler: see
+[`HYDERABAD_DATA_RUNBOOK.md`](HYDERABAD_DATA_RUNBOOK.md) and `scripts/maps/build_region_data.py`. The Protomaps
+extract below is the alternative that needs no Java.
+
 1. Install the `pmtiles` command line tool (https://github.com/protomaps/go-pmtiles/releases).
 2. Pick a bounding box and a Protomaps build (https://maps.protomaps.com/builds lists the daily v4 builds, compatible with the `@protomaps/basemaps`
    style used here; BLAKE3 hashes are published per build; Protomaps asks users not to hotlink, which is why this

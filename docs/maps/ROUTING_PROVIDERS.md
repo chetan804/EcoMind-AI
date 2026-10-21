@@ -27,8 +27,10 @@ force).
   adapter calls `GET {OSRM_BASE_URL}/route/v1/driving/{lng,lat;...}?overview=full&geometries=polyline`
   (`backend/app/integrations/mapping/osrm.py`), one request per plan, no redirects followed, response capped
   at 5 MB, nothing cached or stored.
-- **Not provided here:** an OSRM container or a data extract. Build one with the OSRM documentation (extract,
-  partition, customize, `osrm-routed`) and keep it on a private network reachable only by the backend. The
+- **Data and container:** `python scripts/maps/build_region_data.py routing` prepares the data (extract, partition,
+  customize) and `docker compose --profile osrm up -d osrm` serves it on the private Compose network; see
+  [`HYDERABAD_DATA_RUNBOOK.md`](HYDERABAD_DATA_RUNBOOK.md). Neither has been run by the author. Keep the server on
+  a private network reachable only by the backend. The
   public OSRM demo server is not for production use and is never a default.
 - **Results:** distance and duration from the OSRM `car` profile (free-flow estimates, no traffic) and
   labelled as such in the UI.

@@ -34,6 +34,16 @@ describe('openMapTilesAttribution', () => {
     expect(text).toContain('MapTiler');
     expect(text).toContain('OpenStreetMap contributors');
   });
+  it('credits OpenMapTiles for a Planetiler/OpenMapTiles build', () => {
+    const text = openMapTilesAttribution({
+      attribution:
+        '<a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+    });
+    expect(text).toContain('>OpenMapTiles</a>');
+    expect(text).toContain('OpenStreetMap contributors');
+    expect(text).not.toContain('MapTiler');
+    expect(text).not.toContain('&copy;');
+  });
   it('never copies markup from the file into the page', () => {
     const text = openMapTilesAttribution({ attribution: '<img src=x onerror=alert(1)> MapTiler' });
     expect(text).not.toContain('onerror');

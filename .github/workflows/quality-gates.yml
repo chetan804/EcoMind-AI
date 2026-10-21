@@ -31,10 +31,10 @@ jobs:
           scripts/dependencies/lock_backend.sh --check
       - name: Docker Compose configuration is valid
         run: docker compose --env-file .env.example config --quiet
-      - name: Docker Compose configuration is valid with the Mailpit profile
+      - name: Docker Compose configuration is valid with the Mailpit and OSRM profiles
         run: |
           python scripts/setup/init_demo_mail.py
-          docker compose --env-file .env.example --env-file .env.demo-mail --profile demo-mail config --quiet
+          docker compose --env-file .env.example --env-file .env.demo-mail --profile demo-mail --profile osrm config --quiet
 
   ml:
     name: ML tests
