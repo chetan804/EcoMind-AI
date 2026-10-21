@@ -25,6 +25,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint declares a peer range of typescript <6.1, so `npm ci` fails on 7.x.
+      # Lift this once typescript-eslint supports TypeScript 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     groups:
       frontend-npm:
         update-types: [minor, patch]
@@ -48,5 +53,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # A PostgreSQL major upgrade is a data migration (pg_upgrade or dump/restore), never a bump.
+      # The backend CI service and every test run on 16.
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "docker"

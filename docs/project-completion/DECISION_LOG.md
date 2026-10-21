@@ -47,3 +47,14 @@ Decisions taken during the autonomous build, newest last. Architectural ones hav
 
 ### Release restriction (unchanged)
 Do not declare production readiness until: an approved classifier exists and is evaluated on representative data; real e-mail, maps, routing and GPS are each verified; keyboard and screen-reader testing and load testing are done; and the forced two-step rule is rehearsed in production mode. Mark every item verified, verified only by CI, or not verified.
+
+## Dependency bumps merged after PR #12 (2026-10-21)
+
+Four Dependabot pull requests were merged into `main` at about 14:42 IST, right after PR #12. `main` was then red (Quality gates: the Compose stack and the frontend production image failed; Frontend CI on pull requests failed at `npm ci`). I did not make those merges; this is what I found and did.
+
+| Bump | Finding | Action |
+|---|---|---|
+| `typescript` 6.0.3 → 7.0.2 in `/frontend` | `npm ci` fails: `typescript-eslint@8.71.2` allows only `typescript >=4.8.4 <6.1.0` | **Reverted** to `^6.0.3` (lock regenerated). `npm ci`, `tsc -b`, `eslint`, the production build and all 365 unit tests pass. Dependabot now ignores TypeScript major bumps until typescript-eslint supports 7 |
+| `postgres` 16-alpine → 18-alpine in `compose.yaml` | A major database upgrade is a data migration, not a bump; the 18 images also use a different data directory layout than the `/var/lib/postgresql/data` mount in `compose.yaml`; the backend CI service and every test in this project run on 16. I could not run Docker to test 18 | **Reverted** to `postgres:16-alpine`. Dependabot now ignores PostgreSQL major bumps. Moving to 18 needs its own change: volume path, a tested `pg_upgrade` or dump/restore plan, and CI on 18 |
+| `@types/node` 22 → 26 (`/frontend`, `/tests/e2e`) | Type definitions only; the project runs Node 22 in CI and in the images, so the types describe APIs that do not exist at run time | **Kept for now**: `tsc`, eslint, build and tests pass. Worth pinning back to 22 so types match the runtime: recommended, not done |
+| `typescript` 7 in `/tests/e2e` | Was already `^7.0.2` before these merges and the browser suite passed with it | Unchanged |
