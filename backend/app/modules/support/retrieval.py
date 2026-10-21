@@ -170,23 +170,25 @@ def _article_hits(db: Session, lexemes: list[str], query: set[str]) -> list[Hit]
 
 
 def _guidance_hits(db: Session, lexemes: list[str], query: set[str]) -> list[Hit]:
-    document = (
-        "to_tsvector('english', "
-        "coalesce(c.name, '') || ' ' || coalesce(g.title, '') || ' ' "
-        "|| coalesce(g.instructions, '') || ' ' || coalesce(g.preparation_notes, ''))"
-    )
+    # A fixed statement (no interpolation): the search document is built once in a subquery.
     rows = db.execute(
         text(
-            f"SELECT g.id, g.title, g.instructions, g.preparation_notes, g.disposal_method, "  # noqa: S608
-            f"g.source_reference, c.name AS material, "
-            f"tsvector_to_array({document}) AS lexemes, "
-            f"tsvector_to_array(to_tsvector('english', coalesce(c.name, '') || ' ' || g.title)) "
-            f"AS title_lexemes, "
-            f"tsvector_to_array(to_tsvector('english', coalesce(c.name, '') || ' ' || g.title)) "
-            f"AS anchors "
-            f"FROM sorting_guidance g JOIN material_categories c ON c.id = g.material_category_id "
-            f"WHERE g.is_active AND c.is_active AND {document} @@ to_tsquery('simple', :q) "
-            f"ORDER BY g.id"
+            "SELECT id, title, instructions, preparation_notes, disposal_method, "
+            "source_reference, material, "
+            "tsvector_to_array(document) AS lexemes, "
+            "tsvector_to_array(to_tsvector('english', material || ' ' || title)) AS title_lexemes, "
+            "tsvector_to_array(to_tsvector('english', material || ' ' || title)) AS anchors "
+            "FROM ("
+            "SELECT g.id, g.title, g.instructions, g.preparation_notes, g.disposal_method, "
+            "g.source_reference, coalesce(c.name, '') AS material, "
+            "to_tsvector('english', coalesce(c.name, '') || ' ' || coalesce(g.title, '') || ' ' "
+            "|| coalesce(g.instructions, '') || ' ' || coalesce(g.preparation_notes, '')) "
+            "AS document "
+            "FROM sorting_guidance g JOIN material_categories c ON c.id = g.material_category_id "
+            "WHERE g.is_active AND c.is_active"
+            ") AS guidance "
+            "WHERE document @@ to_tsquery('simple', :q) "
+            "ORDER BY id"
         ),
         {"q": _or_query(lexemes)},
     ).all()
