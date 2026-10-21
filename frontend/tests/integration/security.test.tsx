@@ -147,6 +147,7 @@ const row = (over: Record<string, unknown> = {}) => ({
   full_name: 'Ravi Kumar',
   is_active: true,
   mfa_enabled: true,
+  email_verified: true,
   roles: ['collector'],
   created_at: '2026-09-01T00:00:00Z',
   last_login_at: null,

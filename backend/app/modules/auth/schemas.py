@@ -44,6 +44,7 @@ class UserOut(BaseModel):
     full_name: str
     roles: list[str]
     permissions: list[str]
+    email_verified: bool = Field(description="The address was confirmed by a link sent to it")
 
 
 class AuthResponse(BaseModel):
@@ -97,3 +98,35 @@ class MfaChallenge(BaseModel):
 class MfaVerifyRequest(_Strict):
     mfa_token: str = Field(min_length=10, max_length=2048)
     code: str = Field(min_length=6, max_length=20, description="6-digit code or a recovery code")
+
+
+class AuthConfigOut(BaseModel):
+    """What this deployment can do, so the web app only offers working options."""
+
+    password_reset_available: bool = Field(description="E-mail delivery is configured")
+    email_verification_available: bool
+    email_verification_required: bool = Field(description="Sign-in needs a verified address")
+
+
+class PasswordResetRequest(_Strict):
+    # Plain str on purpose: a malformed address gets the same 202 as an unknown one.
+    email: str = Field(min_length=1, max_length=320)
+
+
+class PasswordResetConfirmRequest(_Strict):
+    token: str = Field(min_length=20, max_length=200)
+    new_password: str = Field(max_length=1024)
+
+
+class EmailVerificationRequest(_Strict):
+    email: str = Field(min_length=1, max_length=320)
+
+
+class EmailVerificationConfirmRequest(_Strict):
+    token: str = Field(min_length=20, max_length=200)
+
+
+class AcceptedOut(BaseModel):
+    """Always the same body, whether or not an account exists for the address."""
+
+    detail: str = "If an account exists for this address, a message is on its way."

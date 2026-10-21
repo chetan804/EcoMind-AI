@@ -9,11 +9,24 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.modules.audit.models import AuditLog
-from app.modules.auth.models import AuthSession, MfaFactor, MfaRecoveryCode
+from app.modules.auth.models import (
+    AccountToken,
+    AccountTokenPurpose,
+    AuthSession,
+    MfaFactor,
+    MfaRecoveryCode,
+)
 
 LOGIN_FAILED = "auth.login_failed"
 LOGIN_SUCCEEDED = "auth.login"
 REGISTERED = "auth.register"
+PASSWORD_RESET_REQUESTED = "auth.password_reset_requested"  # noqa: S105 - audit action name, not a credential
+PASSWORD_RESET_COMPLETED = "auth.password_reset_completed"  # noqa: S105 - audit action name, not a credential
+EMAIL_VERIFICATION_REQUESTED = "auth.email_verification_requested"
+# Sent automatically at registration: audited, but not counted against the request limits.
+EMAIL_VERIFICATION_ON_REGISTER = "auth.email_verification_on_register"
+EMAIL_VERIFIED = "auth.email_verified"
+ACCOUNT_TOKEN_REJECTED = "auth.account_token_rejected"  # noqa: S105 - audit action name, not a credential
 
 
 def add_session(
@@ -71,7 +84,8 @@ def failed_login_times(
     last_success = (
         select(func.max(AuditLog.occurred_at))
         .where(
-            AuditLog.action == LOGIN_SUCCEEDED,
+            # A completed password reset proves control of the mailbox: it clears the lockout too.
+            AuditLog.action.in_((LOGIN_SUCCEEDED, PASSWORD_RESET_COMPLETED)),
             AuditLog.changes["email_sha256"].astext == email_sha256,
         )
         .scalar_subquery()
@@ -196,3 +210,81 @@ def users_with_mfa(db: Session, user_ids: list[uuid.UUID]) -> set[uuid.UUID]:
         MfaFactor.user_id.in_(user_ids), MfaFactor.confirmed_at.is_not(None)
     )
     return set(db.scalars(stmt))
+
+
+def action_times_for_email(
+    db: Session, *, action: str, email_sha256: str, since: datetime, limit: int
+) -> list[datetime]:
+    """Newest-first times of ``action`` rows recorded for this address digest since ``since``."""
+    stmt = (
+        select(AuditLog.occurred_at)
+        .where(
+            AuditLog.action == action,
+            AuditLog.changes["email_sha256"].astext == email_sha256,
+            AuditLog.occurred_at >= since,
+        )
+        .order_by(AuditLog.occurred_at.desc())
+        .limit(limit)
+    )
+    return list(db.scalars(stmt))
+
+
+def add_account_token(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    purpose: AccountTokenPurpose,
+    token_hash: str,
+    email: str,
+    expires_at: datetime,
+    requested_ip: str | None,
+) -> AccountToken:
+    token = AccountToken(
+        user_id=user_id,
+        purpose=purpose,
+        token_hash=token_hash,
+        email=email,
+        expires_at=expires_at,
+        requested_ip=requested_ip,
+    )
+    db.add(token)
+    db.flush()
+    return token
+
+
+def get_account_token_for_update(
+    db: Session, token_hash: str, purpose: AccountTokenPurpose
+) -> AccountToken | None:
+    """Lock the row so concurrent uses of one link serialise (exactly one wins)."""
+    return db.scalar(
+        select(AccountToken)
+        .where(AccountToken.token_hash == token_hash, AccountToken.purpose == purpose)
+        .with_for_update()
+    )
+
+
+def consume_outstanding_tokens(
+    db: Session, user_id: uuid.UUID, purpose: AccountTokenPurpose, now: datetime
+) -> int:
+    """Mark every unused token of this purpose consumed (a newer link replaces older ones)."""
+    result = db.execute(
+        update(AccountToken)
+        .where(
+            AccountToken.user_id == user_id,
+            AccountToken.purpose == purpose,
+            AccountToken.consumed_at.is_(None),
+        )
+        .values(consumed_at=now)
+    )
+    return int(result.rowcount or 0)  # type: ignore[attr-defined]
+
+
+def purge_account_tokens(db: Session, *, older_than: datetime) -> int:
+    """Delete tokens that expired, or were consumed, before ``older_than`` (housekeeping)."""
+    result = db.execute(
+        delete(AccountToken).where(
+            (AccountToken.expires_at < older_than)
+            | (AccountToken.consumed_at.is_not(None) & (AccountToken.consumed_at < older_than))
+        )
+    )
+    return int(result.rowcount or 0)  # type: ignore[attr-defined]

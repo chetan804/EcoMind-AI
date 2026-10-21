@@ -2,7 +2,7 @@
 
 > **Generated** by `scripts/security/generate_route_matrix.py` from the mounted application and the RBAC catalog (`backend/app/modules/users/rbac.py`). Do not edit by hand; CI fails if this file is stale. `backend/tests/security/test_route_inventory.py` fails if a route becomes public or signed-in-only without being listed there.
 
-133 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
+138 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
 
 | Method | Path | Access | Roles that hold it |
 |---|---|---|---|
@@ -24,6 +24,9 @@
 | POST | `/api/v1/anomalies/{alert_id}/false-positive` | `anomalies:manage` | manager, administrator |
 | POST | `/api/v1/anomalies/{alert_id}/resolve` | `anomalies:manage` | manager, administrator |
 | POST | `/api/v1/auth/change-password` | signed in | any signed-in user |
+| GET | `/api/v1/auth/config` | public | anyone |
+| POST | `/api/v1/auth/email-verification/confirm` | public | anyone |
+| POST | `/api/v1/auth/email-verification/request` | public | anyone |
 | POST | `/api/v1/auth/login` | public | anyone |
 | POST | `/api/v1/auth/logout` | public (cookie + CSRF header) | anyone |
 | GET | `/api/v1/auth/me` | signed in | any signed-in user |
@@ -33,6 +36,8 @@
 | POST | `/api/v1/auth/mfa/enroll` | signed in | any signed-in user |
 | POST | `/api/v1/auth/mfa/recovery-codes` | signed in | any signed-in user |
 | POST | `/api/v1/auth/mfa/verify` | public | anyone |
+| POST | `/api/v1/auth/password-reset/confirm` | public | anyone |
+| POST | `/api/v1/auth/password-reset/request` | public | anyone |
 | POST | `/api/v1/auth/refresh` | public (cookie + CSRF header) | anyone |
 | POST | `/api/v1/auth/register` | public | anyone |
 | GET | `/api/v1/circular-economy/recovery-records` | `circular_economy:read` | facility_operator, manager, administrator |

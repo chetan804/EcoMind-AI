@@ -56,6 +56,27 @@ Constraints:
 
 ## Module `auth`
 
+### `account_tokens`
+
+A single-use, expiring token e-mailed to a user (password reset or address verification).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `purpose` | varchar(26) | NN |  |  |
+| `token_hash` | varchar(64) | NN |  | UQ |
+| `email` | varchar(320) | NN |  |  |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `expires_at` | timestamptz | NN |  |  |
+| `consumed_at` | timestamptz | null |  |  |
+| `requested_ip` | varchar(45) | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+
+Constraints:
+
+- `ck_account_tokens_expiry_after_creation`: `expires_at > created_at`
+- Allowed values: `purpose` in (password_reset, email_verification)
+
 ### `auth_sessions`
 
 One issued refresh token. Rotation creates a new row in the same ``family_id``;     presenting an already-rotated token revokes the whole family (reuse detection).
@@ -762,6 +783,7 @@ Constraints:
 | `full_name` | varchar(200) | NN |  |  |
 | `is_active` | boolean | NN | `true` |  |
 | `last_login_at` | timestamptz | null |  |  |
+| `email_verified_at` | timestamptz | null |  |  |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |

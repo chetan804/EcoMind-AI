@@ -8,6 +8,7 @@ export const userSchema = z.object({
   full_name: z.string(),
   is_active: z.boolean(),
   mfa_enabled: z.boolean(),
+  email_verified: z.boolean(),
   roles: z.array(z.string()),
   created_at: z.string(),
   last_login_at: z.string().nullable(),

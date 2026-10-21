@@ -6,6 +6,10 @@ Entities show their primary and foreign key columns only; the full column list, 
 
 ```mermaid
 erDiagram
+    account_tokens {
+        uuid user_id FK
+        uuid id PK
+    }
     anomaly_alerts {
         uuid facility_id FK
         uuid material_category_id FK
@@ -190,6 +194,7 @@ erDiagram
     zones {
         uuid id PK
     }
+    users ||--o{ account_tokens : "user_id"
     users |o--o{ anomaly_alerts : "acknowledged_by_id"
     facilities |o--o{ anomaly_alerts : "facility_id"
     material_categories |o--o{ anomaly_alerts : "material_category_id"
@@ -271,7 +276,7 @@ erDiagram
 
 - **anomaly_detection**: `anomaly_alerts`
 - **audit**: `audit_logs`
-- **auth**: `auth_sessions`, `mfa_factors`, `mfa_recovery_codes`
+- **auth**: `account_tokens`, `auth_sessions`, `mfa_factors`, `mfa_recovery_codes`
 - **circular_economy**: `recovery_records`
 - **classification**: `classification_model_versions`, `classification_predictions`
 - **collection**: `collection_assignments`, `collection_events`, `collection_task_status_history`, `collection_tasks`

@@ -6,6 +6,7 @@ path) come from the environment. Nothing here is read by the browser bundle.
 
 from __future__ import annotations
 
+from email.utils import parseaddr
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal, Self
@@ -61,6 +62,25 @@ class Settings(BaseSettings):
     osrm_base_url: str | None = None
     osrm_timeout_seconds: float = Field(default=8.0, gt=0, le=30)
 
+    # Outbound e-mail (password reset, e-mail verification, security notices).
+    # EMAIL_BACKEND=none|console|smtp|memory. Unset resolves to: none in production (nothing is
+    # sent, and the API reports that honestly), console in local (messages are written to the log:
+    # development only) and memory in tests. console and memory are refused in production.
+    email_backend: Literal["none", "console", "smtp", "memory"] | None = None
+    email_from: str | None = None
+    # Public address of the web app: links in e-mails point here (https required in production).
+    app_base_url: str = "http://localhost:5173"
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_security: Literal["starttls", "ssl", "none"] = "starttls"
+    smtp_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    password_reset_token_minutes: int = Field(default=30, ge=5, le=120)
+    email_verification_token_hours: int = Field(default=24, ge=1, le=168)
+    # When true, sign-in is refused until the address is verified. Needs working e-mail delivery.
+    email_verification_required: bool = False
+
     # Vehicle tracking. Thresholds are operational policy, not physical constants.
     tracking_live_within_seconds: int = Field(default=120, ge=10, le=3600)
     tracking_stale_after_seconds: int = Field(default=900, ge=60, le=86400)
@@ -72,12 +92,45 @@ class Settings(BaseSettings):
     # operator opts in explicitly (e.g. for a demonstration environment).
     tracking_simulator_enabled: bool | None = None
 
-    @field_validator("google_maps_server_api_key", mode="before")
+    @field_validator("google_maps_server_api_key", "smtp_password", mode="before")
     @classmethod
     def _blank_key_is_none(cls, value: object) -> object:
         if isinstance(value, str) and not value.strip():
             return None
         return value
+
+    @field_validator(
+        "email_backend",
+        "email_from",
+        "smtp_host",
+        "smtp_username",
+        mode="before",
+    )
+    @classmethod
+    def _blank_mail_setting_is_unset(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("email_from")
+    @classmethod
+    def _email_from_shape(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        address = parseaddr(value)[1]
+        if "\n" in value or "\r" in value or "@" not in address:
+            raise ValueError("EMAIL_FROM must be an address such as no-reply@example.org")
+        return value
+
+    @field_validator("app_base_url")
+    @classmethod
+    def _app_base_url_shape(cls, value: str) -> str:
+        parts = urlsplit(value.strip())
+        if parts.scheme not in ("http", "https") or not parts.hostname:
+            raise ValueError("APP_BASE_URL must be an http(s) URL such as https://app.example.org")
+        if parts.username or parts.password or parts.query or parts.fragment:
+            raise ValueError("APP_BASE_URL must not contain credentials, a query or a fragment")
+        return value.strip().rstrip("/")
 
     @field_validator("routing_provider", "osrm_base_url", mode="before")
     @classmethod
@@ -97,6 +150,20 @@ class Settings(BaseSettings):
         if parts.username or parts.password or parts.query or parts.fragment:
             raise ValueError("OSRM_BASE_URL must not contain credentials, a query or a fragment")
         return value.rstrip("/")
+
+    @property
+    def effective_email_backend(self) -> Literal["none", "console", "smtp", "memory"]:
+        """The e-mail backend in force (see the ``email_backend`` comment for the defaults)."""
+        if self.email_backend is not None:
+            return self.email_backend
+        if self.environment == "production":
+            return "none"
+        return "memory" if self.environment == "test" else "console"
+
+    @property
+    def email_enabled(self) -> bool:
+        """True when messages can actually be delivered (so reset/verification links are usable)."""
+        return self.effective_email_backend != "none"
 
     @property
     def effective_routing_provider(self) -> Literal["none", "google", "osrm"]:
@@ -131,6 +198,25 @@ class Settings(BaseSettings):
                 raise ValueError("CORS_ALLOWED_ORIGINS must not contain '*' in production")
             if not self.refresh_cookie_secure:
                 raise ValueError("REFRESH_COOKIE_SECURE must be true in production")
+        backend = self.effective_email_backend
+        if self.environment == "production" and backend in ("console", "memory"):
+            raise ValueError(f"EMAIL_BACKEND={backend} is not allowed in production")
+        if backend == "memory" and self.environment != "test":
+            raise ValueError("EMAIL_BACKEND=memory is only for tests")
+        if backend == "smtp":
+            if self.smtp_host is None or self.email_from is None:
+                raise ValueError("EMAIL_BACKEND=smtp requires SMTP_HOST and EMAIL_FROM")
+            if self.smtp_security == "none" and self.environment == "production":
+                raise ValueError("SMTP_SECURITY=none is not allowed in production")
+            if (self.smtp_username is None) != (self.smtp_password is None):
+                raise ValueError("SMTP_USERNAME and SMTP_PASSWORD must be set together")
+            if self.environment == "production" and not self.app_base_url.startswith("https://"):
+                raise ValueError("APP_BASE_URL must be https in production when e-mail is sent")
+        if self.email_verification_required and not self.email_enabled:
+            raise ValueError(
+                "EMAIL_VERIFICATION_REQUIRED=true needs e-mail delivery (EMAIL_BACKEND); "
+                "otherwise nobody could verify an address"
+            )
         if self.tracking_stale_after_seconds <= self.tracking_live_within_seconds:
             raise ValueError(
                 "TRACKING_STALE_AFTER_SECONDS must exceed TRACKING_LIVE_WITHIN_SECONDS"

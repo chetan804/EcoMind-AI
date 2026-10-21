@@ -38,6 +38,7 @@ class Principal:
     full_name: str
     roles: frozenset[str]
     permissions: frozenset[str]
+    email_verified: bool = False
 
     def has(self, permission: str) -> bool:
         return permission in self.permissions
@@ -68,6 +69,7 @@ def get_current_principal(
         full_name=user.full_name,
         roles=frozenset(users.role_names(db, user.id)),
         permissions=frozenset(users.permission_codes(db, user.id)),
+        email_verified=user.email_verified_at is not None,
     )
 
 

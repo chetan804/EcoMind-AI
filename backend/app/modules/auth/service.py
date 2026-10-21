@@ -36,11 +36,13 @@ from app.core.security import (
     password_needs_rehash,
     verify_password,
 )
+from app.integrations.email.base import EmailMessage
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestContext
-from app.modules.auth import mfa, policy, repository
+from app.modules.auth import mfa, policy, recovery, repository
 from app.modules.auth.errors import (
     EmailAlreadyRegisteredError,
+    EmailNotVerifiedError,
     InvalidCredentialsError,
     InvalidRefreshTokenError,
     RefreshTokenRaceError,
@@ -59,6 +61,7 @@ class UserView:
     full_name: str
     roles: list[str]
     permissions: list[str]
+    email_verified: bool = False
 
 
 @dataclass(frozen=True)
@@ -67,6 +70,8 @@ class AuthResult:
     access_token: str
     refresh_token: str
     expires_in: int
+    # Messages the router sends after the response (verification link, security notice).
+    emails: tuple[EmailMessage, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -94,6 +99,7 @@ def user_view(db: Session, user: User) -> UserView:
         full_name=user.full_name,
         roles=users.role_names(db, user.id),
         permissions=sorted(users.permission_codes(db, user.id)),
+        email_verified=user.email_verified_at is not None,
     )
 
 
@@ -204,12 +210,17 @@ def register(
         context=context,
         changes={"role": DEFAULT_REGISTRATION_ROLE},
     )
+    verification = recovery.verification_for_new_account(
+        db, settings, user, context=context, now=now
+    )
     access, refresh, expires_in = _issue_tokens(
         db, settings, user, family_id=uuid.uuid4(), context=context, now=now
     )
     view = user_view(db, user)
     db.commit()
-    return AuthResult(view, access, refresh, expires_in)
+    return AuthResult(
+        view, access, refresh, expires_in, emails=(verification,) if verification else ()
+    )
 
 
 def login(
@@ -266,6 +277,12 @@ def login(
         db.commit()  # the failure must be counted even though this request errors
         raise InvalidCredentialsError("Invalid email or password")
 
+    if settings.email_verification_required and user.email_verified_at is None:
+        # Only after the password was proven, so this reveals nothing to someone without it.
+        raise EmailNotVerifiedError(
+            "Confirm your e-mail address to sign in. Request a new confirmation link from the "
+            "sign-in page."
+        )
     if password_needs_rehash(user.password_hash):
         user.password_hash = hash_password(password)
     if mfa.is_enabled(db, user.id):
@@ -419,4 +436,7 @@ def change_password(
     )
     view = user_view(db, user)
     db.commit()
-    return AuthResult(view, access, refresh_token, expires_in)
+    notice = recovery.password_changed_notice(user, how="from the account page")
+    return AuthResult(
+        view, access, refresh_token, expires_in, emails=(notice,) if settings.email_enabled else ()
+    )

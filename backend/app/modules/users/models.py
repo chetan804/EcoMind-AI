@@ -20,6 +20,9 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
     last_login_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    # Set when the owner of the mailbox proves control (verification link, password reset) or when
+    # an operator creates the account (CLI, demo seed). Null = not verified.
+    email_verified_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 # Emails are unique case-insensitively; services also store them lower-cased.

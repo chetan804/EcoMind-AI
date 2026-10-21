@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import enum
 import uuid
 
 from sqlalchemy import (
@@ -18,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, fk_uuid
+from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, enum_column, fk_uuid
 
 
 class AuthSession(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -72,3 +73,33 @@ class MfaRecoveryCode(UUIDPrimaryKeyMixin, Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     used_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AccountTokenPurpose(enum.StrEnum):
+    PASSWORD_RESET = "password_reset"  # noqa: S105 - token purpose label
+    EMAIL_VERIFICATION = "email_verification"
+
+
+class AccountToken(UUIDPrimaryKeyMixin, Base):
+    """A single-use, expiring token e-mailed to a user (password reset or address verification).
+
+    Only the SHA-256 digest of the token is stored, so a database read cannot be replayed as a
+    link. ``email`` is the address the message was sent to: verification only counts while it is
+    still the account's address.
+    """
+
+    __tablename__ = "account_tokens"
+    __table_args__ = (CheckConstraint("expires_at > created_at", name="expiry_after_creation"),)
+
+    user_id: Mapped[uuid.UUID] = fk_uuid("users.id", ondelete="CASCADE")
+    purpose: Mapped[AccountTokenPurpose] = mapped_column(
+        enum_column(AccountTokenPurpose), nullable=False
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    requested_ip: Mapped[str | None] = mapped_column(String(45))

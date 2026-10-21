@@ -4,7 +4,17 @@
  * auth feature (which owns only the sign-in and sign-up screens).
  */
 export { useAuth, type Auth } from './useAuth';
-export { changePassword, type AuthResponse, type SessionUser } from './auth-api';
+export {
+  changePassword,
+  confirmEmailVerification,
+  confirmPasswordReset,
+  fetchAuthConfig,
+  requestEmailVerification,
+  requestPasswordReset,
+  type AuthConfig,
+  type AuthResponse,
+  type SessionUser,
+} from './auth-api';
 export {
   adoptAuthResponse,
   clearSession,

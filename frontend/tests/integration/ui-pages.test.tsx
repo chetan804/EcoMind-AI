@@ -261,11 +261,12 @@ describe('sign-in', () => {
     expect(screen.queryByRole('heading', { name: 'Welcome back' })).not.toBeInTheDocument();
   });
 
-  it('social sign-in and password reset are visibly unavailable', async () => {
+  it('social sign-in is visibly unavailable, and password reset is a real link', async () => {
     renderAt('/sign-in');
-    for (const name of ['Google', 'Microsoft', 'Forgot password?']) {
+    for (const name of ['Google', 'Microsoft']) {
       expect(await screen.findByRole('button', { name })).toHaveAttribute('aria-disabled', 'true');
     }
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
   });
 
   it('switches to sign-up and validates the confirmation', async () => {

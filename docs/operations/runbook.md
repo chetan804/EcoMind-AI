@@ -77,3 +77,13 @@ Production frontend image with maps: `docker build -f deployment/docker/frontend
 **Daily job (the platform has no scheduler):** `python -m app.cli purge-location-events` removes position events older than `TRACKING_RETENTION_DAYS`, e.g. `0 3 * * * cd /app && python -m app.cli purge-location-events`. It writes an audit record.
 
 Verify after enabling keys: open the Fleet screen (map instead of the "Google Maps is not configured" notice), open a route plan (road route, or the reason it is unavailable), and check the browser console for CSP violations. Watch the Google Cloud console for usage and set budget alerts.
+
+## Account e-mail (password reset and address confirmation)
+Full guide: [`account-recovery.md`](account-recovery.md). Nothing is sent until `EMAIL_BACKEND` is set.
+
+- **Local stack:** `ENVIRONMENT=local` mails through the *console* backend: each message, with its one-time link, is written to the backend log (`docker compose logs backend`). Nothing leaves the machine.
+- **Production:** `EMAIL_BACKEND=smtp` with `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM` and `APP_BASE_URL` (the https origin the links point to). Startup refuses an incomplete configuration; the `console` backend is refused in production.
+- **Check:** `GET /api/v1/auth/config` reports `password_reset_available` and `email_verification_available`. When `false`, the pages say so instead of promising a mail.
+- **Daily job:** `python -m app.cli purge-account-tokens` deletes used and expired tokens (audited), e.g. `15 3 * * * cd /app && python -m app.cli purge-account-tokens`.
+- **Support:** `python -m app.cli mark-email-verified --email <address>` confirms an address by hand when a user cannot receive mail (audited). A forgotten password is reset by the user through the e-mail flow; there is deliberately no way for staff to read or set a password.
+- Real SMTP delivery has been tested only against a local fake server. Before enabling it, send a test message through your provider and confirm SPF/DKIM for the `EMAIL_FROM` domain.

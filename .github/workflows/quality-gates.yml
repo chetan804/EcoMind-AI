@@ -121,6 +121,9 @@ jobs:
         working-directory: tests/e2e
         env:
           E2E_BASE_URL: http://localhost:5173
+          # The local stack mails through the console backend; the account-recovery spec reads
+          # the one-time links back out of the backend log.
+          E2E_MAIL_LOG_COMMAND: docker compose logs --no-color backend
         run: npx playwright test
       - name: Upload Playwright report
         if: failure()

@@ -68,6 +68,9 @@ export const routes: RouteObject[] = [
   { path: '/', lazy: lazyPage(() => import('@/features/landing'), 'LandingPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
   { path: '/sign-in', lazy: lazyPage(() => import('@/features/auth'), 'SignInPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
   { path: '/sign-up', lazy: lazyPage(() => import('@/features/auth'), 'SignUpPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
+  { path: '/forgot-password', lazy: lazyPage(() => import('@/features/auth'), 'ForgotPasswordPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
+  { path: '/reset-password', lazy: lazyPage(() => import('@/features/auth'), 'ResetPasswordPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
+  { path: '/verify-email', lazy: lazyPage(() => import('@/features/auth'), 'VerifyEmailPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
   {
     element: <RequireAuth />,
     errorElement: <RouteErrorFallback />,

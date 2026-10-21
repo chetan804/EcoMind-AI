@@ -71,3 +71,76 @@ def test_samesite_none_requires_secure_cookie() -> None:
 
 def test_test_secret_constant_is_valid() -> None:
     assert len(TEST_SECRET_KEY) >= 32
+
+
+# --- e-mail settings ---------------------------------------------------------------------------
+
+
+def _mail_settings(**values: object) -> Settings:
+    base: dict[str, object] = {
+        "database_url": "postgresql+psycopg://u:p@localhost/db",
+        "secret_key": "unit-test-secret-key-0123456789abcdef",
+    }
+    base.update(values)
+    return Settings(_env_file=None, **base)  # type: ignore[arg-type]
+
+
+def test_email_backend_defaults_follow_the_environment() -> None:
+    assert _mail_settings(environment="test").effective_email_backend == "memory"
+    assert _mail_settings(environment="local").effective_email_backend == "console"
+    production = _mail_settings(environment="production", refresh_cookie_secure=True)
+    assert production.effective_email_backend == "none"
+    assert production.email_enabled is False
+
+
+@pytest.mark.parametrize("backend", ["console", "memory"])
+def test_development_mail_backends_are_refused_in_production(backend: str) -> None:
+    with pytest.raises(ValueError, match=r"not allowed in production|only for tests"):
+        _mail_settings(environment="production", refresh_cookie_secure=True, email_backend=backend)
+
+
+def test_memory_backend_is_for_tests_only() -> None:
+    with pytest.raises(ValueError, match="only for tests"):
+        _mail_settings(environment="local", email_backend="memory")
+
+
+def test_smtp_needs_a_host_and_a_sender() -> None:
+    with pytest.raises(ValueError, match="SMTP_HOST and EMAIL_FROM"):
+        _mail_settings(environment="test", email_backend="smtp")
+
+
+def test_smtp_in_production_needs_tls_https_links_and_paired_credentials() -> None:
+    good: dict[str, object] = {
+        "environment": "production",
+        "refresh_cookie_secure": True,
+        "email_backend": "smtp",
+        "smtp_host": "mail.example.org",
+        "email_from": "EcoMind <no-reply@example.org>",
+        "app_base_url": "https://app.example.org/",
+    }
+    assert _mail_settings(**good).app_base_url == "https://app.example.org"
+    with pytest.raises(ValueError, match="SMTP_SECURITY=none"):
+        _mail_settings(**{**good, "smtp_security": "none"})
+    with pytest.raises(ValueError, match="https in production"):
+        _mail_settings(**{**good, "app_base_url": "http://app.example.org"})
+    with pytest.raises(ValueError, match="set together"):
+        _mail_settings(**{**good, "smtp_username": "mailer"})
+
+
+def test_verification_cannot_be_required_without_delivery() -> None:
+    with pytest.raises(ValueError, match="EMAIL_VERIFICATION_REQUIRED"):
+        _mail_settings(environment="test", email_backend="none", email_verification_required=True)
+    assert _mail_settings(environment="test", email_verification_required=True)
+
+
+def test_mail_settings_reject_malformed_values() -> None:
+    with pytest.raises(ValueError, match="EMAIL_FROM"):
+        _mail_settings(email_backend="none", email_from="no at sign")
+    with pytest.raises(ValueError, match="EMAIL_FROM"):
+        _mail_settings(email_backend="none", email_from="a@example.org\r\nBcc: x@example.org")
+    with pytest.raises(ValueError, match="APP_BASE_URL"):
+        _mail_settings(app_base_url="javascript:alert(1)")
+    with pytest.raises(ValueError, match="APP_BASE_URL"):
+        _mail_settings(app_base_url="https://user:pw@app.example.org")
+    # Blank environment values mean "unset", not "invalid".
+    assert _mail_settings(email_backend="", email_from=" ", smtp_host="").email_from is None

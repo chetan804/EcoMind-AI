@@ -17,6 +17,7 @@ from app.core.logging import configure_logging
 from app.core.middleware import REQUEST_ID_HEADER, RequestContextMiddleware
 from app.core.security import CSRF_HEADER
 from app.health.router import router as health_router
+from app.integrations.email.factory import build_email_sender
 
 API_PREFIX = "/api"
 
@@ -34,6 +35,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         responses={"default": {"model": ErrorResponse}},
     )
     app.state.settings = settings
+    app.state.email_sender = build_email_sender(settings)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_allowed_origins,

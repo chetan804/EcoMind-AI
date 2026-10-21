@@ -5,6 +5,9 @@
     python -m app.cli activate-model --version 1.0.0     # make it the model that answers
     python -m app.cli import-reference-series --key austin   # public series for forecasting demos
     python -m app.cli purge-location-events                  # retention: run daily (cron/timer)
+    python -m app.cli purge-account-tokens                   # delete expired reset/verify links
+    python -m app.cli mark-email-verified --email a@b.org    # operator attests an address
+    python -m app.cli mark-email-verified --all-existing     # before EMAIL_VERIFICATION_REQUIRED
 
 The password is read from the ECOMIND_ADMIN_PASSWORD environment variable or, when that is unset,
 prompted for without echo. It is never accepted as a command-line argument (it would leak into
@@ -19,12 +22,16 @@ import getpass
 import os
 import sys
 
+from sqlalchemy import select
+
+from app.common.time import utc_now
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.security import hash_password
 from app.db.session import get_session_factory
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestContext
+from app.modules.auth import recovery
 from app.modules.auth.errors import EmailAlreadyRegisteredError, WeakPasswordError
 from app.modules.auth.policy import password_problems
 from app.modules.classification import repository as classification_repository
@@ -32,6 +39,7 @@ from app.modules.classification import service as classification_service
 from app.modules.forecasting import importer as forecasting_importer
 from app.modules.tracking import service as tracking_service
 from app.modules.users import repository as users
+from app.modules.users.models import User
 
 ADMIN_ROLE = "administrator"
 
@@ -49,6 +57,7 @@ def create_admin(*, email: str, full_name: str, password: str) -> None:
         user = users.add(
             db, email=email, password_hash=hash_password(password), full_name=full_name
         )
+        user.email_verified_at = utc_now()  # created by an operator with shell access
         users.assign_role(db, user_id=user.id, role_id=role.id)
         audit.record(
             db,
@@ -110,6 +119,36 @@ def purge_location_events() -> str:
     )
 
 
+def purge_account_tokens() -> str:
+    with get_session_factory()() as db:
+        removed = recovery.purge_expired_tokens(db)
+    return f"removed {removed} expired or used account tokens"
+
+
+def mark_email_verified(*, email: str | None, all_existing: bool) -> str:
+    """An operator attests that addresses are genuine (audited). Never done implicitly."""
+    with get_session_factory()() as db:
+        if all_existing:
+            targets = list(db.scalars(select(User).where(User.email_verified_at.is_(None))))
+        else:
+            found = users.get_by_email(db, email or "")
+            if found is None:
+                raise AppError(f"No account with e-mail {email}")
+            targets = [found] if found.email_verified_at is None else []
+        now = utc_now()
+        for user in targets:
+            user.email_verified_at = now
+            audit.record(
+                db,
+                action="auth.email_verified_by_operator",
+                entity_type="user",
+                entity_id=user.id,
+                context=RequestContext(),
+            )
+        db.commit()
+    return f"marked {len(targets)} account(s) as e-mail verified"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m app.cli",
@@ -134,7 +173,24 @@ def main(argv: list[str] | None = None) -> int:
         "purge-location-events",
         help="delete vehicle location events older than TRACKING_RETENTION_DAYS",
     )
+    sub.add_parser("purge-account-tokens", help="delete expired or used reset/verification links")
+    verify = sub.add_parser("mark-email-verified", help="attest e-mail addresses as verified")
+    target = verify.add_mutually_exclusive_group(required=True)
+    target.add_argument("--email")
+    target.add_argument("--all-existing", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.command == "purge-account-tokens":
+        print(purge_account_tokens())
+        return 0
+
+    if args.command == "mark-email-verified":
+        try:
+            print(mark_email_verified(email=args.email, all_existing=args.all_existing))
+        except AppError as exc:
+            print(f"error: {exc.message}", file=sys.stderr)
+            return 1
+        return 0
 
     if args.command == "purge-location-events":
         print(purge_location_events())

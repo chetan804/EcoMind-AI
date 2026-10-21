@@ -6,6 +6,7 @@
 .shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
 .shell__main { min-width: 0; padding: var(--space-8) var(--content-padding) var(--space-12); }
 .shell__main:focus { outline: none; }
+.shell__notice { margin-bottom: var(--space-6); }
 .shell__bar { display: none; }
 .shell__backdrop { display: none; }
 

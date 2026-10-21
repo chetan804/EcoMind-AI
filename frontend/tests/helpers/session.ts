@@ -8,6 +8,7 @@ export const testUser: SessionUser = {
   full_name: 'Asha Verma',
   roles: ['citizen'],
   permissions: ['waste_reports:create', 'classification:predict', 'sorting_guide:read', 'marketplace:read'],
+  email_verified: true,
 };
 
 export const authResponse = (user: SessionUser = testUser, token = 'test-access-token'): AuthResponse => ({
