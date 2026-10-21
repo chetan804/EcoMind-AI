@@ -24,7 +24,7 @@ the overfit-resistant choice here. "Confidence" is **calibrated** (mean confiden
 ## Layout
 | Path | Purpose |
 |---|---|
-| `research/` | Cross-dataset evaluation (`cross_dataset.py`) and the bounded multi-dataset experiment (`multi_dataset_experiment.py`); never trains a released model. Evidence: `docs/ml/dataset-research/`. |
+| `research/` | Cross-dataset evaluation (`cross_dataset.py`) the bounded multi-dataset experiment (`multi_dataset_experiment.py`) and the TrashBox research experiment (`trashbox_experiment.py`, no licence on file: research only); never trains a released model. Evidence: `docs/ml/dataset-research/`. |
 | `data/fetch.py` | Fetch TrashNet and the backbones at pinned commits; verify SHA-256 (all git-ignored). |
 | `data/trashnet.py` | Loader, near-duplicate grouping, group-aware stratified split. |
 | `training/features.py` | Embedding extraction with cache; hand-crafted baseline features. |

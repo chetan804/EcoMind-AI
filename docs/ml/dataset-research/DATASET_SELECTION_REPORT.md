@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-20. Companion files: [`DATASET_CATALOG.md`](DATASET_CATALOG.md), [`dataset_manifest.yaml`](dataset_manifest.yaml),
 [`REJECTED_DATASETS.md`](REJECTED_DATASETS.md), [`ingestion/INGESTION_REPORT.md`](ingestion/INGESTION_REPORT.md).
-Raw results: `experiments/cross-dataset-realwaste.json`, `experiments/multi-dataset-realwaste.json`.
+Raw results: `experiments/cross-dataset-realwaste.json`, `experiments/multi-dataset-realwaste.json`, `experiments/trashbox-experiment.json` (added 2026-10-21, §4b).
 
 ## 1. Decision summary
 
@@ -13,7 +13,8 @@ Raw results: `experiments/cross-dataset-realwaste.json`, `experiments/multi-data
 | Does more real-world data help? | **Yes, a lot** (+28 points on real photos) — but the only reachable labelled real-world set (RealWaste) is non-commercial | §4 |
 | Is a RealWaste-trained model released? | **No.** Experiment only; no artifact written; never auto-activated | licence in the manifest |
 | New taxonomy classes (organic, textile, e-waste, medical, battery)? | **None added.** No legitimately licensed, reachable labelled data. They stay `unsupported`→ review | §5 |
-| What closes the gap legitimately? | Local, consented field photos labelled through the app's own **review queue** (`/classify/review`) plus a licensed external set (TACO images whose licences are verified at source, see `TACO_LICENCE_AUDIT.md`; TrashBox only with a written licence from its authors) | §6 |
+| Does TrashBox (e-waste, medical) help? | **It adds two classes the product lacks and fits its own photos well, but it does not close the real-world gap.** Research only, under verbal permission the owner reports; not released | §4b |
+| What closes the gap legitimately? | Local, consented field photos labelled through the app's own **review queue** (`/classify/review`) plus a licensed external set (TACO images whose licences are verified at source, see `TACO_LICENCE_AUDIT.md`; TrashBox only with a written permission and licence from its authors) | §6 |
 
 The product therefore behaves honestly today: predictions carry a calibrated confidence, 64% of real-world images go to a
 person, and the model card states the measured field result.
@@ -113,10 +114,62 @@ Food Organics + Vegetation; textile). "Shared 6" = the six classes every trainin
 8. **Not tested:** fine-tuning the backbone (CPU-only sandbox, no PyTorch), data augmentation on RealWaste (the augmentation
    ablation for 1.0.0 is in its report), other real-world datasets (unreachable), and field data from India.
 
+## 4b. TrashBox experiment (research only; no model written, registered or activated)
+
+**Status of the data.** TrashBox has no licence. The owner reported on 2026-10-21 that its authors gave verbal permission; nothing
+is in writing, so for this project it is research input only. Manifest: `datasets/manifests/trashbox-research-1.0.yaml`. The
+script (`ml/waste_classification/research/trashbox_experiment.py`) writes no model, refuses to overwrite its result file and was
+run once; the design (below) was fixed before any number was seen.
+
+**Data handling.** Only `TrashBox_train_set` (14,282 images; the sub-folder tree is a duplicate). A seeded sample of at most 1,000
+images per class (7,000). Dropped before splitting and reported in the JSON: 14 undecodable files, 68 exact duplicates inside
+TrashBox, **385 exact copies of TrashNet images** and 5 near-copies of TrashNet images (S-embedding cosine ≥ 0.85); 6,528 images in
+4,829 near-duplicate groups remain. Across the whole tree 819 files are byte-identical to TrashNet images, so TrashBox itself
+republishes material its authors did not create; whatever the authors say about their own rights, it cannot cover those images or
+the unrecorded sources of the rest. RealWaste (shared five classes, 3,092 images, 0 dropped) served only as an external test set.
+
+**Method.** Same frozen EfficientNet-EdgeTPU-M features, logistic regression, temperature and review rule as the released
+pipeline, in an 8-class taxonomy (TrashNet's six plus `e_waste`, `medical`). Three training mixtures (TrashNet only; TrashBox only;
+both), each class-balanced. C, temperature and the review rule were chosen on validation data of the mixture only; each test set
+was read once. TrashNet used the released model's exact split; TrashBox the same group-aware procedure (6 folds). Intervals are
+95% grouped bootstrap.
+
+| Trained on → tested on | TrashNet only | TrashBox only | TrashNet + TrashBox |
+|---|---|---|---|
+| TrashNet test, 5 shared materials (n = 398), accuracy | **0.882** (0.833–0.927) | 0.661 (0.582–0.730) | 0.862 (0.819–0.900) |
+| TrashBox test, 5 shared materials (n = 756), accuracy | 0.541 (0.487–0.590) | **0.845** (0.813–0.875) | 0.837 (0.804–0.866) |
+| TrashBox test, all 7 classes (n = 1,088), accuracy | 0.376 (0.336–0.417) | **0.867** (0.844–0.889) | 0.859 (0.836–0.883) |
+| TrashBox test, 7 classes, macro-F1 | 0.338 | 0.865 | 0.859 |
+| **RealWaste, 5 shared materials (n = 3,092), accuracy** | 0.462 (0.429–0.493) | 0.460 (0.426–0.496) | **0.479** (0.450–0.508) |
+| RealWaste, share auto-accepted by the review rule | 41% | 37% | 41% |
+| Expected calibration error on TrashNet test / RealWaste | 0.033 / 0.261 | 0.104 / 0.208 | **0.016 / 0.214** |
+
+Per-class F1 on the TrashBox test for the mixture: e-waste 0.919, medical 0.886; the five materials 0.81–0.87. Full per-class
+numbers, rules and sizes are in the JSON.
+
+**Findings.**
+1. A TrashNet-only model does not transfer to TrashBox: 0.54 on the five shared materials and, naturally, 0 on e-waste and medical.
+   The reverse is also poor (TrashBox-only on TrashNet 0.66). The two datasets look different (studio photographs vs web photographs).
+2. Training on both keeps TrashNet performance within noise of the TrashNet-only model (0.862 vs 0.882, intervals overlap) while
+   reaching 0.84 on TrashBox photos, and it is the best calibrated option (ECE 0.016). So *if* TrashBox could be used, a mixture is the
+   sensible way to use it and e-waste and medical become learnable classes (F1 ≈ 0.89–0.92 on TrashBox's own test).
+3. **None of this carries over to real facility photos.** On RealWaste accuracy is 0.46–0.48 for all three and the difference
+   between mixtures is inside the intervals; TrashBox does not close the gap that RealWaste itself closes (§4). The TrashBox test
+   score therefore says the model fits web photographs of waste, not that it works on a collection route or in a facility.
+4. Consequences: the e-waste/medical result is interesting for the taxonomy but is **not** a reason to ship anything. The decision
+   in §1 stands: 1.0.0 stays the single non-default candidate; adding TrashBox to a released model needs written permission and a
+   licence from the authors **and** a plan for the third-party images inside it; the real fix remains in-domain, consented photos.
+
+**Limits.** One split and one seed per dataset; TrashBox's own test is in the same web-photo domain as its training data (grouped by
+near-duplicates, but photographers and sources are unknown, so some residual leakage cannot be excluded and 0.84–0.87 is probably
+optimistic); 1,000 images per class cap; RealWaste maps only five classes (its "Miscellaneous Trash" is not used here); a
+RealWaste image the model labels `e_waste` or `medical` counts as wrong for the TrashBox-trained mixtures; the RealWaste region
+(Australia) is not the target region (Hyderabad); CPU-only, frozen backbone, no fine-tuning.
+
 ## 5. Why no new classes were added
 
 A class needs adequate, legitimately licensed, labelled images and a held-out test. `organic` and `textile` have them only in
-RealWaste (non-commercial); `e_waste`/`medical` only in TrashBox (no licence); `battery` nowhere reachable. Adding any of
+RealWaste (non-commercial); `e_waste`/`medical` only in TrashBox (no licence on file; verbal permission reported, §4b); `battery` nowhere reachable. Adding any of
 them would mean shipping a model whose training data we may not use. They stay `unsupported`; the review gate is the mitigation
 and its measured effect is §3 (96% of unsupported-class images go to review).
 
@@ -127,8 +180,11 @@ and its measured effect is §3 (96% of unsupported-class images go to review).
    a `1.1.0-research` model trained on TrashNet + RealWaste (M or L backbone, mixture) is a justified, clearly-labelled
    research candidate; its model card would carry the licence. The experiment above indicates ≈ +28 points on real photos.
    If no, skip.
-3. **Owner decision B:** ask the TrashBox authors for permission (e-waste and medical are the classes municipalities most often
-   need); or supply TACO/Flickr images by an owner-run download with a per-image licence audit.
+3. **Owner decision B (partly done):** the owner reports verbal permission from the TrashBox authors (2026-10-21). Still needed before
+   any use in a released model: written permission and a licence statement, and an answer on the third-party images in the dataset
+   (819 files are byte-identical to TrashNet; the rest have no recorded source). The experiment (§4b) shows the gain is on
+   TrashBox-like photos, not on real facility photos. Alternatively supply TACO/Flickr images by an owner-run download with a
+   per-image licence audit.
 4. **Collect in-domain data legitimately:** every reviewer correction in `/classify/review` is a labelled field example linked
    to a prediction and a person. After enough volume, retrain with a group-aware split by reporting site/date and re-estimate the
    review threshold on that data.
