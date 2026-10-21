@@ -51,7 +51,7 @@ export function IncidentsPage() {
       <PageHeader
         title="Community incident triage"
         titleId="incidents-title"
-        subtitle={triage ? 'Review, assign and close reports from residents and field staff' : 'Problems you have reported and what happened to them'}
+        subtitle={triage ? 'Review, assign and close reports from residents and field staff' : 'Problems you have reported or been assigned, and what happened to them'}
         actions={can('incidents:create') ? <Button onClick={() => setCreating(true)}>Report an incident</Button> : undefined}
       />
       {triage && summary.data && (

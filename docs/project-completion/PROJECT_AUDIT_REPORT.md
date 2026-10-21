@@ -131,6 +131,8 @@ One open security note: GitGuardian flagged a test password in the git history (
 
 ## 10. Decisions only the owner can make
 
+> **Update:** the owner answered all eight on 2026-10-21. The answers, what is done and what still needs an owner action are in `docs/project-completion/DECISION_LOG.md` (section "Owner decisions on the eight launch questions"). The list below is the original question list.
+
 1. Merge draft PR #12.
 2. Provide Google Maps/Routes keys (only if Google maps are wanted; the offline map needs none).
 3. Ask the TrashBox authors for permission (otherwise it stays unused).
@@ -149,13 +151,15 @@ One open security note: GitGuardian flagged a test password in the git history (
 4. The demo seed script failed where only `httpx` was installed. Fixed.
 5. A command-line import failed with a confusing error when the reference-data clone was missing. It now gives a clear message, with a test.
 
-**Open issues (none blocks a demo)**
-1. A collector who is assigned an incident cannot open it. Incident visibility is "own report" or "triage permission" only. Decision needed: either give assigned collectors read access or leave incidents out of collector workflows.
-2. When a route plan cannot be created because a task is already in another active plan, the message shows the other plan's internal ID instead of its name.
+**Open issues (none blocks a demo; numbers 1 and 2 are now closed)**
+1. ~~A collector who is assigned an incident cannot open it.~~ **Fixed after the audit** (see the update note below).
+2. ~~A route-plan conflict message showed an internal ID.~~ **Fixed after the audit.** (Correction: the ID it showed was the *task's* ID, not the other plan's; I described it wrongly in the first version of this report.) The message now names the task by title and the clashing plan by name.
 3. The photo classifier, tile file, real maps, real GPS and real e-mail are unproven or absent (sections 7–9).
 4. Seeded or newly registered accounts show the "Confirm your email address" banner until the link in the server log is used. This is expected with the console e-mail backend.
 5. The first listed task option labels in the route-plan dialog show "title, address" and the checkbox is custom-styled; automated tools must click the label text rather than the box. Not a user problem.
 6. There is no frontend coverage measurement and no load or stress test. A light local timing (one user, tiny data, same machine, 30 requests each) gave about 6–8 ms median for list endpoints and 17 ms for the analytics overview. That says nothing about real traffic.
+
+**Update after the audit (2026-10-21, after PR #12 was merged).** An assigned collector can now open (read, not change) the incident assigned to them, with a test; route-plan conflict messages name tasks and plans (tests updated). The owner's decisions on the eight launch questions are recorded in `DECISION_LOG.md`. The PR #12 mentions in sections 9 and 10 are historical: it was merged on 2026-10-21 as `2834cf0`.
 
 ## 12. What was not verified (do not assume it works)
 

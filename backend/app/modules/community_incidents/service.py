@@ -1,8 +1,8 @@
 """Community-incident use cases.
 
-Citizens and collectors report (``incidents:create``); citizens see their own reports
-(``incidents:read_own``); managers triage everything (``incidents:triage``). The reporter is
-notified of every status change. Lifecycle::
+Citizens and collectors report (``incidents:create``); they see their own reports
+(``incidents:read_own``) plus any incident assigned to them; managers triage everything
+(``incidents:triage``). The reporter is notified of every status change. Lifecycle::
 
     open ─▶ acknowledged | dismissed
     acknowledged ─▶ in_progress | resolved | dismissed
@@ -65,9 +65,15 @@ def _out(incident: CommunityIncident) -> IncidentOut:
 
 
 def _visible(incident: CommunityIncident | None, principal: Principal) -> CommunityIncident:
-    """Own incidents, or any incident for triage staff; otherwise indistinguishable from missing."""
+    """Own reports, incidents assigned to the caller, or any incident for triage staff.
+
+    Anything else is indistinguishable from a missing incident. Being assigned an incident lets
+    the assignee read it (so a collector can open the work they were given) but not change it.
+    """
     if incident is None or (
-        incident.reporter_id != principal.user_id and not principal.has(TRIAGE)
+        incident.reporter_id != principal.user_id
+        and incident.assigned_to_id != principal.user_id
+        and not principal.has(TRIAGE)
     ):
         raise NotFoundError("Incident not found")
     return incident
@@ -114,7 +120,7 @@ def list_incidents(
     rows, total = repository.list_page(
         db,
         params,
-        reporter_id=None if triage else principal.user_id,
+        visible_to_id=None if triage else principal.user_id,
         status=status,
         incident_type=incident_type,
         assigned_to_id=assigned_to_id if triage else None,

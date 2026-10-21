@@ -67,13 +67,14 @@ def tasks_with_estimates(
     return [(task, est) for task, est in db.execute(stmt).all()]
 
 
-def tasks_in_active_plans(db: Session, task_ids: list[uuid.UUID]) -> set[uuid.UUID]:
+def tasks_in_active_plans(db: Session, task_ids: list[uuid.UUID]) -> dict[uuid.UUID, str]:
+    """Map each task that already sits in an active plan to that plan's name."""
     stmt = (
-        select(RouteStop.collection_task_id)
+        select(RouteStop.collection_task_id, RoutePlan.name)
         .join(RoutePlan, RoutePlan.id == RouteStop.route_plan_id)
         .where(RouteStop.collection_task_id.in_(task_ids), RoutePlan.status.in_(ACTIVE))
     )
-    return {tid for tid in db.execute(stmt).scalars() if tid is not None}
+    return {tid: name for tid, name in db.execute(stmt).all() if tid is not None}
 
 
 def list_page(

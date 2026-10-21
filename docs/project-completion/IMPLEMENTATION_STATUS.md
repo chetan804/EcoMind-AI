@@ -13,7 +13,7 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Where the project stands (branch `arena/34eb0c5c-ecomind-ai`, draft PR #12, started from `main` at `8ebe716`)
+## 1. Where the project stands (PR #12 was merged into `main` on 2026-10-21 as `2834cf0`; it was developed on branch `arena/34eb0c5c-ecomind-ai`, started from `main` at `8ebe716`)
 
 `main` is at `8ebe716` (PR #11 merged: offline map, optional OSRM, TACO audit). This branch carries the five production-hardening
 steps (Phase J below): supply chain and CI, account recovery, marketplace completion, reward redemption, accessibility audit, plus

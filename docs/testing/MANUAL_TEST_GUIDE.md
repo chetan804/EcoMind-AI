@@ -257,7 +257,7 @@ Sign in as `manager.test@example.org` → **Reports**.
 2. `Plan name` `Test loop`, `Date` any date (**required**), `Start depot` `Test depot`.
 3. Under "Tasks to include" tick your task (click its **text**), `Create plan`.
 4. Open the plan (`Open`). **Expected:** a draft with the stop order, total distance in km, and a notice **"No road route: straight-line fallback"** (honest: no road data). Click `Publish plan`. Status becomes **Published**.
-5. A task already in an active plan cannot be added to another one; the app says so.
+5. A task already in an active plan cannot be added to another one. Try it: the error names the task by title and the plan by name (not a code).
 
 ### 9.6 Collector does the work
 Sign in as `collector.test@example.org` → **Collections**.
@@ -301,7 +301,7 @@ Sign in as `citizen.test@example.org`.
 1. **Citizen:** **Incidents** → `Report an incident`. `Type` Overflowing bin, `Title` `Overflowing bin at Gate 2`, `Address or landmark` `Gate 2`, `Latitude` `17.44`, `Longitude` `78.35` → `Submit incident`. **Expected:** it appears in the citizen's list as Open.
 2. **Manager:** **Incidents** → open it (`Open`). Move the status to **Acknowledged** (and optionally assign someone), save. **Expected:** status changes. The citizen gets an alert "Your incident report is now acknowledged".
 3. Resolve it (status **Resolved**, with a `Resolution` text). **Expected:** it shows resolved.
-4. **Collector** can report incidents and sees their own. (Operators have no Incidents page.) (Known gap: a collector who is *assigned* someone else's incident cannot open it.)
+4. **Collector** can report incidents and sees their own. (Operators have no Incidents page.) As manager, open the incident, choose a collector under assign (`Test Collector`) and click the assign button. Then sign in as the collector: **Incidents** now lists that incident and it opens, but the collector has no status or assign controls. If the manager assigns it to someone else, it disappears from the collector's list. *(Automated test only; not rehearsed by hand.)*
 5. Another citizen cannot see this citizen's incident.
 
 ### 10.2 Marketplace
@@ -525,8 +525,6 @@ Set the variables described in `docs/maps/GOOGLE_MAPS_INTEGRATION.md`. **Expecte
 | No real e-mail | Links appear only in the server log |
 | Not deployed | Everything runs only on your computer |
 | Google/Routes/OSRM/GPS unproven | Not covered unless you set them up |
-| Collector assigned an incident cannot open it | Known gap |
-| A route-plan error mentions an internal ID instead of a plan name | Known small issue |
 
 ## 16.4 How to decide
 - **Ready for a supervised demo or academic submission:** every must-pass item PASSES, at most a few non-critical FAILs, and the known items above are the only surprises.

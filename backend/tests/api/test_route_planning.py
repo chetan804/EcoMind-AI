@@ -206,12 +206,19 @@ def test_facility_and_task_preconditions(env: Env, world: dict[str, Any]) -> Non
     )
     response = create(env, **body_for(world, task_ids=[cancelled]))
     assert response.status_code == 409 and response.json()["error"]["code"] == "task_not_plannable"
+    assert cancelled not in response.json()["error"]["message"]  # titles, not ids
 
 
 def test_a_task_is_in_at_most_one_active_plan(env: Env, world: dict[str, Any]) -> None:
     first = create(env, **body_for(world, task_ids=world["tasks"][:3])).json()
     clash = create(env, **body_for(world, task_ids=world["tasks"][2:4]))
     assert clash.status_code == 409 and clash.json()["error"]["code"] == "task_already_planned"
+    # the message names the plan (and the task by title) instead of showing internal ids
+    error = clash.json()["error"]
+    assert f"plan “{first['name']}”" in error["message"]
+    assert world["tasks"][2] not in error["message"]
+    assert error["details"][0]["task_id"] == world["tasks"][2]
+    assert error["details"][0]["plan_name"] == first["name"]
     env.client.post(f"{PLANS}/{first['id']}/cancel", json={}, headers=env.h["manager"])
     assert create(env, **body_for(world, task_ids=world["tasks"][2:4])).status_code == 201
 

@@ -227,7 +227,6 @@ docker compose exec backend python -m app.cli seed-support-knowledge
 - **Never deployed.** No server, domain, TLS, backups or monitoring.
 - **No map tile file**, so maps show a plain background and a notice.
 - **Google Maps/Routes, OSRM, real GPS and real e-mail** were never tried with real services.
-- A collector who is assigned an incident cannot open it (decision pending).
 - No human accessibility review; automated checks only.
 - Backend tests: 763 passed, 1 skipped. Browser tests: 31 passed, 1 skipped. Frontend tests: 365 passed.
 
