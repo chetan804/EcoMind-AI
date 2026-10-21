@@ -1,39 +1,41 @@
 # Functional requirements
 
-Status values: **Foundation** = schema/boundary exists, **Not started**. Nothing below is implemented as a user feature yet unless stated. Priority: M = must, S = should, C = could. IDs are stable; reference them in issues, tests and PRs.
+Status values: **Implemented** = the behaviour exists behind authorization and automated tests cover it (the evidence column names them); **Partial** = part of the requirement is met and the gap is stated; nothing here means *deployed* or *verified against a real external service*: those limits are in `docs/project-completion/LIMITATIONS.md` and `RELEASE_CHECKLIST.md`. Priority: M = must, S = should, C = could. IDs are stable; reference them in issues, tests and PRs.
 
-| ID | Requirement | Module / feature | Pri | Status |
-|---|---|---|---|---|
-| FR-AUTH-1 | Users register/are created and sign in with email and password; passwords stored only as Argon2id hashes. | auth, users | M | Primitives only (`core/security.py`) |
-| FR-AUTH-2 | Sessions use short-lived access tokens and rotating refresh tokens that can be revoked; logout revokes. | auth | M | Schema (`auth_sessions`) |
-| FR-AUTH-3 | Every protected endpoint enforces server-side authorization by permission. | core/permissions | M | Primitive only |
-| FR-USER-1 | Administrators manage users, roles and permissions. | users, administration | M | Schema |
-| FR-REP-1 | Users create waste reports with location, description, estimated weight (kg) and images. | waste_reports | M | Schema |
-| FR-REP-2 | Reports can be listed with pagination and filtered by status, reporter, date range and area. | waste_reports | M | Not started |
-| FR-REP-3 | Image upload validates type, size and pixel count and stores metadata and hash. | waste_reports, ml/common | M | Preprocessing validation only |
-| FR-CLS-1 | An uploaded image can be classified into identified object + waste-material category with confidences from the deployed model only. | classification | M | Schema; **no model** |
-| FR-CLS-2 | Low-confidence predictions are flagged for review; reviewers confirm, correct or reject. | classification | M | Schema |
-| FR-CLS-3 | Disposal guidance is shown from the sorting guide by material category. | sorting_guide | M | Schema |
-| FR-COL-1 | Collection tasks are created from reports or manually, with priority and due date. | collection | M | Schema |
-| FR-COL-2 | Tasks are assigned to a collector (and vehicle); only one active assignment per task. | collection | M | Schema + DB constraint |
-| FR-COL-3 | Status transitions are validated and recorded in an append-only history. | collection | M | Schema |
-| FR-COL-4 | Field events record arrival, collection (weight kg), skip, contamination, delivery. | collection | M | Schema |
-| FR-RTE-1 | Route plans order stops for a vehicle/driver; stops are tasks or facilities. | route_planning | S | Schema |
-| FR-RTE-2 | A route optimization endpoint proposes a stop order and records the optimizer used. | route_planning, integrations/mapping | S | Not started |
-| FR-FAC-1 | Facilities (processing centers, depots, transfer stations, drop-off points) are managed. | facilities | M | Schema |
-| FR-FLT-1 | Vehicles, capacity (kg) and availability are managed. | fleet | M | Schema |
-| FR-CIR-1 | Facilities record material recovery (input/recovered kg, method). | circular_economy | M | Schema |
-| FR-CIR-2 | Recovery is verified by an authorized user; only verified records count in metrics. | circular_economy | M | Schema + DB constraint |
-| FR-ANA-1 | Dashboards show volumes, status counts and trends computed from real records. | analytics, dashboard | M | Not started |
-| FR-FOR-1 | Waste-generation forecasts for a stated horizon, with baseline comparison and error metrics. | forecasting, ml | S | Schema; no model |
-| FR-ANO-1 | Operational anomalies raise alerts with severity, expected vs observed values and an explanation. | anomaly_detection, ml | S | Schema; no detector |
-| FR-INC-1 | Community members report incidents with location/photo; staff triage to resolution. | community_incidents | S | Schema |
-| FR-PAS-1 | Material passports with append-only chain-of-custody events. | material_passports | C | Schema |
-| FR-RWD-1 | An append-only ledger awards points idempotently per source and records verified impact (kg). | rewards | C | Schema + DB constraint |
-| FR-NOT-1 | Users receive in-app notifications and can mark them read. | notifications | S | Schema |
-| FR-AUD-1 | Security-relevant and administrative actions are recorded in an append-only audit log. | audit | M | Schema |
-| FR-OPS-1 | `/health` reports liveness; `/ready` reports database reachability and migration state. | health | M | **Implemented** |
-| FR-OPS-2 | Operators can view API liveness/readiness in the UI. | frontend settings | C | **Implemented** (System status page) |
+Reconciled with the code and tests on 2026-10-21. The earlier "Foundation / Not started" statuses described the repository before the feature work landed; they were replaced only where a test in the evidence column exercises the behaviour. Screen-level evidence is in `docs/project-completion/SCREEN_TRACEABILITY.md`; the cross-cutting matrix is `docs/project-completion/TRACEABILITY_MATRIX.md`.
+
+| ID | Requirement | Module / feature | Pri | Status | Evidence and limits |
+|---|---|---|---|---|---|
+| FR-AUTH-1 | Users register/are created and sign in with email and password; passwords stored only as Argon2id hashes. | auth, users | M | Implemented | `tests/api/test_auth_flow.py`, `tests/security/test_passwords.py`; e2e `auth.spec.ts` |
+| FR-AUTH-2 | Sessions use short-lived access tokens and rotating refresh tokens that can be revoked; logout revokes. | auth | M | Implemented | `tests/api/test_auth_sessions.py`, `tests/security/test_tokens.py`; e2e `auth.spec.ts` |
+| FR-AUTH-3 | Every protected endpoint enforces server-side authorization by permission. | core/permissions | M | Implemented | `tests/security/test_route_inventory.py` (deny by default, every route listed), `test_authorization.py`; generated `docs/security/route-permission-matrix.md` |
+| FR-USER-1 | Administrators manage users, roles and permissions. | users, administration | M | Implemented | `tests/api/test_administration.py`; MFA-required roles `test_mfa_enforcement.py` |
+| FR-REP-1 | Users create waste reports with location, description, estimated weight (kg) and images. | waste_reports | M | Implemented | `tests/api/test_waste_reports.py`, `test_waste_report_media.py`; e2e `core-workflow.spec.ts` |
+| FR-REP-2 | Reports can be listed with pagination and filtered by status, reporter, date range and area. | waste_reports | M | Implemented (area = bounding box; see note) | `tests/api/test_waste_reports.py` (pagination, status, date range, own reports, bounding box). Zones have no boundary geometry (no verified map data), so "area" is a latitude/longitude bounding box, not a named zone |
+| FR-REP-3 | Image upload validates type, size and pixel count and stores metadata and hash. | waste_reports, ml/common | M | Implemented | `tests/unit/test_images.py`, `test_file_storage.py`, `tests/api/test_waste_report_media.py` |
+| FR-CLS-1 | An uploaded image can be classified into identified object + waste-material category with confidences from the deployed model only. | classification | M | **Partial, not release-approved** | Material category only (six classes); **no object identification** (`object_label` is always null: no object-level training data). Served only from an activated, hash-verified model; with none active the API answers `503 no_active_model`. No model is active or shipped. `tests/api/test_classification.py` uses a stub runtime; the real-artifact parity test is skipped unless the git-ignored artifact exists. Candidate scored 0.867 (TrashNet) and 0.454 (RealWaste). See `docs/ml/model-cards/waste-classification-1.0.0.md` |
+| FR-CLS-2 | Low-confidence predictions are flagged for review; reviewers confirm, correct or reject. | classification | M | Implemented | `tests/api/test_classification.py`; frontend `review-queue.test.tsx`; the review rule also flags unfamiliar images (measured: 96% of food, vegetation and textile photos, which the model has no class for, go to review) |
+| FR-CLS-3 | Disposal guidance is shown from the sorting guide by material category. | sorting_guide | M | Implemented | `tests/api/test_sorting_guide.py` |
+| FR-COL-1 | Collection tasks are created from reports or manually, with priority and due date. | collection | M | Implemented | `tests/api/test_collection.py` |
+| FR-COL-2 | Tasks are assigned to a collector (and vehicle); only one active assignment per task. | collection | M | Implemented | `tests/api/test_collection.py`; database constraint `tests/integration/test_schema_constraints.py::test_only_one_active_assignment_per_collection_task` |
+| FR-COL-3 | Status transitions are validated and recorded in an append-only history. | collection | M | Implemented (history enforced append-only from migration 0017) | `tests/api/test_collection.py` (invalid transitions are 409); `tests/integration/test_append_only_records.py` |
+| FR-COL-4 | Field events record arrival, collection (weight kg), skip, contamination, delivery. | collection | M | Implemented | `tests/api/test_collection.py` (events and completion validation) |
+| FR-RTE-1 | Route plans order stops for a vehicle/driver; stops are tasks or facilities. | route_planning | S | Implemented | `tests/api/test_route_planning.py` |
+| FR-RTE-2 | A route optimization endpoint proposes a stop order and records the optimizer used. | route_planning, integrations/mapping | S | Implemented (straight-line order; road routing optional and not live-verified) | `tests/unit/test_route_optimizer.py`, `test_route_planning.py` (the plan stores the optimizer name and version). Road geometry: `ROUTING_PROVIDER=none` by default; Google and OSRM adapters are mocked-only (`test_google_routes.py`, `test_osrm.py`) |
+| FR-FAC-1 | Facilities (processing centers, depots, transfer stations, drop-off points) are managed. | facilities | M | Implemented | `tests/api/test_facilities.py`, `test_zones.py` |
+| FR-FLT-1 | Vehicles, capacity (kg) and availability are managed. | fleet | M | Implemented | `tests/api/test_fleet.py` |
+| FR-CIR-1 | Facilities record material recovery (input/recovered kg, method). | circular_economy | M | Implemented | `tests/api/test_recovery_records.py` |
+| FR-CIR-2 | Recovery is verified by an authorized user; only verified records count in metrics. | circular_economy | M | Implemented | `tests/api/test_recovery_records.py`; DB constraints in `test_schema_constraints.py` |
+| FR-ANA-1 | Dashboards show volumes, status counts and trends computed from real records. | analytics, dashboard | M | Implemented | `tests/api/test_analytics.py` (weights and weekly trend equal stored events); frontend `analytics-dashboard.test.tsx`; e2e `core-workflow.spec.ts` (report to collected weight, reward and analytics) |
+| FR-FOR-1 | Waste-generation forecasts for a stated horizon, with baseline comparison and error metrics. | forecasting, ml | S | Implemented (statistical, labelled) | `tests/api/test_forecasting.py`, `ml/tests/test_time_series.py`. Beats the naive baseline on two of four public series; interpolated weeks are disclosed; no claim of accuracy on this platform's own data |
+| FR-ANO-1 | Operational anomalies raise alerts with severity, expected vs observed values and an explanation. | anomaly_detection, ml | S | Implemented (statistical; no labelled anomalies) | `tests/api/test_anomalies.py`. Detection is injected-spike tested only; there are no labelled real anomalies, so no precision/recall is claimed |
+| FR-INC-1 | Community members report incidents with location/photo; staff triage to resolution. | community_incidents | S | Implemented | `tests/api/test_community_incidents.py` (collectors read incidents assigned to them, fixed in 0016) |
+| FR-PAS-1 | Material passports with append-only chain-of-custody events. | material_passports | C | Implemented | `tests/api/test_material_passports.py` (append-only enforced in the database) |
+| FR-RWD-1 | An append-only ledger awards points idempotently per source and records verified impact (kg). | rewards | C | Implemented | `tests/api/test_rewards.py`, `test_rewards_catalogue.py` |
+| FR-NOT-1 | Users receive in-app notifications and can mark them read. | notifications | S | Implemented | `tests/api/test_notifications.py` |
+| FR-AUD-1 | Security-relevant and administrative actions are recorded in an append-only audit log. | audit | M | Implemented (append-only enforced in the database from migration 0017) | `tests/api/test_administration.py` (audit endpoint), `tests/integration/test_append_only_records.py` |
+| FR-OPS-1 | `/health` reports liveness; `/ready` reports database reachability and migration state. | health | M | Implemented | `tests/api/test_health.py`, `tests/integration/test_readiness_database.py` |
+| FR-OPS-2 | Operators can view API liveness/readiness in the UI. | frontend settings | C | Implemented (System status page) | e2e `system-status.spec.ts` |
 
 ## Acceptance
 A requirement is done only when: endpoint(s)/screens exist behind authorization, tests at the layers listed in `docs/testing/testing-strategy.md` pass in CI, the API/data docs are updated, and the status above is changed in the same pull request.

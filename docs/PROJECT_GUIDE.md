@@ -160,7 +160,7 @@ All AI work is separate from the web server code, uses only licence-checked data
 
 | Folder | What is in it |
 |---|---|
-| `backend/` | The server. `app/modules/<name>/` holds each of the 22 modules. `migrations/versions/` holds database changes 0001–0016. `tests/` holds 60 test files. |
+| `backend/` | The server. `app/modules/<name>/` holds each of the 22 modules. `migrations/versions/` holds database changes 0001–0017. `tests/` holds 60 test files. |
 | `frontend/` | The web app. `src/features/<name>/` holds each screen group. `src/app/router.tsx` lists every page address. `src/components/navigation/nav-items.ts` builds the sidebar. `tests/` holds 37 test files. |
 | `ml/` | Training and evaluation code, the model registry entry, git-ignored `artifacts/` (model files, absent). |
 | `datasets/manifests/` | Records of which data sources were checked and why each was or was not used. No raw data is committed. |

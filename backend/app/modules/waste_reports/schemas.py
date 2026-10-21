@@ -90,5 +90,10 @@ class WasteReportQuery(BaseModel):
     mine: bool = False
     reported_from: dt.datetime | None = None
     reported_to: dt.datetime | None = None
+    # Area filter: a latitude/longitude box (all four values or none; no antimeridian crossing).
+    min_latitude: decimal.Decimal | None = None
+    max_latitude: decimal.Decimal | None = None
+    min_longitude: decimal.Decimal | None = None
+    max_longitude: decimal.Decimal | None = None
     sort_by: SortField = "reported_at"
     order: SortOrder = SortOrder.DESC
