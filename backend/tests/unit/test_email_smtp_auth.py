@@ -129,6 +129,7 @@ class _Handler(socketserver.StreamRequestHandler):
 
     def _upgrade(self, server: _Server) -> None:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.load_cert_chain(server.cert_path, server.key_path)
         secured = context.wrap_socket(self.connection, server_side=True)
         self.connection = secured
