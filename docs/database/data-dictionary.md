@@ -631,6 +631,30 @@ Constraints:
 
 ## Module `rewards`
 
+### `reward_items`
+
+Something a citizen can spend points on. Entered by staff: the platform ships none.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `name` | varchar(120) | NN |  |  |
+| `description` | text | null |  |  |
+| `points_cost` | integer | NN |  |  |
+| `stock` | integer | null |  |  |
+| `max_per_user` | integer | null |  |  |
+| `active` | boolean | NN | `true` |  |
+| `valid_until` | timestamptz | null |  |  |
+| `created_by_id` | uuid | NN |  | FK -> `users.id` |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_reward_items_cost_positive`: `points_cost > 0`
+- `ck_reward_items_limit_positive`: `max_per_user IS NULL OR max_per_user >= 1`
+- `ck_reward_items_stock_non_negative`: `stock IS NULL OR stock >= 0`
+
 ### `reward_ledger_entries`
 
 | Column | Type | Null | Default | Notes |
@@ -653,7 +677,43 @@ Constraints:
 - `ck_reward_ledger_entries_points_non_zero`: `points <> 0`
 - `ck_reward_ledger_entries_reversal_references_entry`: `(entry_type = 'reversal') = (reverses_entry_id IS NOT NULL)`
 - `uq_reward_ledger_entries_idempotency`: unique index WHERE `source_id IS NOT NULL AND entry_type = 'earned'`
-- Allowed values: `entry_type` in (earned, redeemed, adjustment, reversal); `source_type` in (waste_report, collection_task, recovery_record, community_incident, manual)
+- Allowed values: `entry_type` in (earned, redeemed, adjustment, reversal); `source_type` in (waste_report, collection_task, recovery_record, community_incident, manual, reward_redemption)
+
+### `reward_redemptions`
+
+One spend of points on a reward item.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` |
+| `item_id` | uuid | NN |  | FK -> `reward_items.id` |
+| `item_name` | varchar(120) | NN |  |  |
+| `points_spent` | integer | NN |  |  |
+| `code` | varchar(16) | NN |  | UQ |
+| `client_request_id` | uuid | NN |  |  |
+| `status` | varchar(17) | NN | `pending` |  |
+| `ledger_entry_id` | uuid | NN |  | FK -> `reward_ledger_entries.id`; UQ |
+| `refund_entry_id` | uuid | null |  | FK -> `reward_ledger_entries.id`; UQ |
+| `fulfilled_by_id` | uuid | null |  | FK -> `users.id` |
+| `fulfilled_at` | timestamptz | null |  |  |
+| `note` | varchar(500) | null |  |  |
+| `cancelled_by_id` | uuid | null |  | FK -> `users.id` |
+| `cancelled_at` | timestamptz | null |  |  |
+| `cancel_reason` | varchar(500) | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_reward_redemptions_cancelled_timestamp_consistent`: `(status = 'cancelled') = (cancelled_at IS NOT NULL)`
+- `ck_reward_redemptions_fulfilled_timestamp_consistent`: `(status = 'fulfilled') = (fulfilled_at IS NOT NULL)`
+- `ck_reward_redemptions_points_positive`: `points_spent > 0`
+- `ck_reward_redemptions_refund_iff_cancelled`: `(status = 'cancelled') = (refund_entry_id IS NOT NULL)`
+- `uq_reward_redemptions_user_client_request`: unique (user_id, client_request_id)
+- `ix_reward_redemptions_ledger_entry_id`: unique index
+- `ix_reward_redemptions_refund_entry_id`: unique index
+- Allowed values: `status` in (pending, fulfilled, cancelled)
 
 ## Module `route_planning`
 

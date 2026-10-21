@@ -2,7 +2,7 @@
 
 > **Generated** by `scripts/security/generate_route_matrix.py` from the mounted application and the RBAC catalog (`backend/app/modules/users/rbac.py`). Do not edit by hand; CI fails if this file is stale. `backend/tests/security/test_route_inventory.py` fails if a route becomes public or signed-in-only without being listed there.
 
-142 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
+152 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
 
 | Method | Path | Access | Roles that hold it |
 |---|---|---|---|
@@ -109,11 +109,21 @@
 | GET | `/api/v1/notifications/unread-count` | `notifications:read_own` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/notifications/{notification_id}/read` | `notifications:read_own` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/rewards/adjustments` | `rewards:manage` | manager, administrator |
+| GET | `/api/v1/rewards/catalog` | `rewards:read_own` | citizen, administrator |
+| POST | `/api/v1/rewards/catalog/{item_id}/redeem` | `rewards:redeem` | citizen, administrator |
 | POST | `/api/v1/rewards/entries/{entry_id}/reverse` | `rewards:manage` | manager, administrator |
+| GET | `/api/v1/rewards/items` | `rewards:manage` | manager, administrator |
+| POST | `/api/v1/rewards/items` | `rewards:manage` | manager, administrator |
+| PATCH | `/api/v1/rewards/items/{item_id}` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/rewards/ledger` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/rewards/ledger/summary` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/rewards/me/balance` | `rewards:read_own` | citizen, administrator |
 | GET | `/api/v1/rewards/me/entries` | `rewards:read_own` | citizen, administrator |
+| GET | `/api/v1/rewards/me/redemptions` | `rewards:read_own` | citizen, administrator |
+| POST | `/api/v1/rewards/me/redemptions/{redemption_id}/cancel` | `rewards:redeem` | citizen, administrator |
+| GET | `/api/v1/rewards/redemptions` | `rewards:manage` | manager, administrator |
+| POST | `/api/v1/rewards/redemptions/{redemption_id}/cancel` | `rewards:manage` | manager, administrator |
+| POST | `/api/v1/rewards/redemptions/{redemption_id}/fulfil` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/route-planning/plans` | `routes:read` | collector, manager, administrator |
 | POST | `/api/v1/route-planning/plans` | `routes:manage` | manager, administrator |
 | GET | `/api/v1/route-planning/plans/{plan_id}` | `routes:read` | collector, manager, administrator |

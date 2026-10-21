@@ -147,10 +147,23 @@ erDiagram
         uuid series_id FK
         uuid id PK
     }
+    reward_items {
+        uuid created_by_id FK
+        uuid id PK
+    }
     reward_ledger_entries {
         uuid user_id FK
         uuid reverses_entry_id FK
         uuid created_by_id FK
+        uuid id PK
+    }
+    reward_redemptions {
+        uuid user_id FK
+        uuid item_id FK
+        uuid ledger_entry_id FK
+        uuid refund_entry_id FK
+        uuid fulfilled_by_id FK
+        uuid cancelled_by_id FK
         uuid id PK
     }
     role_permissions {
@@ -256,9 +269,16 @@ erDiagram
     material_categories ||--o{ recovery_records : "material_category_id"
     users |o--o{ recovery_records : "verified_by_id"
     reference_series ||--o{ reference_series_points : "series_id"
+    users ||--o{ reward_items : "created_by_id"
     users |o--o{ reward_ledger_entries : "created_by_id"
     reward_ledger_entries |o--o{ reward_ledger_entries : "reverses_entry_id"
     users ||--o{ reward_ledger_entries : "user_id"
+    users |o--o{ reward_redemptions : "cancelled_by_id"
+    users |o--o{ reward_redemptions : "fulfilled_by_id"
+    reward_items ||--o{ reward_redemptions : "item_id"
+    reward_ledger_entries ||--o{ reward_redemptions : "ledger_entry_id"
+    reward_ledger_entries |o--o{ reward_redemptions : "refund_entry_id"
+    users ||--o{ reward_redemptions : "user_id"
     permissions ||--o{ role_permissions : "permission_id"
     roles ||--o{ role_permissions : "role_id"
     users ||--o{ route_plans : "created_by_id"
@@ -294,7 +314,7 @@ erDiagram
 - **marketplace**: `marketplace_listing_photos`, `marketplace_listings`, `marketplace_requests`
 - **material_passports**: `custody_events`, `material_passports`
 - **notifications**: `notifications`
-- **rewards**: `reward_ledger_entries`
+- **rewards**: `reward_items`, `reward_ledger_entries`, `reward_redemptions`
 - **route_planning**: `route_plans`, `route_stops`
 - **sorting_guide**: `material_categories`, `sorting_guidance`
 - **tracking**: `vehicle_location_events`

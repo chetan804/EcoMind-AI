@@ -6,26 +6,35 @@ import uuid
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Body, Depends, Request, Response, status
 
 from app.api.deps import AppSettings, DbSession
 from app.common.pagination import Page, PageParams, page_params
 from app.modules.audit.service import RequestContext
 from app.modules.auth.dependencies import Principal, require_permissions
-from app.modules.rewards import adjustments, service
-from app.modules.rewards.constants import LedgerEntryType, LedgerSourceType
+from app.modules.rewards import adjustments, catalog, service
+from app.modules.rewards.constants import LedgerEntryType, LedgerSourceType, RedemptionStatus
 from app.modules.rewards.models import RewardLedgerEntry
 from app.modules.rewards.schemas import (
     AdjustmentCreate,
     Balance,
+    CancelOwnRequest,
+    CatalogItemOut,
     EntryOut,
+    FulfilRequest,
+    ItemCreate,
+    ItemOut,
+    ItemUpdate,
     LedgerSummary,
+    RedeemRequest,
+    RedemptionOut,
     ReverseRequest,
 )
 
 router = APIRouter()
 
 Own = Annotated[Principal, Depends(require_permissions("rewards:read_own"))]
+Redeem = Annotated[Principal, Depends(require_permissions("rewards:redeem"))]
 Manage = Annotated[Principal, Depends(require_permissions("rewards:manage"))]
 Pagination = Annotated[PageParams, Depends(page_params)]
 
@@ -112,3 +121,116 @@ def reverse_entry(
         db, principal, entry_id, payload, context=RequestContext.from_request(request)
     )
     return EntryOut.model_validate(entry, from_attributes=True)
+
+
+# -- catalogue and redemptions -------------------------------------------------------------------
+@router.get("/catalog", response_model=Page[CatalogItemOut])
+def browse_catalog(db: DbSession, principal: Own, params: Pagination) -> Page[CatalogItemOut]:
+    """What the caller can spend points on: active, unexpired items (out-of-stock ones marked)."""
+    return catalog.catalog_for(db, principal, params)
+
+
+@router.post("/catalog/{item_id}/redeem", response_model=RedemptionOut)
+def redeem_item(
+    item_id: uuid.UUID,
+    payload: RedeemRequest,
+    request: Request,
+    response: Response,
+    db: DbSession,
+    principal: Redeem,
+) -> RedemptionOut:
+    """Spend points. `201` when new; `200` with the same body when `client_request_id` repeats."""
+    out, created = catalog.redeem(
+        db, principal, item_id, payload, context=RequestContext.from_request(request)
+    )
+    response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+    return out
+
+
+@router.get("/me/redemptions", response_model=Page[RedemptionOut])
+def my_redemptions(db: DbSession, principal: Own, params: Pagination) -> Page[RedemptionOut]:
+    return catalog.my_redemptions(db, principal, params)
+
+
+@router.post("/me/redemptions/{redemption_id}/cancel", response_model=RedemptionOut)
+def cancel_my_redemption(
+    redemption_id: uuid.UUID,
+    request: Request,
+    db: DbSession,
+    principal: Redeem,
+    payload: Annotated[CancelOwnRequest, Body(default_factory=CancelOwnRequest)],
+) -> RedemptionOut:
+    """Cancel your own pending redemption; the points come back."""
+    return catalog.cancel_own(
+        db, principal, redemption_id, payload, context=RequestContext.from_request(request)
+    )
+
+
+@router.get("/items", response_model=Page[ItemOut])
+def list_items(
+    db: DbSession, _: Manage, params: Pagination, active: bool | None = None
+) -> Page[ItemOut]:
+    return catalog.list_items(db, params, active=active)
+
+
+@router.post("/items", response_model=ItemOut, status_code=status.HTTP_201_CREATED)
+def create_item(payload: ItemCreate, request: Request, db: DbSession, principal: Manage) -> ItemOut:
+    return catalog.create_item(db, principal, payload, context=RequestContext.from_request(request))
+
+
+@router.patch("/items/{item_id}", response_model=ItemOut)
+def update_item(
+    item_id: uuid.UUID,
+    payload: ItemUpdate,
+    request: Request,
+    db: DbSession,
+    principal: Manage,
+) -> ItemOut:
+    return catalog.update_item(
+        db, principal, item_id, payload, context=RequestContext.from_request(request)
+    )
+
+
+@router.get("/redemptions", response_model=Page[RedemptionOut])
+def list_redemptions(
+    db: DbSession,
+    _: Manage,
+    params: Pagination,
+    status: RedemptionStatus | None = None,
+    code: str | None = None,
+    user_id: uuid.UUID | None = None,
+) -> Page[RedemptionOut]:
+    return catalog.list_redemptions(db, params, status=status, code=code, user_id=user_id)
+
+
+@router.post("/redemptions/{redemption_id}/fulfil", response_model=RedemptionOut)
+def fulfil_redemption(
+    redemption_id: uuid.UUID,
+    request: Request,
+    db: DbSession,
+    principal: Manage,
+    payload: Annotated[FulfilRequest, Body(default_factory=FulfilRequest)],
+) -> RedemptionOut:
+    """Staff: the reward was handed over."""
+    return catalog.fulfil(
+        db, principal, redemption_id, payload, context=RequestContext.from_request(request)
+    )
+
+
+@router.post("/redemptions/{redemption_id}/cancel", response_model=RedemptionOut)
+def cancel_redemption(
+    redemption_id: uuid.UUID,
+    payload: ReverseRequest,
+    request: Request,
+    db: DbSession,
+    principal: Manage,
+) -> RedemptionOut:
+    """Staff: cancel a pending redemption with a reason; the points and stock come back."""
+    return catalog.cancel(
+        db,
+        principal,
+        redemption_id,
+        payload.reason,
+        by_owner=False,
+        context=RequestContext.from_request(request),
+    )
