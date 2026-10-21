@@ -110,6 +110,19 @@ services:
       backend:
         condition: service_healthy
 
+  # Optional demonstration mail catcher (profile `demo-mail`, started by `make demo-mail-up`).
+  # Accepts what the backend sends and shows it at http://localhost:8025; nothing leaves the host.
+  # Credentials come from the git-ignored .env.demo-mail (scripts/setup/init_demo_mail.py).
+  mailpit:
+    image: axllent/mailpit:v1.31.6
+    profiles: ["demo-mail"]
+    environment:
+      MP_SMTP_AUTH: ${MAILPIT_SMTP_AUTH:-}
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"  # no TLS inside the private compose network (local only)
+      MP_MAX_MESSAGES: "500"
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+
 volumes:
   ecomind_pgdata:
   ecomind_storage:
