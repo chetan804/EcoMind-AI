@@ -1,11 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { expect, publicTest } from './fixtures';
-import { latestMailLink, mailLogCommand, waitForMailLink } from './mail';
+import { latestMailLink, mailAvailable, mailSource, messagesTo, waitForMailLink, waitForMessage } from './mail';
 
-// Real browser, real backend, real database. The e-mails are read from the backend's console
-// backend log (development only); see mail.ts. No network stubbing.
+// Real browser, real backend, real database. The e-mails are read from a Mailpit inbox that the
+// backend delivers to over SMTP (CI), or from the backend's console log (development); see mail.ts.
+// No network stubbing.
 
-publicTest.skip(!mailLogCommand, 'E2E_MAIL_LOG_COMMAND is not set: cannot read the e-mailed links');
+publicTest.skip(!mailAvailable, 'Neither E2E_MAILPIT_URL nor E2E_MAIL_LOG_COMMAND is set: cannot read the e-mailed links');
+const viaMailpit = mailSource === 'mailpit';
 
 const PASSWORD = 'first passphrase for e2e 2026';
 const NEW_PASSWORD = 'second passphrase for e2e 2026';
@@ -39,6 +41,15 @@ publicTest.describe('account recovery journey', () => {
 
     const link = await waitForMailLink(email, 'reset-password');
     expect(link).toContain('#token=');
+    if (viaMailpit) {
+      // What arrived is a real SMTP delivery, not a log line.
+      const mail = await waitForMessage(email, (m) => m.subject === 'Reset your EcoMind AI password');
+      expect(mail.from).toBe('no-reply@example.org');
+      expect(mail.to).toEqual([email]);
+      expect(mail.username, 'the backend authenticated to the SMTP server').not.toBe('');
+      expect(mail.text).toContain('Recovery Tester');
+      expect(new URL(link).search, 'the token travels in the fragment, never the query string').toBe('');
+    }
     await page.goto(link);
     await page.getByLabel(/^New password/).fill(NEW_PASSWORD);
     await page.getByLabel(/Confirm new password/).fill(NEW_PASSWORD);
@@ -56,6 +67,11 @@ publicTest.describe('account recovery journey', () => {
     await page.getByLabel(/^Password/).fill(NEW_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByRole('button', { name: 'Account menu' })).toBeVisible();
+    if (viaMailpit) {
+      // A password change is announced by e-mail, and that notice carries no link to steal.
+      const notice = await waitForMessage(email, (m) => m.subject === 'Your EcoMind AI password was changed');
+      expect(notice.text).not.toMatch(/#token=/);
+    }
 
     // The same link cannot be used again.
     await page.goto(link);
@@ -72,8 +88,9 @@ publicTest.describe('account recovery journey', () => {
     await page.getByRole('button', { name: 'Send reset link' }).click();
     await expect(page.getByRole('heading', { name: 'Check your inbox' })).toBeVisible();
     await expect(page.getByText('If an account exists for that address')).toBeVisible();
-    await page.waitForTimeout(1000); // the mail (if any) is sent after the response
-    expect(latestMailLink(unknown, 'reset-password')).toBeNull();
+    await page.waitForTimeout(2000); // the mail (if any) is sent after the response
+    expect(await latestMailLink(unknown, 'reset-password')).toBeNull();
+    if (viaMailpit) expect(await messagesTo(unknown), 'nothing at all is sent to an unknown address').toEqual([]);
   });
 
   publicTest('a new account is asked to confirm its address, and the e-mailed link confirms it', async ({ page }) => {
@@ -82,6 +99,11 @@ publicTest.describe('account recovery journey', () => {
     await expect(page.getByText('Confirm your email address')).toBeVisible();
 
     const link = await waitForMailLink(email, 'verify-email');
+    if (viaMailpit) {
+      const mail = await waitForMessage(email, (m) => m.subject === 'Confirm your EcoMind AI e-mail address');
+      expect(mail.from).toBe('no-reply@example.org');
+      expect(mail.username).not.toBe('');
+    }
     await page.goto(link);
     // Opening the link alone confirms nothing: a button press is required.
     await expect(page.getByRole('heading', { name: 'Confirm your email' })).toBeVisible();

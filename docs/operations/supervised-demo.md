@@ -13,6 +13,7 @@ Do **not** expose this stack to the Internet. It uses the local development Comp
 1. `make env` (creates `.env` files with generated secrets; never overwrites).
 2. `make demo-mail-up` (stack plus a Mailpit inbox at http://localhost:8025; creates `.env.demo-mail`).
    Plain `make up` also works; then e-mails appear in `docker compose logs backend`.
+   The CI browser tests use the same Mailpit set-up (see `docs/operations/account-recovery.md`).
 3. Load the help articles once: `docker compose exec backend python -m app.cli seed-support-knowledge`.
    Without them the assistant answers "no answer" to everything (the browser suite fails for this reason on an empty database).
 4. Create the demo people (password of your choice, 12 or more characters; change it any time by re-running with `--reset-passwords`):

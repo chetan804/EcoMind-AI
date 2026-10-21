@@ -122,6 +122,13 @@ services:
       MP_MAX_MESSAGES: "500"
     ports:
       - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      # The image is minimal (no curl/wget); Mailpit ships its own readiness probe.
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
 
 volumes:
   ecomind_pgdata:
