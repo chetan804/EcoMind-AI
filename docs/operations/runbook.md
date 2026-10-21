@@ -88,5 +88,15 @@ Full guide: [`account-recovery.md`](account-recovery.md). Nothing is sent until 
 - **Support:** `python -m app.cli mark-email-verified --email <address>` confirms an address by hand when a user cannot receive mail (audited). A forgotten password is reset by the user through the e-mail flow; there is deliberately no way for staff to read or set a password.
 - Real SMTP delivery has been tested only against a local fake server. Before enabling it, send a test message through your provider and confirm SPF/DKIM for the `EMAIL_FROM` domain.
 
+## Help assistant and support desk
+Design: [`../decisions/ADR-0003-retrieval-help-assistant.md`](../decisions/ADR-0003-retrieval-help-assistant.md); API: [`../api/support-api.md`](../api/support-api.md).
+
+- **First deployment:** after `alembic upgrade head`, run `python -m app.cli seed-support-knowledge` once. It loads the 31 starter articles (`backend/app/modules/support/knowledge/platform_help.json`) and is safe to repeat: articles that staff have edited in the application are not overwritten. Without articles the assistant can only read the person's own data and answers everything else with "no answer".
+- **Review the articles for your deployment** (screen names, limits such as the listing lifetime and points per kilogram, who to contact). They describe the platform's defaults, not your organisation's policies. Staff keep them under Support, Help articles.
+- **Daily job:** `python -m app.cli purge-assistant-conversations` removes conversations idle for `ASSISTANT_RETENTION_DAYS` (default 90), keeping any attached to a support request, e.g. `45 3 * * * cd /app && python -m app.cli purge-assistant-conversations`.
+- **Who can use it:** `support:ask` is held by every role; `support:manage` (queue) and `knowledge:manage` (articles) by managers and administrators. Staff who open a request with a shared chat are audited (`support_ticket.transcript_viewed`).
+- **Quality check:** `pytest backend/tests/api/test_support_assistant_quality.py` runs on every CI build. After editing many articles, run it and read `docs/ml/support-assistant.md` for what the numbers do and do not mean.
+- Requesters are told of replies by in-app notification only; no e-mail is sent.
+
 ## Marketplace listing expiry
 `python -m app.cli expire-marketplace-listings` closes published listings past their expiry (outcome `expired`), tells owners and the requesters whose requests were declined, and warns owners of listings that lapse within 3 days. Idempotent; run it daily, e.g. `30 3 * * * cd /app && python -m app.cli expire-marketplace-listings`. `MARKETPLACE_LISTING_DAYS` (default 30, 1–90) sets the default lifetime. Until the job runs, the API already hides and refuses lapsed listings, so a missed run delays notifications, not correctness. Details: [`../api/marketplace-api.md`](../api/marketplace-api.md).

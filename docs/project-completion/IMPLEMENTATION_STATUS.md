@@ -17,8 +17,8 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 
 `main` is at `8ebe716` (PR #11 merged: offline map, optional OSRM, TACO audit). This branch carries the five production-hardening
 steps (Phase J below): supply chain and CI, account recovery, marketplace completion, reward redemption, accessibility audit, plus
-three defects found on the way. Alembic head is `0014` (0012 account tokens, 0013 marketplace, 0014 reward catalogue and redemptions);
-43 permissions (new: `rewards:redeem`). **Nothing is deployed and the branch is not merged.**
+three defects found on the way. Alembic head is `0015` (0012 account tokens, 0013 marketplace, 0014 reward catalogue and redemptions, 0015 help assistant and support desk);
+46 permissions (new: `rewards:redeem`, `support:ask`, `support:manage`, `knowledge:manage`). Phase K adds the help assistant (retrieval only) and support desk. **Nothing is deployed and the branch is not merged.**
 
 The sections below this one that describe "this branch" in earlier phases (B to I) are history of work that is already on `main`.
 
@@ -42,12 +42,12 @@ loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only s
 
 ## 2. Capability matrix
 
-### Backend modules (all 20 have routes, tests and an API document under `docs/api/`)
+### Backend modules (all 21 have routes, tests and an API document under `docs/api/`)
 
 | Module | Status | Notes |
 |---|---|---|
 | auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
-| users / roles / permissions | **Verified** | 42 permissions, 5 roles, drift-guard test. |
+| users / roles / permissions | **Verified** | 46 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
 | classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
@@ -61,7 +61,8 @@ loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only s
 | sorting_guide | **Verified** | Ships no rules; entries are created by managers. |
 | circular_economy (material recovery) | **Verified** | Verification needs a different person than the recorder. |
 | material_passports | **Verified** | Chain of custody; integrity check is a consistency check only. |
-| rewards | **Verified** | Append-only ledger, no redemption. |
+| rewards | **Verified** | Append-only ledger, staff catalogue, claim-code redemption (hand-over only). |
+| support (help assistant, knowledge base, support requests) | **Verified; retrieval only** | Migration 0015, 3 permissions, 38 API tests plus 4 quality tests over two question sets, 11 mutation checks caught; no generative model (ADR-0003); held-out top-1 0.55, contaminated (`docs/ml/support-assistant.md`). |
 | notifications | **Verified** | |
 | community_incidents | **Verified** | 9 tests; 6 mutations (2 equivalent survivors). |
 | analytics | **Verified** | Query-based; `recovery_rate` is null without verified input. |
@@ -302,3 +303,27 @@ Defects found by checking, not by being told:
 
 Local results for the branch: backend 706 passed / 1 skipped before the tracking change (the tracking file now has 43 tests); vitest 345; contract 37;
 ML 58; e2e 29 passed / 1 skipped on the run before the registration-limit change. **See the PR for the CI result of the final head; it is not recorded here to avoid a stale claim.**
+
+### Phase K: help assistant and support desk (branch `arena/34eb0c5c-ecomind-ai`, PR #12)
+
+Request: "complete the rest of the project: frontend, backend, database, role based auth, ml and an AI chatbot to solve the customer queries". The rest of the areas were already built (see section 2); the missing piece was the chatbot, plus three directive documents.
+
+| Item | What exists | Evidence (local, this sandbox) |
+|---|---|---|
+| Backend | `backend/app/modules/support/` (retrieval, own-data intents, assistant, knowledge base, tickets), migration 0015 (knowledge articles with a generated search vector, conversations, messages, tickets, replies, 3 permissions), CLI `seed-support-knowledge` / `purge-assistant-conversations`, `ASSISTANT_RETENTION_DAYS` | `test_support.py` 38 tests; `test_cli.py` 5; mutation checks (conversation ownership, feedback target, ticket visibility, reopen on reply, assignee must be staff, purge cutoff, seed keeps edits, transcript consent and audit, procedural-question rule, anchor rule) all failed the suite as they should |
+| Quality | 31 starter articles; two author-written question sets in `backend/tests/data/assistant_eval.json`, gated in CI | Development top-1 0.953 (tuned), held-out 0.550 (contaminated), wrong-article 0.031 / 0.000, false answers to out-of-scope questions 0.050 / 0.000; see `docs/ml/support-assistant.md` |
+| Frontend | `/assistant` chat (origin label, sources, related articles, feedback, send-to-staff with opt-in chat sharing) and `/support` (my requests; staff queue, usage, article editor); nav entries "Help assistant" and "Support" | vitest 362 passed (17 new); `docs/ui/evidence/screens/assistant-render.png`, `support-queue-render.png`, `support-articles-render.png` |
+| End to end | `tests/e2e/specs/support.spec.ts` (two tests), `/assistant` and `/support` added to the axe scan; CI seeds the starter articles | full e2e run on this branch: 31 passed / 1 skipped (`--workers=2`, includes axe in both themes over 22 routes) |
+| Documents | `docs/api/support-api.md`, ADR-0003, `docs/ml/support-assistant.md`, runbook section, `LIMITATIONS.md`, `DECISION_LOG.md`, `RELEASE_CHECKLIST.md`, `TRACEABILITY_MATRIX.md`; data dictionary, ER diagram and route matrix regenerated | `--check` of each generator and `check_structure.py` |
+
+Defects found by checking:
+
+| Defect | Cause and fix |
+|---|---|
+| "How do I redeem my points?" answered with the user's balance | The own-points pattern matched "my points". Added a rule that how-to phrasing with an action verb goes to the help articles; parametrised test |
+| Body-only word matches (e.g. "time", "name") produced answers to unrelated questions | Added the anchor rule (title or keyword match required); out-of-scope false answers on the held-out set fell from 2 of 16 to 0 |
+| Data-dictionary generator crashed on a generated (`Computed`) column | Handles `Computed` columns |
+| Notification "Mark as read" button's accessible name did not contain its visible text (axe `label-content-name-mismatch`, WCAG 2.5.3) | Hidden until the e2e account had a notification; label is now `Mark as read: <title>` and tests updated |
+| Several help articles named screens or buttons wrongly (found by checking each claim against the UI and code) | Corrected: Waste intake records screen, Classification screen title, Guide, Redeem tab, "Send this to the support team", route-plan wording |
+
+Local results at the end of Phase K: backend 750 passed / 1 skipped (full run before the last wording edits to the starter articles; the support, quality and CLI files were re-run after them: 47 passed); vitest 362; contract 37; e2e 31 passed / 1 skipped; ML unchanged (58, not re-run). **See the PR for the CI result of the final head; it is not recorded here to avoid a stale claim.**
