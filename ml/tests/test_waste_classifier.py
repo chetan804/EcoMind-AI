@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from ml.waste_classification.inference.classifier import (
 )
 from ml.waste_classification.inference.embedder import (
     ArtifactIntegrityError,
+    InferenceRuntimeMissingError,
     TFLiteEmbedder,
     sha256_file,
 )
@@ -127,3 +129,14 @@ def test_embedder_refuses_a_backbone_with_the_wrong_hash(tmp_path: Path) -> None
     fake.write_bytes(b"not a model")
     with pytest.raises(ArtifactIntegrityError):
         TFLiteEmbedder(fake, expected_sha256="0" * 64)
+
+
+def test_a_missing_inference_runtime_is_reported_with_the_fix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake = tmp_path / "model.tflite"
+    fake.write_bytes(b"not a model")
+    monkeypatch.setitem(sys.modules, "ai_edge_litert", None)  # makes `import ai_edge_litert` fail
+    monkeypatch.setitem(sys.modules, "ai_edge_litert.interpreter", None)
+    with pytest.raises(InferenceRuntimeMissingError, match=r"pip install -r ml/requirements\.txt"):
+        TFLiteEmbedder(fake)
