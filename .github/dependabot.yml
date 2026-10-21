@@ -1,0 +1,52 @@
+# Automated dependency update pull requests. Each PR runs the full CI; none is merged blind.
+#
+# Not covered here on purpose:
+#  * Python: installs come from the hash-pinned lock files (backend/requirements*.lock,
+#    ml/requirements-dev.lock), which Dependabot cannot rewrite. The weekly Security workflow
+#    (pip-audit) reports advisories; upgrade with scripts/dependencies/lock_backend.sh
+#    (see docs/operations/dependency-management.md).
+#  * Dockerfiles: they are named backend.Dockerfile / frontend.Dockerfile, which Dependabot's docker
+#    ecosystem does not discover. Base images are reviewed per docs/operations/dependency-management.md.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      frontend-npm:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "frontend"
+
+
+  - package-ecosystem: npm
+    directory: /tests/e2e
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      e2e-npm:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "e2e"
+
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "docker"
