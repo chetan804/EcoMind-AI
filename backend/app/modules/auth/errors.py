@@ -47,6 +47,18 @@ class WeakPasswordError(AppError):
     code = "weak_password"
 
 
+class MfaEnrollmentRequiredError(ForbiddenError):
+    """The person's role requires two-step verification and it is not switched on yet."""
+
+    code = "mfa_enrollment_required"
+
+
+class MfaRequiredForRoleError(ConflictError):
+    """Two-step verification cannot be switched off while a role of the person requires it."""
+
+    code = "mfa_required_for_role"
+
+
 class MfaAlreadyEnabledError(ConflictError):
     code = "mfa_already_enabled"
 

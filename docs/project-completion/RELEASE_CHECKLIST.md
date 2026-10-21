@@ -26,7 +26,7 @@ Tick each item with evidence (a command output, a CI run URL, a screenshot path)
 - [ ] `python -m app.cli seed-support-knowledge` run; the help articles reviewed for this organisation's policies.
 - [ ] Demo data (`scripts/demo/seed_demo.py`, local-only by design) has not been run against this database.
 - [ ] Scheduled jobs installed: `purge-account-tokens`, `expire-marketplace-listings`, `purge-assistant-conversations`.
-- [ ] MFA enrolment decided for administrators and managers (still optional in the product). **owner**
+- [ ] `MFA_REQUIRED_ROLES` reviewed (default: administrators and managers in production). Existing privileged accounts are held to Settings, Security until they enrol, so tell them before the release and keep one administrator able to run `reset-mfa`. **owner**
 
 ## 5. ML
 - [ ] No model is active unless its model card, licence audit and held-out metrics are on file. The 1.0.0 candidate is non-default and its artifact is not shipped in Git.

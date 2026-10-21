@@ -15,7 +15,10 @@ from urllib.parse import urlsplit
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+from app.modules.users.rbac import ROLES  # plain constants, imports nothing
+
 MIN_SECRET_KEY_LENGTH = 32
+_KNOWN_ROLES = tuple(ROLES)
 _PLACEHOLDER_MARKERS = ("change_me", "changeme", "replace-with", "replace_with")
 
 
@@ -46,6 +49,13 @@ class Settings(BaseSettings):
     # is the production policy; raise it only for a throw-away test stack that registers many
     # accounts from one address (the end-to-end suite), never in a deployment.
     registration_limit_per_ip_per_hour: int = Field(default=10, ge=1, le=10_000)
+
+    # Roles that must have two-step verification (TOTP) switched on. Unset resolves to
+    # "administrator,manager" in production and to none elsewhere. Such a person can still sign in,
+    # but only to set it up: every other endpoint answers 403 `mfa_enrollment_required` until the
+    # factor is confirmed (checked on every request, so it cannot be skipped by keeping a token).
+    # Comma-separated role names; blank = default policy; `none` = nobody (an owner decision).
+    mfa_required_roles: Annotated[list[str], NoDecode] | None = None
 
     # Days an idle help-assistant conversation is kept before the daily purge removes it
     # (conversations a person shared with a support ticket are kept with the ticket).
@@ -190,6 +200,35 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @field_validator("mfa_required_roles", mode="before")
+    @classmethod
+    def _split_roles(cls, value: object) -> object:
+        if isinstance(value, str):
+            names = [role.strip() for role in value.split(",") if role.strip()]
+            # Empty means "not configured" (the default policy applies), so a blank variable can
+            # never switch the requirement off by accident; `none` is the explicit opt-out.
+            if not names:
+                return None
+            return [] if names == ["none"] else names
+        return value
+
+    @field_validator("mfa_required_roles")
+    @classmethod
+    def _known_roles(cls, value: list[str] | None) -> list[str] | None:
+        if value is not None:
+            unknown = sorted(set(value) - set(_KNOWN_ROLES))
+            if unknown:
+                raise ValueError(f"MFA_REQUIRED_ROLES names unknown roles: {', '.join(unknown)}")
+        return value
+
+    @property
+    def effective_mfa_required_roles(self) -> frozenset[str]:
+        if self.mfa_required_roles is not None:
+            return frozenset(self.mfa_required_roles)
+        if self.environment == "production":
+            return frozenset({"administrator", "manager"})
+        return frozenset()
 
     @field_validator("database_url")
     @classmethod

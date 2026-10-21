@@ -25,6 +25,8 @@ from app.api.deps import AppSettings, DbSession
 from app.core.exceptions import ForbiddenError, UnauthenticatedError
 from app.core.permissions import ensure_permissions
 from app.core.security import CSRF_HEADER, CSRF_HEADER_VALUE, decode_access_token
+from app.modules.auth import mfa
+from app.modules.auth.errors import MfaEnrollmentRequiredError
 from app.modules.users import repository as users
 
 _bearer = HTTPBearer(auto_error=False, description="Short-lived access token from /auth/login")
@@ -39,6 +41,9 @@ class Principal:
     roles: frozenset[str]
     permissions: frozenset[str]
     email_verified: bool = False
+    # A role of this person requires two-step verification and it is not active yet: the person
+    # may only set it up (see ``ActivePrincipal`` and ``require_permissions``).
+    mfa_enrollment_required: bool = False
 
     def has(self, permission: str) -> bool:
         return permission in self.permissions
@@ -63,17 +68,36 @@ def get_current_principal(
     user = users.get_by_id(db, user_id)
     if user is None or not user.is_active:
         raise UnauthenticatedError("Invalid or expired access token", headers=_CHALLENGE)
+    roles = frozenset(users.role_names(db, user.id))
     return Principal(
         user_id=user.id,
         email=user.email,
         full_name=user.full_name,
-        roles=frozenset(users.role_names(db, user.id)),
+        roles=roles,
         permissions=frozenset(users.permission_codes(db, user.id)),
         email_verified=user.email_verified_at is not None,
+        mfa_enrollment_required=mfa.enrollment_required(db, settings, user.id, roles),
     )
 
 
 CurrentPrincipal = Annotated[Principal, Depends(get_current_principal)]
+
+
+def _refuse_until_mfa_is_set_up(principal: Principal) -> None:
+    if principal.mfa_enrollment_required:
+        raise MfaEnrollmentRequiredError(
+            "Your role requires two-step verification. Set it up under Settings, Security."
+        )
+
+
+def get_active_principal(principal: CurrentPrincipal) -> Principal:
+    """Like ``get_current_principal`` but refuses people who still have to set up two-step
+    verification. The account and two-step endpoints use the plain one so they remain reachable."""
+    _refuse_until_mfa_is_set_up(principal)
+    return principal
+
+
+ActivePrincipal = Annotated[Principal, Depends(get_active_principal)]
 
 
 def require_permissions(*required: str) -> Callable[[Principal], Principal]:
@@ -81,7 +105,7 @@ def require_permissions(*required: str) -> Callable[[Principal], Principal]:
     if not required:
         raise ValueError("require_permissions needs at least one permission")
 
-    def dependency(principal: CurrentPrincipal) -> Principal:
+    def dependency(principal: ActivePrincipal) -> Principal:
         ensure_permissions(principal.permissions, required)
         return principal
 
@@ -97,7 +121,7 @@ def require_any_permission(*accepted: str) -> Callable[[Principal], Principal]:
     if not accepted:
         raise ValueError("require_any_permission needs at least one permission")
 
-    def dependency(principal: CurrentPrincipal) -> Principal:
+    def dependency(principal: ActivePrincipal) -> Principal:
         if not any(principal.has(code) for code in accepted):
             # Same message as require_permissions: never reveal which permission was needed.
             raise ForbiddenError("You do not have permission to perform this action")

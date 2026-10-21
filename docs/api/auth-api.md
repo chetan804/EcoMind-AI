@@ -50,6 +50,8 @@ Details, threat model and limits: `docs/security/mfa.md`.
 | `POST /mfa/disable` | Bearer | Body `{password, code}` (code may be a recovery code). `204`. `401 invalid_credentials`, `422 invalid_mfa_code`, `409 mfa_not_enabled` |
 | `POST /mfa/recovery-codes` | Bearer | Body `{password, code}`. Replaces all recovery codes; returns ten new ones once |
 
+`mfa_enrollment_required` (on `GET /me`, the sign-in responses and the refresh response) is `true` when a role of the person requires two-step verification (`MFA_REQUIRED_ROLES`, default administrator and manager in production) that is not switched on. Every endpoint outside `/auth` then answers `403 mfa_enrollment_required`, and `POST /mfa/disable` answers `409 mfa_required_for_role` for such roles. See `docs/security/mfa.md`.
+
 Second-step errors: `401 invalid_mfa_code` (wrong code, replayed code, expired or invalid `mfa_token`, deactivated account; deliberately one code), `429 rate_limited` after five wrong codes in 15 minutes. An administrator can remove a locked-out user's authenticator with `POST /api/v1/admin/users/{id}/reset-mfa`.
 
 ### `POST /refresh` → `200`

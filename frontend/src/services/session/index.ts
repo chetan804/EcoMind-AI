@@ -20,6 +20,7 @@ export {
   clearSession,
   getAccessToken,
   getSessionState,
+  reloadSessionUser,
   resetSessionForTests,
   SESSION_HINT_KEY,
   type SessionState,

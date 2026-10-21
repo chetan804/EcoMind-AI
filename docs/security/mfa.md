@@ -1,6 +1,6 @@
 # Two-factor authentication (TOTP)
 
-**Status:** implemented in the backend (migration `0008`, `app/modules/auth/{totp,mfa}.py`). Optional per user; the platform does not force any role to enrol.
+**Status:** implemented in the backend (migration `0008`, `app/modules/auth/{totp,mfa}.py`). Optional per user by default; in production administrators and managers must enrol (see "Required roles").
 
 ## What it is
 
@@ -34,9 +34,17 @@ Audit events: `auth.mfa_enrolment_started`, `auth.mfa_enabled`, `auth.mfa_succee
 * **Rotating `SECRET_KEY`** invalidates every stored authenticator secret and recovery-code hash, and signs out everyone anyway. Affected users get `409 mfa_secret_unreadable` and need an administrator reset. Plan rotation as a maintenance event.
 * **Dependency:** `cryptography` (Fernet, HKDF). Everything else is standard library.
 
+## Required roles
+
+`MFA_REQUIRED_ROLES` (comma-separated role names) lists the roles that must use two-step verification. Unset or blank it resolves to `administrator,manager` when `ENVIRONMENT=production` and to nobody otherwise, so local and CI stacks stay usable without an authenticator; `none` is the explicit opt-out, and an unknown role name stops the application at startup.
+
+A person holding any listed role who has not completed enrolment can still sign in, but the server answers every endpoint except the account and two-step ones (`/auth/*`, which is how they enrol) with `403 mfa_enrollment_required`, including the signed-in-only `GET /classification/model`. The check reads the database on every request, so it cannot be avoided by keeping an old token, by starting but not confirming an enrolment, or by holding a second, unrestricted role. `GET /auth/me` and the sign-in response carry `mfa_enrollment_required`, and the web app sends such a person to Settings, Security with an explanation; the restriction lifts the moment the code is confirmed. While a listed role is held, `POST /auth/mfa/disable` is refused with `409 mfa_required_for_role`. Administrators who reset someone's factor (`reset-mfa`) put that person back in the enrolment-only state.
+
+Tests: `backend/tests/api/test_mfa_enforcement.py` (nine cases; removing the check or the disable refusal fails them), `tests/unit/test_config.py`, and `frontend/tests/integration/security.test.tsx`.
+
 ## Limitations
 
 * TOTP only: no WebAuthn/passkeys, SMS or email codes.
-* No policy forcing MFA for administrators; that is an owner decision (see `docs/security/security-baseline.md`).
+* The requirement covers roles, not individual accounts, and only TOTP satisfies it; a locked-out required user is reset by another administrator (`reset-mfa`) and must enrol again before doing anything else.
 * Existing refresh sessions stay valid when MFA is switched on; the user can sign out other devices by changing the password.
 * Recovery codes are shown once and cannot be retrieved; a user who loses them re-issues new ones while still signed in.

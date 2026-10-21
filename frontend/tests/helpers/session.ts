@@ -9,6 +9,7 @@ export const testUser: SessionUser = {
   roles: ['citizen'],
   permissions: ['waste_reports:create', 'classification:predict', 'sorting_guide:read', 'marketplace:read'],
   email_verified: true,
+  mfa_enrollment_required: false,
 };
 
 export const authResponse = (user: SessionUser = testUser, token = 'test-access-token'): AuthResponse => ({

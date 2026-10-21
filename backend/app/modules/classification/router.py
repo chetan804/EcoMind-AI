@@ -11,7 +11,7 @@ from app.api.deps import AppSettings, DbSession
 from app.common.pagination import Page, PageParams, page_params
 from app.integrations.file_storage import FileStorage, LocalFileStorage
 from app.modules.audit.service import RequestContext
-from app.modules.auth.dependencies import CurrentPrincipal, Principal, require_permissions
+from app.modules.auth.dependencies import ActivePrincipal, Principal, require_permissions
 from app.modules.classification import service
 from app.modules.classification.constants import ReviewStatus
 from app.modules.classification.provider import RuntimeProvider, get_runtime_provider
@@ -41,7 +41,7 @@ Storage = Annotated[FileStorage, Depends(get_storage)]
 
 
 @router.get("/model", response_model=ActiveModelOut)
-def active_model(db: DbSession, _: CurrentPrincipal) -> ActiveModelOut:
+def active_model(db: DbSession, _: ActivePrincipal) -> ActiveModelOut:
     """Which model (if any) answers predictions. ``active`` is null when none is active."""
     return service.active_model(db)
 

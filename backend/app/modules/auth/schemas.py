@@ -45,6 +45,11 @@ class UserOut(BaseModel):
     roles: list[str]
     permissions: list[str]
     email_verified: bool = Field(description="The address was confirmed by a link sent to it")
+    mfa_enrollment_required: bool = Field(
+        default=False,
+        description="A role requires two-step verification that is not set up yet; until it is, "
+        "every endpoint except the account and two-step ones answers 403 mfa_enrollment_required",
+    )
 
 
 class AuthResponse(BaseModel):

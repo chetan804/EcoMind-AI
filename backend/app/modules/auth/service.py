@@ -62,6 +62,7 @@ class UserView:
     roles: list[str]
     permissions: list[str]
     email_verified: bool = False
+    mfa_enrollment_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -92,14 +93,16 @@ def _email_digest(email: str) -> str:
     return hashlib.sha256(users.normalize_email(email).encode()).hexdigest()
 
 
-def user_view(db: Session, user: User) -> UserView:
+def user_view(db: Session, settings: Settings, user: User) -> UserView:
+    roles = users.role_names(db, user.id)
     return UserView(
         id=user.id,
         email=user.email,
         full_name=user.full_name,
-        roles=users.role_names(db, user.id),
+        roles=roles,
         permissions=sorted(users.permission_codes(db, user.id)),
         email_verified=user.email_verified_at is not None,
+        mfa_enrollment_required=mfa.enrollment_required(db, settings, user.id, roles),
     )
 
 
@@ -216,7 +219,7 @@ def register(
     access, refresh, expires_in = _issue_tokens(
         db, settings, user, family_id=uuid.uuid4(), context=context, now=now
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
     return AuthResult(
         view, access, refresh, expires_in, emails=(verification,) if verification else ()
@@ -311,7 +314,7 @@ def finish_login(
         context=context,
         changes={"email_sha256": _email_digest(user.email)},
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
     return AuthResult(view, access, refresh, expires_in)
 
@@ -359,7 +362,7 @@ def refresh(
     access, new_refresh, expires_in = _issue_tokens(
         db, settings, user, family_id=session.family_id, context=context, now=now
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
     return AuthResult(view, access, new_refresh, expires_in)
 
@@ -434,7 +437,7 @@ def change_password(
         context=context,
         changes={"sessions_revoked": revoked},
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
     notice = recovery.password_changed_notice(user, how="from the account page")
     return AuthResult(

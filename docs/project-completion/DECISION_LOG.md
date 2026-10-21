@@ -16,7 +16,7 @@ Decisions taken during the autonomous build, newest last. Architectural ones hav
 | 10 | 2026-10-21 | The help assistant is retrieval-only (quotes articles, reads own data, says "I don't know") | No LLM provider/key/data agreement; cannot hallucinate; private; testable offline | Hosted or self-hosted LLM | ADR-0003 |
 | 11 | 2026-10-21 | Assistant answers need an anchored match (title or keyword) and 60% query coverage; near misses are only suggested | Body-only coincidences ("time", "name") produced false answers (held-out 2 of 16) | Lower threshold; ranking only | `docs/ml/support-assistant.md` |
 | 12 | 2026-10-21 | A chat is shared with staff only when the requester ticks a box; staff reading it is audited; idle chats are purged after 90 days unless attached to a request | Privacy by default | Always attach the chat | `docs/api/support-api.md` |
-| 13 | 2026-10-21 | MFA stays optional for all roles in this phase | Enforcing it needs an enrolment-only session state and a rollout plan (existing admins, recovery); doing it half-way would lock people out or add a bypass | A quick "required" flag checked only in the UI | LIMITATIONS.md |
+| 13 | 2026-10-21 (revised same day) | Administrators and managers must use MFA in production; optional elsewhere. Superseded the earlier "optional for all roles" entry | The owner asked for production-grade choices. Built the enrolment-only state properly: the server refuses every non-`/auth` endpoint with `403 mfa_enrollment_required`, checked on every request, plus `409` when a required role tries to switch it off. Blank config can never disable it (`none` is the explicit opt-out) | A flag checked only in the UI (bypassable); a grace period (leaves privileged accounts unprotected); forcing it in local/CI (breaks stacks with no authenticator) | `docs/security/mfa.md`, LIMITATIONS.md |
 | 14 | 2026-10-21 | Evaluation sets for the assistant are reported as author-written and, for the held-out one, contaminated | Overstating quality would mislead operators | Presenting the numbers as accuracy | `docs/ml/support-assistant.md` |
 
 ## Open owner decisions
@@ -25,5 +25,5 @@ Decisions taken during the autonomous build, newest last. Architectural ones hav
 3. Whether the TrashBox authors permit use (otherwise it stays excluded).
 4. GitGuardian "Generic Password" finding on a test file: dismissal is owner-only.
 5. Whether to add a generative layer to the assistant, with which provider, and under what data-processing terms.
-6. Whether and when to require MFA for administrators and managers.
+6. Whether to widen the MFA requirement beyond administrators and managers (collectors, operators), or add a grace period, and who resets a locked-out sole administrator.
 7. The real SMTP server and the sender address for account and support e-mail (nothing has been delivered through real SMTP).

@@ -329,3 +329,16 @@ Defects found by checking:
 | Several help articles named screens or buttons wrongly (found by checking each claim against the UI and code) | Corrected: Waste intake records screen, Classification screen title, Guide, Redeem tab, "Send this to the support team", route-plan wording |
 
 Local results at the end of Phase K: backend 750 passed / 1 skipped (full run in a clean environment, `env -i` with only `TEST_DATABASE_URL`); vitest 362; contract 37; e2e 31 passed / 1 skipped; ML unchanged (58, not re-run). **See the PR for the CI result of the final head; it is not recorded here to avoid a stale claim.**
+
+### Phase L: MFA required for privileged roles (branch `arena/34eb0c5c-ecomind-ai`, PR #12)
+
+Role-based authentication had one open gap: two-step verification was optional for everyone, including administrators (previous DECISION_LOG #13). It is now enforced, by policy, in production.
+
+| Item | What exists | Evidence (local, this sandbox) |
+|---|---|---|
+| Policy | `MFA_REQUIRED_ROLES` (comma-separated roles). Blank/unset: `administrator,manager` in production, nobody elsewhere. `none` opts out. Unknown role names stop startup | `tests/unit/test_config.py` (3 new tests, including "a blank variable does not switch it off") |
+| Enforcement | `Principal.mfa_enrollment_required` is computed from the database on every request. `require_permissions`, `require_any_permission` and the new `ActivePrincipal` (used by `GET /classification/model`) answer `403 mfa_enrollment_required`; `/auth/*` stays reachable so the person can enrol. `POST /auth/mfa/disable` is refused (`409 mfa_required_for_role`) for required roles | `tests/api/test_mfa_enforcement.py`, 9 tests: blocked until enrolled; a pending (unconfirmed) factor does not count; a second, unrestricted role does not escape; released immediately after confirmation without a new token; citizens unaffected; not enforced by default outside production. Mutations (removing the check, removing the disable refusal) each failed the suite |
+| Client | `mfa_enrollment_required` on `/auth/me` and the sign-in/refresh responses; `RequireAuth` sends such a person to Settings, Security, where a banner explains why; the session user is reloaded when the code is confirmed | `tests/integration/security.test.tsx` 3 new tests (redirect and banner; released after confirmation; others unaffected); the redirect mutation failed the first test |
+| Documents | `docs/security/mfa.md` (Required roles section), `docs/api/auth-api.md`, `DECISION_LOG.md` #13 (revised), `LIMITATIONS.md`, `RELEASE_CHECKLIST.md`, `TRACEABILITY_MATRIX.md`, both `.env.example` files, `compose.yaml` | `check_env_templates.py`, `check_structure.py`, route-matrix and data-dictionary `--check` pass |
+
+Not verified: no end-to-end (browser) test of the enforced flow, because the CI stack runs with `ENVIRONMENT=local` (policy off) and a browser test would need a TOTP generator and a privileged account; the API and component tests cover the behaviour. No production deployment exists to observe.

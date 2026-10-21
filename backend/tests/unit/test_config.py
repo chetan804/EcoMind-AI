@@ -144,3 +144,40 @@ def test_mail_settings_reject_malformed_values() -> None:
         _mail_settings(app_base_url="https://user:pw@app.example.org")
     # Blank environment values mean "unset", not "invalid".
     assert _mail_settings(email_backend="", email_from=" ", smtp_host="").email_from is None
+
+
+def test_mfa_is_required_for_privileged_roles_only_in_production() -> None:
+    assert build().effective_mfa_required_roles == frozenset()
+    production = build(
+        environment="production",
+        refresh_cookie_secure=True,
+        cors_allowed_origins="https://app.example.org",
+    )
+    assert production.effective_mfa_required_roles == {"administrator", "manager"}
+
+
+def test_mfa_required_roles_can_be_set_or_switched_off_explicitly() -> None:
+    assert build(mfa_required_roles="administrator, collector").effective_mfa_required_roles == {
+        "administrator",
+        "collector",
+    }
+    off = build(
+        environment="production",
+        refresh_cookie_secure=True,
+        cors_allowed_origins="https://app.example.org",
+        mfa_required_roles="none",
+    )
+    assert off.effective_mfa_required_roles == frozenset()
+    # a blank variable (an empty line in a deployment file) must not switch the policy off
+    blank = build(
+        environment="production",
+        refresh_cookie_secure=True,
+        cors_allowed_origins="https://app.example.org",
+        mfa_required_roles=" ",
+    )
+    assert blank.effective_mfa_required_roles == {"administrator", "manager"}
+
+
+def test_mfa_required_roles_must_be_real_roles() -> None:
+    with pytest.raises(ValueError, match="unknown roles: admin"):
+        build(mfa_required_roles="admin,manager")

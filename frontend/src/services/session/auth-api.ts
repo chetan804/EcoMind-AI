@@ -8,6 +8,8 @@ export interface SessionUser {
   permissions: string[];
   /** The address was confirmed through a link sent to it. */
   email_verified: boolean;
+  /** A role requires two-step verification that is not set up yet: only the Security page works. */
+  mfa_enrollment_required: boolean;
 }
 
 export interface AuthResponse {

@@ -97,6 +97,7 @@ def _body(result: service.AuthResult) -> AuthResponse:
             roles=user.roles,
             permissions=user.permissions,
             email_verified=user.email_verified,
+            mfa_enrollment_required=user.mfa_enrollment_required,
         ),
     )
 
@@ -234,6 +235,7 @@ def me(principal: CurrentPrincipal) -> UserOut:
         roles=sorted(principal.roles),
         permissions=sorted(principal.permissions),
         email_verified=principal.email_verified,
+        mfa_enrollment_required=principal.mfa_enrollment_required,
     )
 
 

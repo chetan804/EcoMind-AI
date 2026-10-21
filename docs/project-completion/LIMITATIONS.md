@@ -32,7 +32,7 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - The 31 starter articles were written from the code and screens of this repository and checked against them, but they describe platform defaults; an operator must review them for their own policies. They are English only.
 - A generative model was not added: no provider, key or data-processing decision exists (ADR-0003). Adding one is an owner decision.
 - Requesters hear about replies through in-app notifications only (no e-mail); the desk has no SLA timers, categories, attachments or satisfaction survey.
-- MFA is still optional for every role, including administrators. Enforcement was not built in this phase because it needs an enrolment-only session state and an owner decision on rollout; see `DECISION_LOG.md`.
+- MFA is required for administrators and managers only when `ENVIRONMENT=production` (override with `MFA_REQUIRED_ROLES`); in local and test stacks it stays optional so they work without an authenticator. Rolling it out to existing privileged accounts means they are held to the Security page until they enrol; there is no grace period.
 
 ## Maps and tracking (details: `docs/maps/OFFLINE_MAPS.md`, `ROUTING_PROVIDERS.md`, `GOOGLE_MAPS_INTEGRATION.md`)
 - **The default offline map has only been rendered with synthetic tiles.** The basemap needs an owner-prepared PMTiles file from OpenStreetMap data (`scripts/maps/prepare_offline_maps.py tiles`, needs the `pmtiles` CLI and network); without it the screens draw markers and routes on a plain background and say "Base map not installed". How a real OSM region looks with this style, labels in non-Latin scripts (only Latin glyph ranges are shipped) and city-scale performance are unverified. It is an original OSM-based style, not a copy of Google Maps. No geocoding or turn-by-turn navigation.
@@ -47,7 +47,7 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - The e2e suite registers 9 accounts from one address per run (more on a Playwright retry), which exceeds the production limit of 10 per address per hour once retries happen (this is what failed CI on `a97911d` and `b9704d0`). The limit is now the setting `REGISTRATION_LIMIT_PER_IP_PER_HOUR` (default 10); only the throw-away CI stack raises it. A local run needs a fresh hour or the same override.
 
 ## Security (details: `docs/security/security-review.md`)
-- MFA is TOTP only and not forced for any role; rotating `SECRET_KEY` invalidates stored MFA secrets.
+- MFA is TOTP only (required for administrators and managers in production); rotating `SECRET_KEY` invalidates stored MFA secrets.
 - Per-address limits need trusted-proxy configuration in production.
 - Registration reveals whether an e-mail exists (409). Password check is a small denylist.
 - No antivirus scan on uploads; no automatic purge of orphaned uploads.

@@ -29,6 +29,8 @@ x-backend-environment: &backend-environment
   # Registrations per client address per hour; the CI end-to-end run raises it (see quality-gates.yml).
   REGISTRATION_LIMIT_PER_IP_PER_HOUR: ${REGISTRATION_LIMIT_PER_IP_PER_HOUR:-10}
   ASSISTANT_RETENTION_DAYS: ${ASSISTANT_RETENTION_DAYS:-90}
+  # Blank = default policy (administrator and manager in production); see .env.example.
+  MFA_REQUIRED_ROLES: ${MFA_REQUIRED_ROLES:-}
   # Optional, server-only (Routes API). Empty = road routes reported as unavailable.
   GOOGLE_MAPS_SERVER_API_KEY: ${GOOGLE_MAPS_SERVER_API_KEY:-}
 

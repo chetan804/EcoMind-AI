@@ -147,6 +147,20 @@ export async function signOut(): Promise<void> {
   }
 }
 
+/**
+ * Re-read the signed-in user from the server (after two-step verification was switched on, say, so
+ * the "set it up first" restriction lifts without signing in again). A failure keeps the cached user.
+ */
+export async function reloadSessionUser(): Promise<void> {
+  if (state.status !== 'authenticated') return;
+  try {
+    const user = await authApi.fetchMe();
+    if (state.status === 'authenticated') setState({ status: 'authenticated', user });
+  } catch {
+    // The cached user stays; the next request is authorised by the server regardless.
+  }
+}
+
 /** Replace the cached user with the server's current view (after a password change, say). */
 export function adoptAuthResponse(response: AuthResponse): void {
   adopt(response);

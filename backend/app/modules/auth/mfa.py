@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import secrets
 import uuid
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -38,6 +39,7 @@ from app.modules.auth.errors import (
     MfaChallengeFailedError,
     MfaEnrollmentNotStartedError,
     MfaNotEnabledError,
+    MfaRequiredForRoleError,
     MfaUnavailableError,
 )
 from app.modules.auth.models import MfaFactor
@@ -56,6 +58,16 @@ _MAX_FAILURES = 5
 def is_enabled(db: Session, user_id: uuid.UUID) -> bool:
     factor = repository.get_factor(db, user_id)
     return factor is not None and factor.confirmed_at is not None
+
+
+def enrollment_required(
+    db: Session, settings: Settings, user_id: uuid.UUID, roles: Iterable[str]
+) -> bool:
+    """True when a role of this person requires two-step verification and it is not active yet."""
+    required = settings.effective_mfa_required_roles
+    if not required or required.isdisjoint(roles):
+        return False
+    return not is_enabled(db, user_id)
 
 
 def new_challenge(settings: Settings, user_id: uuid.UUID, *, now: datetime) -> tuple[str, int]:
@@ -257,6 +269,10 @@ def disable(
     context: RequestContext,
 ) -> None:
     _require_proof(db, settings, user, password, code, context=context)
+    if not settings.effective_mfa_required_roles.isdisjoint(users.role_names(db, user.id)):
+        raise MfaRequiredForRoleError(
+            "Your role requires two-step verification, so it cannot be switched off."
+        )
     repository.delete_factor(db, user.id)
     audit.record(
         db,
