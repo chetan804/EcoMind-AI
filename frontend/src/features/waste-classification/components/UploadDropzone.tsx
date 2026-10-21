@@ -26,6 +26,7 @@ export function UploadDropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const hintId = useId();
   const [dragging, setDragging] = useState(false);
+  const safePreviewUrl = previewUrl?.startsWith('blob:') ? previewUrl : null;
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -45,8 +46,8 @@ export function UploadDropzone({
       onDrop={onDrop}
     >
       <div className="dropzone__stage">
-        {previewUrl ? (
-          <img className="dropzone__preview" src={previewUrl} alt={`Selected image: ${fileName ?? 'upload'}`} />
+        {safePreviewUrl ? (
+          <img className="dropzone__preview" src={safePreviewUrl} alt={`Selected image: ${fileName ?? 'upload'}`} />
         ) : (
           <span className="dropzone__placeholder" aria-hidden="true">
             <ImagePlus size={56} />
@@ -76,7 +77,7 @@ export function UploadDropzone({
         unavailableReason={busy ? 'An image is being analysed.' : undefined}
         onClick={() => inputRef.current?.click()}
       >
-        {previewUrl ? 'Choose another image' : 'Choose image'}
+        {safePreviewUrl ? 'Choose another image' : 'Choose image'}
       </Button>
       {error && <Alert tone="danger">{error}</Alert>}
     </div>
