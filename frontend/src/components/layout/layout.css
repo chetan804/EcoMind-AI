@@ -31,6 +31,7 @@
   font-size: 11px; font-weight: var(--font-weight-medium); color: var(--color-text-muted); letter-spacing: var(--tracking-wide);
 }
 .nav-link--planned { color: var(--color-text-muted); }
+button.nav-link { width: 100%; border: 0; background: none; font-family: inherit; text-align: left; cursor: pointer; }
 
 /* ---- Page header and top bar ---- */
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-6); margin-bottom: 30px; }
