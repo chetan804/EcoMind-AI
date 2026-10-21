@@ -45,7 +45,7 @@ Implemented in `waste_reports/images.py` and `integrations/file_storage/local.py
 ## Errors, logging, audit
 - Errors use one envelope; unhandled exceptions return a generic message and are logged with a request id. ✔ tested
 - Logs never contain passwords, tokens, secrets or full request bodies. JSON logging available. ✔ (formatter); discipline enforced in review
-- Audit log (`audit_logs`) is append-only; `changes` must exclude secrets. ✔ written for register, login (success/failure, with a SHA-256 pseudonym of the email, never the clear address), logout, refresh-reuse detection, password change (success/failure) and CLI admin creation. Other modules add their events as they are built.
+- Audit log (`audit_logs`) is append-only, enforced by a database trigger since migration 0017 (UPDATE and DELETE fail; only detaching a removed user's `actor_id` is allowed); `changes` must exclude secrets. ✔ written for register, login (success/failure, with a SHA-256 pseudonym of the email, never the clear address), logout, refresh-reuse detection, password change (success/failure) and CLI admin creation. Other modules add their events as they are built.
 
 ## Dependencies and CI
 - Dependencies pinned by lockfile on the frontend (`package-lock.json`); the backend uses version ranges (a lock/constraints file is a recommended follow-up). Enable Dependabot/`pip-audit`/`npm audit` in CI when the repository is public or has Advanced Security (follow-up).

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import decimal
 import uuid
 from typing import Annotated
 
@@ -82,17 +83,38 @@ def list_reports(
     mine: Annotated[bool, Query(description="Only my own reports")] = False,
     reported_from: dt.datetime | None = None,
     reported_to: dt.datetime | None = None,
+    min_latitude: Annotated[decimal.Decimal | None, Query(ge=-90, le=90)] = None,
+    max_latitude: Annotated[decimal.Decimal | None, Query(ge=-90, le=90)] = None,
+    min_longitude: Annotated[decimal.Decimal | None, Query(ge=-180, le=180)] = None,
+    max_longitude: Annotated[decimal.Decimal | None, Query(ge=-180, le=180)] = None,
     sort_by: SortField = "reported_at",
     order: SortOrder = SortOrder.DESC,
 ) -> Page[WasteReportOut]:
     if reported_from and reported_to and reported_from > reported_to:
         raise BadRequestError("reported_from must not be after reported_to")
+    if any(v is not None for v in (min_latitude, max_latitude, min_longitude, max_longitude)):
+        if (
+            min_latitude is None
+            or max_latitude is None
+            or min_longitude is None
+            or max_longitude is None
+        ):
+            raise BadRequestError(
+                "an area filter needs min_latitude, max_latitude, min_longitude and "
+                "max_longitude together"
+            )
+        if min_latitude > max_latitude or min_longitude > max_longitude:
+            raise BadRequestError("an area filter's minimum must not exceed its maximum")
     query = WasteReportQuery(
         status=status_filter,
         q=q,
         mine=mine,
         reported_from=reported_from,
         reported_to=reported_to,
+        min_latitude=min_latitude,
+        max_latitude=max_latitude,
+        min_longitude=min_longitude,
+        max_longitude=max_longitude,
         sort_by=sort_by,
         order=order,
     )

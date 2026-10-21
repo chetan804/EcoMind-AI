@@ -478,3 +478,64 @@ def test_database_rejects_a_key_without_fingerprint(env: Env) -> None:
             ),
             {"u": env.citizen_id},
         )
+
+
+# ------------------------------------------------------------------------------ area (bounding box)
+
+HYDERABAD_BOX = {
+    "min_latitude": "17.30",
+    "max_latitude": "17.50",
+    "min_longitude": "78.30",
+    "max_longitude": "78.60",
+}
+
+
+def test_area_filter_keeps_only_reports_inside_the_box(env: Env) -> None:
+    make_report(env, title="Inside", latitude="17.385", longitude="78.486")
+    make_report(env, title="Edge", latitude="17.30", longitude="78.30")  # boundaries are inclusive
+    make_report(env, title="Too far north", latitude="17.90", longitude="78.486")
+    make_report(env, title="Too far east", latitude="17.385", longitude="79.50")
+    make_report(env, title="Elsewhere", latitude="28.61", longitude="77.21")
+    make_report(env, title="No location")
+    found = env.client.get(REPORTS, params=HYDERABAD_BOX, headers=env.manager)
+    assert found.status_code == 200, found.text
+    assert sorted(r["title"] for r in found.json()["items"]) == ["Edge", "Inside"]
+    assert found.json()["total"] == 2
+    everything = env.client.get(REPORTS, headers=env.manager).json()
+    assert (
+        everything["total"] == 6
+    )  # without the box nothing is hidden, including reports with no location
+
+
+def test_area_filter_combines_with_other_filters_and_respects_ownership(env: Env) -> None:
+    make_report(env, title="Mine inside", latitude="17.385", longitude="78.486")
+    make_report(env, env.other, title="Theirs inside", latitude="17.40", longitude="78.50")
+    # a citizen never sees other people's reports, with or without the box
+    mine = env.client.get(REPORTS, params=HYDERABAD_BOX, headers=env.citizen).json()
+    assert [r["title"] for r in mine["items"]] == ["Mine inside"]
+    staff = env.client.get(REPORTS, params=HYDERABAD_BOX, headers=env.manager).json()
+    assert sorted(r["title"] for r in staff["items"]) == ["Mine inside", "Theirs inside"]
+    own = env.client.get(REPORTS, params={**HYDERABAD_BOX, "mine": "true"}, headers=env.manager)
+    assert own.json()["items"] == []  # the manager reported nothing
+    verified = env.client.get(
+        REPORTS, params={**HYDERABAD_BOX, "status": "verified"}, headers=env.manager
+    )
+    assert verified.json()["items"] == []
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"min_latitude": "17.3", "max_latitude": "17.5"},  # incomplete box
+        {**HYDERABAD_BOX, "max_longitude": ""},
+        {**HYDERABAD_BOX, "min_latitude": "17.6"},  # minimum above maximum
+        {**HYDERABAD_BOX, "min_longitude": "79"},
+        {**HYDERABAD_BOX, "max_latitude": "91"},  # outside the valid range
+        {**HYDERABAD_BOX, "min_longitude": "-181"},
+        {**HYDERABAD_BOX, "min_latitude": "north"},  # not a number
+    ],
+)
+def test_malformed_area_filters_are_rejected(env: Env, params: dict[str, str]) -> None:
+    response = env.client.get(REPORTS, params=params, headers=env.manager)
+    assert response.status_code in (400, 422), response.text
+    assert "traceback" not in response.text.lower()

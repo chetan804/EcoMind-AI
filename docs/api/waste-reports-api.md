@@ -79,6 +79,7 @@ Content-Type: image/jpeg            (informational only)
 * `q`: case-insensitive substring over title, description and address. `%`, `_` and `\` are matched literally. Max 100 characters.
 * `sort_by`: `reported_at|title|status|estimated_weight_kg`; `order`: `asc|desc`. Anything else is 422.
 * `reported_from` > `reported_to` is 400.
+* Area: `min_latitude`, `max_latitude`, `min_longitude`, `max_longitude` together (WGS84 degrees, inclusive bounds). A box, not a named zone: zones have no boundary geometry. Reports without a location never match a box; a box that crosses the antimeridian is not supported. Giving some but not all four values, a minimum above its maximum, or a value outside -90..90 / -180..180 is 400 or 422. A citizen still only ever sees their own reports.
 
 ## Review workflow
 

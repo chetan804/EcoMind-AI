@@ -3,7 +3,6 @@
 // Needs the demo stack (see README.md) seeded with clearly labelled demonstration records.
 import { chromium } from 'playwright-core';
 import { readFileSync, mkdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 
 const base = process.env.VISUAL_BASE_URL ?? 'http://127.0.0.1:5173';
 const exe = process.env.E2E_CHROMIUM_PATH ?? '/tmp/chromium';
@@ -15,10 +14,11 @@ const cfg = JSON.parse(readFileSync(new URL('./auth-targets.json', import.meta.u
 const outDir = new URL('./out/', import.meta.url).pathname;
 mkdirSync(outDir, { recursive: true });
 const wanted = process.argv.slice(2);
-const sizeOf = (ref) =>
-  JSON.parse(
-    execFileSync('python3', ['-c', `import struct,sys;d=open(sys.argv[1],'rb').read(24);print(list(struct.unpack('>II',d[16:24])))`, new URL(`../../../docs/ui/reference/${ref}`, import.meta.url).pathname]).toString(),
-  );
+// PNG width and height are the two big-endian integers at byte 16 of the file.
+const sizeOf = (ref) => {
+  const header = readFileSync(new URL(`../../../docs/ui/reference/${ref}`, import.meta.url));
+  return [header.readUInt32BE(16), header.readUInt32BE(20)];
+};
 
 const browser = await chromium.launch({ executablePath: exe, args: ['--no-sandbox', '--font-render-hinting=none'] });
 const ctx = await browser.newContext({ viewport: { width: cfg.width, height: 900 }, reducedMotion: 'reduce', colorScheme: 'dark' });

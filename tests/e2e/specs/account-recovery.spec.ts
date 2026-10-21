@@ -6,7 +6,7 @@ import { latestMailLink, mailAvailable, mailSource, messagesTo, waitForMailLink,
 // backend delivers to over SMTP (CI), or from the backend's console log (development); see mail.ts.
 // No network stubbing.
 
-publicTest.skip(!mailAvailable, 'Neither E2E_MAILPIT_URL nor E2E_MAIL_LOG_COMMAND is set: cannot read the e-mailed links');
+publicTest.skip(!mailAvailable, 'Neither E2E_MAILPIT_URL nor E2E_MAIL_LOG_FILE is set: cannot read the e-mailed links');
 const viaMailpit = mailSource === 'mailpit';
 
 const PASSWORD = 'first passphrase for e2e 2026';

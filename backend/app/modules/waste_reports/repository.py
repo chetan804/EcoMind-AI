@@ -59,6 +59,10 @@ def _filtered(
         stmt = stmt.where(WasteReport.reported_at >= query.reported_from)
     if query.reported_to is not None:
         stmt = stmt.where(WasteReport.reported_at <= query.reported_to)
+    if query.min_latitude is not None and query.max_latitude is not None:
+        stmt = stmt.where(WasteReport.latitude.between(query.min_latitude, query.max_latitude))
+    if query.min_longitude is not None and query.max_longitude is not None:
+        stmt = stmt.where(WasteReport.longitude.between(query.min_longitude, query.max_longitude))
     pattern = contains_pattern(query.q) if query.q else None
     if pattern is not None:
         stmt = stmt.where(
