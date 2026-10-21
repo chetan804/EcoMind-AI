@@ -3,12 +3,15 @@
 Reading needs ``marketplace:read``; offering material needs ``marketplace:create``; asking for a
 listing needs ``marketplace:request``; ``marketplace:manage`` (managers) can act on any listing.
 Owners always control their own listings. There is no price, payment or delivery: a request only
-tells the owner who is interested, and the owner decides.
+tells the owner who is interested, and the owner decides. A published listing lapses after
+``MARKETPLACE_LISTING_DAYS`` unless renewed; the daily job ``expire-marketplace-listings``
+closes it.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import uuid
 from decimal import Decimal
 from enum import Enum
@@ -18,7 +21,15 @@ from sqlalchemy.orm import Session
 
 from app.common.enums import SortOrder
 from app.common.pagination import Page, PageParams
-from app.core.exceptions import AppError, ForbiddenError, NotFoundError, UnprocessableError
+from app.core.exceptions import (
+    AppError,
+    ForbiddenError,
+    NotFoundError,
+    PayloadTooLargeError,
+    UnprocessableError,
+)
+from app.integrations.file_storage import FileStorage, StorageError
+from app.integrations.file_storage.local import new_storage_key
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestContext
 from app.modules.auth.dependencies import Principal
@@ -26,23 +37,29 @@ from app.modules.facilities import repository as facilities
 from app.modules.marketplace import repository
 from app.modules.marketplace.constants import (
     LISTING_TRANSITIONS,
+    MAX_PHOTOS_PER_LISTING,
     ListingCategory,
+    ListingOutcome,
     ListingStatus,
     RequestStatus,
 )
-from app.modules.marketplace.models import Listing, ListingRequest
+from app.modules.marketplace.models import Listing, ListingPhoto, ListingRequest
 from app.modules.marketplace.schemas import (
     CloseRequest,
     ListingCreate,
     ListingOut,
     ListingUpdate,
+    PhotoOut,
+    PublishRequest,
     RequestCreate,
     RequestOut,
 )
 from app.modules.notifications import service as notifications
 from app.modules.notifications.constants import NotificationCategory
+from app.modules.waste_reports.images import normalize_image
 
 MANAGE = "marketplace:manage"
+_STORAGE_BACKEND = "local"
 
 
 class InvalidListingStateError(AppError):
@@ -58,6 +75,16 @@ class RequestExistsError(AppError):
 class OwnListingError(AppError):
     status_code = 409
     code = "own_listing"
+
+
+class ListingExpiredError(AppError):
+    status_code = 409
+    code = "listing_expired"
+
+
+class PhotoLimitError(AppError):
+    status_code = 409
+    code = "photo_limit_reached"
 
 
 class InvalidRequestStateError(AppError):
@@ -83,10 +110,20 @@ def _can_control(principal: Principal, listing: Listing) -> bool:
     return listing.created_by_id == principal.user_id or principal.has(MANAGE)
 
 
-def _visible(principal: Principal, listing: Listing) -> bool:
-    return listing.status in (ListingStatus.PUBLISHED, ListingStatus.RESERVED) or _can_control(
-        principal, listing
+def is_expired(listing: Listing, now: dt.datetime) -> bool:
+    """A published listing past its expiry. Reserved listings are being handed over: they stay."""
+    return (
+        listing.status is ListingStatus.PUBLISHED
+        and listing.expires_at is not None
+        and listing.expires_at <= now
     )
+
+
+def _visible(principal: Principal, listing: Listing, now: dt.datetime) -> bool:
+    on_offer = listing.status is ListingStatus.RESERVED or (
+        listing.status is ListingStatus.PUBLISHED and not is_expired(listing, now)
+    )
+    return on_offer or _can_control(principal, listing)
 
 
 def _out_many(db: Session, principal: Principal, listings: list[Listing]) -> list[ListingOut]:
@@ -96,6 +133,8 @@ def _out_many(db: Session, principal: Principal, listings: list[Listing]) -> lis
     facility_names = repository.facility_names(db, list(set(facility_ids)))
     pending = repository.pending_counts(db, ids)
     mine = repository.my_request_statuses(db, ids, principal.user_id)
+    photos = repository.photos_for(db, ids)
+    now = _now()
     result: list[ListingOut] = []
     for item in listings:
         controls = _can_control(principal, item)
@@ -120,11 +159,25 @@ def _out_many(db: Session, principal: Principal, listings: list[Listing]) -> lis
                 published_at=item.published_at,
                 closed_at=item.closed_at,
                 close_reason=item.close_reason,
+                outcome=item.outcome,
+                expires_at=item.expires_at,
+                is_expired=is_expired(item, now),
+                photos=[_photo_out(photo) for photo in photos.get(item.id, [])],
                 created_at=item.created_at,
                 updated_at=item.updated_at,
             )
         )
     return result
+
+
+def _photo_out(photo: ListingPhoto) -> PhotoOut:
+    return PhotoOut(
+        id=photo.id,
+        position=photo.position,
+        caption=photo.caption,
+        width_px=photo.width_px,
+        height_px=photo.height_px,
+    )
 
 
 def _out(db: Session, principal: Principal, listing: Listing) -> ListingOut:
@@ -136,7 +189,7 @@ def _load_visible(
 ) -> Listing:
     listing = repository.get(db, listing_id, for_update=for_update)
     # Drafts and closed listings of other people do not exist as far as the caller can tell.
-    if listing is None or not _visible(principal, listing):
+    if listing is None or not _visible(principal, listing, _now()):
         raise NotFoundError("Listing not found")
     return listing
 
@@ -193,6 +246,7 @@ def list_listings(
     rows, total = repository.list_page(
         db,
         params,
+        now=_now(),
         viewer_id=principal.user_id,
         sees_all=principal.has(MANAGE),
         mine=mine,
@@ -269,13 +323,23 @@ def update_listing(
 
 
 def publish_listing(
-    db: Session, principal: Principal, listing_id: uuid.UUID, *, context: RequestContext
+    db: Session,
+    principal: Principal,
+    listing_id: uuid.UUID,
+    payload: PublishRequest,
+    *,
+    default_days: int,
+    context: RequestContext,
 ) -> ListingOut:
     listing = _load_controlled(db, principal, listing_id)
     if listing.status is not ListingStatus.DRAFT:
         raise InvalidListingStateError(f"A {listing.status.value} listing cannot be published")
     _transition(listing, ListingStatus.PUBLISHED)
-    listing.published_at = _now()
+    now = _now()
+    days = payload.duration_days or default_days
+    listing.published_at = now
+    listing.expires_at = now + dt.timedelta(days=days)
+    listing.expiry_notice_sent_at = None
     audit.record(
         db,
         action="marketplace_listing.published",
@@ -283,6 +347,42 @@ def publish_listing(
         entity_id=listing.id,
         actor_id=principal.user_id,
         context=context,
+        changes={"duration_days": days, "expires_at": listing.expires_at.isoformat()},
+    )
+    db.commit()
+    db.refresh(listing)
+    return _out(db, principal, listing)
+
+
+def renew_listing(
+    db: Session,
+    principal: Principal,
+    listing_id: uuid.UUID,
+    payload: PublishRequest,
+    *,
+    default_days: int,
+    context: RequestContext,
+) -> ListingOut:
+    """Keep a published listing on offer for another period, counted from now."""
+    listing = _load_controlled(db, principal, listing_id)
+    if listing.status is not ListingStatus.PUBLISHED:
+        raise InvalidListingStateError(f"A {listing.status.value} listing cannot be renewed")
+    days = payload.duration_days or default_days
+    previous = listing.expires_at
+    listing.expires_at = _now() + dt.timedelta(days=days)
+    listing.expiry_notice_sent_at = None
+    audit.record(
+        db,
+        action="marketplace_listing.renewed",
+        entity_type="marketplace_listing",
+        entity_id=listing.id,
+        actor_id=principal.user_id,
+        context=context,
+        changes={
+            "duration_days": days,
+            "from": previous.isoformat() if previous else None,
+            "to": listing.expires_at.isoformat(),
+        },
     )
     db.commit()
     db.refresh(listing)
@@ -298,15 +398,31 @@ def close_listing(
     context: RequestContext,
 ) -> ListingOut:
     listing = _load_controlled(db, principal, listing_id)
+    outcome = payload.outcome or ListingOutcome.WITHDRAWN
+    if outcome is ListingOutcome.HANDED_OVER and listing.status is not ListingStatus.RESERVED:
+        raise InvalidListingStateError(
+            "Only a reserved listing (one with an accepted request) can be marked as handed over"
+        )
     _transition(listing, ListingStatus.CLOSED)
     listing.closed_at = _now()
     listing.close_reason = payload.reason
+    listing.outcome = outcome
     declined: list[str] = []
     for request in repository.pending_requests(db, listing.id):
         request.status = RequestStatus.DECLINED
         request.decided_at = listing.closed_at
         declined.append(str(request.id))
         _notify(db, request.requester_id, "A listing you asked for was closed", listing)
+    accepted = repository.accepted_request(db, listing.id)
+    if accepted is not None:
+        _notify(
+            db,
+            accepted.requester_id,
+            "The hand-over was recorded as complete"
+            if outcome is ListingOutcome.HANDED_OVER
+            else "A listing reserved for you was withdrawn",
+            listing,
+        )
     audit.record(
         db,
         action="marketplace_listing.closed",
@@ -314,7 +430,11 @@ def close_listing(
         entity_id=listing.id,
         actor_id=principal.user_id,
         context=context,
-        changes={"reason": payload.reason, "declined_requests": declined},
+        changes={
+            "reason": payload.reason,
+            "outcome": outcome.value,
+            "declined_requests": declined,
+        },
     )
     db.commit()
     db.refresh(listing)
@@ -357,6 +477,8 @@ def create_request(
         raise OwnListingError("You cannot request your own listing")
     if listing.status is not ListingStatus.PUBLISHED:
         raise InvalidListingStateError("Only published listings can be requested")
+    if is_expired(listing, _now()):
+        raise ListingExpiredError("This listing has expired and can no longer be requested")
     existing = repository.get_request_for(db, listing.id, principal.user_id)
     if existing is not None and existing.status is not RequestStatus.WITHDRAWN:
         raise RequestExistsError("You already have a request for this listing")
@@ -524,3 +646,116 @@ def withdraw_request(
     db.refresh(request)
     contacts = repository.user_contacts(db, [request.requester_id])
     return _request_out(principal, request, listing, contacts)
+
+
+# -- photos --------------------------------------------------------------------------------------
+def upload_photo(
+    db: Session,
+    storage: FileStorage,
+    principal: Principal,
+    listing_id: uuid.UUID,
+    data: bytes,
+    *,
+    caption: str | None,
+    max_bytes: int,
+    context: RequestContext,
+) -> PhotoOut:
+    """Attach a photo. It is decoded and re-encoded, so EXIF (including GPS) never survives."""
+    if len(data) > max_bytes:
+        raise PayloadTooLargeError(f"The file is larger than the {max_bytes}-byte limit")
+    listing = _load_controlled(db, principal, listing_id)  # locks the listing row
+    if listing.status not in (ListingStatus.DRAFT, ListingStatus.PUBLISHED):
+        raise InvalidListingStateError(
+            f"Photos of a {listing.status.value} listing cannot be changed"
+        )
+    count, highest = repository.photo_stats(db, listing.id)
+    if count >= MAX_PHOTOS_PER_LISTING:
+        raise PhotoLimitError(f"A listing can have at most {MAX_PHOTOS_PER_LISTING} photos")
+    image = normalize_image(data)
+    key = new_storage_key(image.extension)
+    try:
+        storage.save(key, image.content)
+    except StorageError as exc:
+        raise AppError("The file could not be stored") from exc
+    try:
+        photo = repository.add_photo(
+            db,
+            listing_id=listing.id,
+            uploaded_by_id=principal.user_id,
+            position=highest + 1,
+            caption=caption,
+            storage_backend=_STORAGE_BACKEND,
+            storage_key=key,
+            content_type=image.content_type,
+            size_bytes=len(image.content),
+            sha256=hashlib.sha256(image.content).hexdigest(),
+            width_px=image.width,
+            height_px=image.height,
+        )
+        audit.record(
+            db,
+            action="marketplace_listing.photo_added",
+            entity_type="marketplace_listing",
+            entity_id=listing.id,
+            actor_id=principal.user_id,
+            context=context,
+            changes={
+                "photo_id": str(photo.id),
+                "content_type": image.content_type,
+                "size_bytes": len(image.content),
+            },
+        )
+        db.commit()
+    except BaseException:
+        db.rollback()
+        storage.delete(key)  # no file without a row
+        raise
+    return _photo_out(photo)
+
+
+def delete_photo(
+    db: Session,
+    storage: FileStorage,
+    principal: Principal,
+    listing_id: uuid.UUID,
+    photo_id: uuid.UUID,
+    *,
+    context: RequestContext,
+) -> None:
+    listing = _load_controlled(db, principal, listing_id)
+    if listing.status not in (ListingStatus.DRAFT, ListingStatus.PUBLISHED):
+        raise InvalidListingStateError(
+            f"Photos of a {listing.status.value} listing cannot be changed"
+        )
+    photo = repository.get_photo(db, photo_id)
+    if photo is None or photo.listing_id != listing.id:
+        raise NotFoundError("Photo not found")
+    key = photo.storage_key
+    db.delete(photo)
+    audit.record(
+        db,
+        action="marketplace_listing.photo_removed",
+        entity_type="marketplace_listing",
+        entity_id=listing.id,
+        actor_id=principal.user_id,
+        context=context,
+        changes={"photo_id": str(photo_id)},
+    )
+    db.commit()
+    storage.delete(
+        key
+    )  # after the commit: a failed delete leaves an orphan file, never a dead link
+
+
+def read_photo(
+    db: Session, storage: FileStorage, principal: Principal, photo_id: uuid.UUID
+) -> tuple[bytes, ListingPhoto]:
+    photo = repository.get_photo(db, photo_id)
+    listing = repository.get(db, photo.listing_id) if photo is not None else None
+    # Same answer as for the listing itself: photos of drafts and lapsed listings do not exist.
+    if photo is None or listing is None or not _visible(principal, listing, _now()):
+        raise NotFoundError("Photo not found")
+    try:
+        return storage.read(photo.storage_key), photo
+    except StorageError as exc:
+        raise AppError("The file is currently unavailable") from exc

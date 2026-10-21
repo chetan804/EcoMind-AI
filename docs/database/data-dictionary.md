@@ -478,6 +478,34 @@ Constraints:
 
 ## Module `marketplace`
 
+### `marketplace_listing_photos`
+
+A photo of a listing. The bytes live in the file-storage backend (re-encoded, no EXIF).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `listing_id` | uuid | NN |  | FK -> `marketplace_listings.id` ON DELETE CASCADE |
+| `uploaded_by_id` | uuid | NN |  | FK -> `users.id` |
+| `position` | integer | NN |  |  |
+| `caption` | varchar(200) | null |  |  |
+| `storage_backend` | varchar(32) | NN |  |  |
+| `storage_key` | varchar(500) | NN |  | UQ |
+| `content_type` | varchar(100) | NN |  |  |
+| `size_bytes` | bigint | NN |  |  |
+| `sha256` | varchar(64) | NN |  |  |
+| `width_px` | integer | NN |  |  |
+| `height_px` | integer | NN |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_marketplace_listing_photos_position_non_negative`: `position >= 0`
+- `ck_marketplace_listing_photos_sha256_hex_length`: `length(sha256) = 64`
+- `ck_marketplace_listing_photos_size_positive`: `size_bytes > 0`
+- `uq_marketplace_photos_listing_position`: unique (listing_id, position)
+
 ### `marketplace_listings`
 
 Surplus material or items offered for reuse. No price and no payment exist.
@@ -497,6 +525,9 @@ Surplus material or items offered for reuse. No price and no payment exist.
 | `published_at` | timestamptz | null |  |  |
 | `closed_at` | timestamptz | null |  |  |
 | `close_reason` | varchar(500) | null |  |  |
+| `expires_at` | timestamptz | null |  |  |
+| `expiry_notice_sent_at` | timestamptz | null |  |  |
+| `outcome` | varchar(19) | null |  |  |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |
@@ -504,9 +535,11 @@ Surplus material or items offered for reuse. No price and no payment exist.
 Constraints:
 
 - `ck_marketplace_listings_closed_timestamp_consistent`: `(status = 'closed') = (closed_at IS NOT NULL)`
+- `ck_marketplace_listings_expiry_needs_publication`: `expires_at IS NULL OR published_at IS NOT NULL`
+- `ck_marketplace_listings_outcome_only_when_closed`: `outcome IS NULL OR status = 'closed'`
 - `ck_marketplace_listings_published_timestamp_consistent`: `(status IN ('published', 'reserved', 'closed')) OR published_at IS NULL`
 - `ck_marketplace_listings_quantity_positive`: `quantity > 0`
-- Allowed values: `category` in (plastics, metals, paper, glass, e_waste, organics, textiles, wood, furniture, other); `unit` in (kg, units); `condition` in (like_new, good, fair, damaged); `status` in (draft, published, reserved, closed)
+- Allowed values: `category` in (plastics, metals, paper, glass, e_waste, organics, textiles, wood, furniture, other); `unit` in (kg, units); `condition` in (like_new, good, fair, damaged); `status` in (draft, published, reserved, closed); `outcome` in (handed_over, withdrawn, expired)
 
 ### `marketplace_requests`
 

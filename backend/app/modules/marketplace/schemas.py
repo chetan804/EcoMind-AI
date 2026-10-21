@@ -10,8 +10,10 @@ from typing import Annotated, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from app.modules.marketplace.constants import (
+    MAX_LISTING_DAYS,
     ListingCategory,
     ListingCondition,
+    ListingOutcome,
     ListingStatus,
     ListingUnit,
     RequestStatus,
@@ -20,6 +22,8 @@ from app.modules.marketplace.constants import (
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=200)]
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
 City = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+Caption = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+Days = Annotated[int, Field(ge=1, le=MAX_LISTING_DAYS)]
 Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
 Quantity = Annotated[decimal.Decimal, Field(gt=0, le=1_000_000_000, decimal_places=3)]
 
@@ -61,10 +65,31 @@ class ListingUpdate(BaseModel):
         return self
 
 
+class PublishRequest(BaseModel):
+    """Optional: how long the listing stays on offer (default: ``MARKETPLACE_LISTING_DAYS``)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    duration_days: Days | None = None
+
+
 class CloseRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     reason: Reason | None = None
+    # ``handed_over`` is allowed only on a reserved listing. Omitted means ``withdrawn``;
+    # ``expired`` is set only by the expiry job.
+    outcome: Literal[ListingOutcome.HANDED_OVER, ListingOutcome.WITHDRAWN] | None = None
+
+
+class PhotoOut(BaseModel):
+    """Fetch the image from ``GET /marketplace/photos/{id}/content`` (needs the access token)."""
+
+    id: uuid.UUID
+    position: int
+    caption: str | None
+    width_px: int
+    height_px: int
 
 
 class ListingOut(BaseModel):
@@ -89,6 +114,12 @@ class ListingOut(BaseModel):
     published_at: dt.datetime | None
     closed_at: dt.datetime | None
     close_reason: str | None
+    outcome: ListingOutcome | None
+    # When a published listing lapses. ``is_expired`` is true between that moment and the next run
+    # of the expiry job; such a listing cannot be requested and is hidden from other people.
+    expires_at: dt.datetime | None
+    is_expired: bool
+    photos: list[PhotoOut]
     created_at: dt.datetime
     updated_at: dt.datetime
 

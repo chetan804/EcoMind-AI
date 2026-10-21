@@ -35,6 +35,20 @@ class ListingStatus(StrEnum):
     CLOSED = "closed"
 
 
+class ListingOutcome(StrEnum):
+    """How a closed listing ended. ``None`` on listings closed before outcomes were recorded."""
+
+    HANDED_OVER = "handed_over"
+    WITHDRAWN = "withdrawn"
+    EXPIRED = "expired"
+
+
+MAX_PHOTOS_PER_LISTING = 4
+MAX_LISTING_DAYS = 90
+# Listings that are about to lapse are flagged to their owner this long beforehand.
+EXPIRY_NOTICE_DAYS = 3
+
+
 class RequestStatus(StrEnum):
     PENDING = "pending"
     ACCEPTED = "accepted"

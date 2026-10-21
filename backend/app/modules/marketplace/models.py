@@ -6,13 +6,23 @@ import datetime as dt
 import decimal
 import uuid
 
-from sqlalchemy import CheckConstraint, DateTime, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin, enum_column, fk_uuid
 from app.modules.marketplace.constants import (
     ListingCategory,
     ListingCondition,
+    ListingOutcome,
     ListingStatus,
     ListingUnit,
     RequestStatus,
@@ -32,6 +42,10 @@ class Listing(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             "(status IN ('published', 'reserved', 'closed')) OR published_at IS NULL",
             name="published_timestamp_consistent",
         ),
+        CheckConstraint(
+            "expires_at IS NULL OR published_at IS NOT NULL", name="expiry_needs_publication"
+        ),
+        CheckConstraint("outcome IS NULL OR status = 'closed'", name="outcome_only_when_closed"),
     )
 
     created_by_id: Mapped[uuid.UUID] = fk_uuid("users.id")
@@ -56,6 +70,36 @@ class Listing(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     published_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     close_reason: Mapped[str | None] = mapped_column(String(500))
+    # A published listing lapses at this moment (the ``expire-marketplace-listings`` CLI job).
+    # NULL only on drafts and on listings that predate expiry.
+    expires_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    # Set once, when the owner is told the listing is about to lapse.
+    expiry_notice_sent_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    outcome: Mapped[ListingOutcome | None] = mapped_column(enum_column(ListingOutcome))
+
+
+class ListingPhoto(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A photo of a listing. The bytes live in the file-storage backend (re-encoded, no EXIF)."""
+
+    __tablename__ = "marketplace_listing_photos"
+    __table_args__ = (
+        UniqueConstraint("listing_id", "position", name="uq_marketplace_photos_listing_position"),
+        CheckConstraint("size_bytes > 0", name="size_positive"),
+        CheckConstraint("length(sha256) = 64", name="sha256_hex_length"),
+        CheckConstraint("position >= 0", name="position_non_negative"),
+    )
+
+    listing_id: Mapped[uuid.UUID] = fk_uuid("marketplace_listings.id", ondelete="CASCADE")
+    uploaded_by_id: Mapped[uuid.UUID] = fk_uuid("users.id")
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    caption: Mapped[str | None] = mapped_column(String(200))
+    storage_backend: Mapped[str] = mapped_column(String(32), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(500), nullable=False, unique=True)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    width_px: Mapped[int] = mapped_column(Integer, nullable=False)
+    height_px: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class ListingRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):

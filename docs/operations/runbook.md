@@ -87,3 +87,6 @@ Full guide: [`account-recovery.md`](account-recovery.md). Nothing is sent until 
 - **Daily job:** `python -m app.cli purge-account-tokens` deletes used and expired tokens (audited), e.g. `15 3 * * * cd /app && python -m app.cli purge-account-tokens`.
 - **Support:** `python -m app.cli mark-email-verified --email <address>` confirms an address by hand when a user cannot receive mail (audited). A forgotten password is reset by the user through the e-mail flow; there is deliberately no way for staff to read or set a password.
 - Real SMTP delivery has been tested only against a local fake server. Before enabling it, send a test message through your provider and confirm SPF/DKIM for the `EMAIL_FROM` domain.
+
+## Marketplace listing expiry
+`python -m app.cli expire-marketplace-listings` closes published listings past their expiry (outcome `expired`), tells owners and the requesters whose requests were declined, and warns owners of listings that lapse within 3 days. Idempotent; run it daily, e.g. `30 3 * * * cd /app && python -m app.cli expire-marketplace-listings`. `MARKETPLACE_LISTING_DAYS` (default 30, 1–90) sets the default lifetime. Until the job runs, the API already hides and refuses lapsed listings, so a missed run delays notifications, not correctness. Details: [`../api/marketplace-api.md`](../api/marketplace-api.md).

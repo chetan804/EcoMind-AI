@@ -5,6 +5,7 @@
     python -m app.cli activate-model --version 1.0.0     # make it the model that answers
     python -m app.cli import-reference-series --key austin   # public series for forecasting demos
     python -m app.cli purge-location-events                  # retention: run daily (cron/timer)
+    python -m app.cli expire-marketplace-listings            # close lapsed marketplace listings
     python -m app.cli purge-account-tokens                   # delete expired reset/verify links
     python -m app.cli mark-email-verified --email a@b.org    # operator attests an address
     python -m app.cli mark-email-verified --all-existing     # before EMAIL_VERIFICATION_REQUIRED
@@ -37,6 +38,7 @@ from app.modules.auth.policy import password_problems
 from app.modules.classification import repository as classification_repository
 from app.modules.classification import service as classification_service
 from app.modules.forecasting import importer as forecasting_importer
+from app.modules.marketplace import expiry as marketplace_expiry
 from app.modules.tracking import service as tracking_service
 from app.modules.users import repository as users
 from app.modules.users.models import User
@@ -125,6 +127,12 @@ def purge_account_tokens() -> str:
     return f"removed {removed} expired or used account tokens"
 
 
+def expire_marketplace_listings() -> str:
+    with get_session_factory()() as db:
+        result = marketplace_expiry.run(db)
+    return f"closed {result.closed} expired listing(s); warned owners of {result.announced}"
+
+
 def mark_email_verified(*, email: str | None, all_existing: bool) -> str:
     """An operator attests that addresses are genuine (audited). Never done implicitly."""
     with get_session_factory()() as db:
@@ -173,12 +181,20 @@ def main(argv: list[str] | None = None) -> int:
         "purge-location-events",
         help="delete vehicle location events older than TRACKING_RETENTION_DAYS",
     )
+    sub.add_parser(
+        "expire-marketplace-listings",
+        help="close marketplace listings past their expiry and warn owners of those about to lapse",
+    )
     sub.add_parser("purge-account-tokens", help="delete expired or used reset/verification links")
     verify = sub.add_parser("mark-email-verified", help="attest e-mail addresses as verified")
     target = verify.add_mutually_exclusive_group(required=True)
     target.add_argument("--email")
     target.add_argument("--all-existing", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.command == "expire-marketplace-listings":
+        print(expire_marketplace_listings())
+        return 0
 
     if args.command == "purge-account-tokens":
         print(purge_account_tokens())

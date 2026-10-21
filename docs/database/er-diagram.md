@@ -85,6 +85,11 @@ erDiagram
         uuid material_category_id FK
         uuid id PK
     }
+    marketplace_listing_photos {
+        uuid listing_id FK
+        uuid uploaded_by_id FK
+        uuid id PK
+    }
     marketplace_listings {
         uuid created_by_id FK
         uuid facility_id FK
@@ -228,6 +233,8 @@ erDiagram
     facilities |o--o{ fleet_vehicles : "home_facility_id"
     facilities |o--o{ forecast_results : "facility_id"
     material_categories |o--o{ forecast_results : "material_category_id"
+    marketplace_listings ||--o{ marketplace_listing_photos : "listing_id"
+    users ||--o{ marketplace_listing_photos : "uploaded_by_id"
     users ||--o{ marketplace_listings : "created_by_id"
     facilities |o--o{ marketplace_listings : "facility_id"
     marketplace_listings ||--o{ marketplace_requests : "listing_id"
@@ -284,7 +291,7 @@ erDiagram
 - **facilities**: `facilities`, `zones`
 - **fleet**: `fleet_vehicles`
 - **forecasting**: `forecast_results`, `reference_series`, `reference_series_points`
-- **marketplace**: `marketplace_listings`, `marketplace_requests`
+- **marketplace**: `marketplace_listing_photos`, `marketplace_listings`, `marketplace_requests`
 - **material_passports**: `custody_events`, `material_passports`
 - **notifications**: `notifications`
 - **rewards**: `reward_ledger_entries`

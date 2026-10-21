@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     file_storage_local_path: Path = Path("./var/storage")
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1)
 
+    # How long a published marketplace listing stays on offer before it lapses (owners can renew).
+    marketplace_listing_days: int = Field(default=30, ge=1, le=90)
+
     model_artifacts_dir: Path = Path("../ml/artifacts")
 
     # Rewards policy: points awarded per verified kilogram collected for a reporter. This is a
