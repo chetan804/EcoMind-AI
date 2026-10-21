@@ -44,7 +44,7 @@ def list_page(
     db: Session,
     params: PageParams,
     *,
-    reporter_id: uuid.UUID | None,
+    visible_to_id: uuid.UUID | None,
     status: IncidentStatus | None,
     incident_type: IncidentType | None,
     assigned_to_id: uuid.UUID | None,
@@ -54,8 +54,11 @@ def list_page(
     order: SortOrder,
 ) -> tuple[list[CommunityIncident], int]:
     stmt = select(CommunityIncident)
-    if reporter_id is not None:
-        stmt = stmt.where(CommunityIncident.reporter_id == reporter_id)
+    if visible_to_id is not None:  # not triage staff: own reports and incidents assigned to them
+        stmt = stmt.where(
+            (CommunityIncident.reporter_id == visible_to_id)
+            | (CommunityIncident.assigned_to_id == visible_to_id)
+        )
     if status is not None:
         stmt = stmt.where(CommunityIncident.status == status)
     if incident_type is not None:

@@ -18,12 +18,32 @@ Decisions taken during the autonomous build, newest last. Architectural ones hav
 | 12 | 2026-10-21 | A chat is shared with staff only when the requester ticks a box; staff reading it is audited; idle chats are purged after 90 days unless attached to a request | Privacy by default | Always attach the chat | `docs/api/support-api.md` |
 | 13 | 2026-10-21 (revised same day) | Administrators and managers must use MFA in production; optional elsewhere. Superseded the earlier "optional for all roles" entry | The owner asked for production-grade choices. Built the enrolment-only state properly: the server refuses every non-`/auth` endpoint with `403 mfa_enrollment_required`, checked on every request, plus `409` when a required role tries to switch it off. Blank config can never disable it (`none` is the explicit opt-out) | A flag checked only in the UI (bypassable); a grace period (leaves privileged accounts unprotected); forcing it in local/CI (breaks stacks with no authenticator) | `docs/security/mfa.md`, LIMITATIONS.md |
 | 14 | 2026-10-21 | Evaluation sets for the assistant are reported as author-written and, for the held-out one, contaminated | Overstating quality would mislead operators | Presenting the numbers as accuracy | `docs/ml/support-assistant.md` |
+| 15 | 2026-10-21 | A collector can read (not change) an incident assigned to them | An assigned collector could not open their own work (audit finding). Visibility is now reporter, assignee or triage staff; re-assigning withdraws it | Giving all collectors read access (leaks other residents' reports); letting assignees change status (a triage permission) | `docs/api/community-incidents-api.md` |
+| 16 | 2026-10-21 | Route-plan conflict messages name tasks by title and plans by name; ids stay in `details` | The message showed a raw task id | Showing ids only | `docs/api/route-planning-api.md` |
 
-## Open owner decisions
-1. Merge PR #12 (draft) and the support work on it.
-2. Google keys for live verification of Google Maps/Routes (not needed for the offline default).
-3. Whether the TrashBox authors permit use (otherwise it stays excluded).
-4. GitGuardian "Generic Password" finding on a test file: dismissal is owner-only.
-5. Whether to add a generative layer to the assistant, with which provider, and under what data-processing terms.
-6. Whether to widen the MFA requirement beyond administrators and managers (collectors, operators), or add a grace period, and who resets a locked-out sole administrator.
-7. The real SMTP server and the sender address for account and support e-mail (nothing has been delivered through real SMTP).
+## Owner decisions on the eight launch questions (2026-10-21)
+
+**Release target:** supervised demonstration or academic submission. **Not approved for a public production launch.** Each entry says what was decided and what, if anything, is still outstanding. "Done" means done in the repository; "Owner action" means something only you (or a person with the needed account) can do.
+
+| # | Decision | Recorded answer | State |
+|---|---|---|---|
+| 1 | Merge PR #12 | Merge after the latest head passed required CI and the diff was reviewed | **Done.** Head `0b236c5` had every workflow green; the PR was marked ready and merged as `2834cf0`. CI on `main` after the merge has not been checked yet |
+| 2 | Google Maps keys | Offline map is the default. Google Maps and Routes are enabled only after restricted keys exist and a live test passes | **Nothing to change in code** (`VITE_MAP_PROVIDER=offline`, `ROUTING_PROVIDER=none` are the defaults). Owner action when wanted: create restricted keys and follow `docs/maps/GOOGLE_MAPS_INTEGRATION.md`. Live Google behaviour is **not verified** |
+| 3 | TrashBox | Permission pending; dataset excluded from training, evaluation and distribution | **Owner action:** ask the authors in writing. Until a written permission and licence are on file the exclusion stands (`datasets/manifests/`) |
+| 4 | GitGuardian alert | Verify first; dismiss only if confirmed harmless | **Investigated (evidence below); dismissal is still owner-only.** I cannot open the GitGuardian alert, so I could not confirm which line it flagged |
+| 5 | Help assistant | Stay retrieval-only | **Done** (ADR-0003). Setting: retrieval-only, no provider, no key |
+| 6 | E-mail | Console e-mail for local and supervised demos; verified SMTP before production | **Owner action:** provide SMTP host, port, user, password, sender, TLS mode and the public HTTPS URL as secrets, then send and receive a real test message. Real delivery is **not verified** |
+| 7 | Two-step sign-in | Mandatory for administrators; policy configurable for other staff | **Satisfied and stricter by default:** with `ENVIRONMENT=production` and `MFA_REQUIRED_ROLES` blank, administrators **and managers** are required. To require only administrators set `MFA_REQUIRED_ROLES=administrator`; to add collectors and operators set `MFA_REQUIRED_ROLES=administrator,manager,collector,facility_operator`. Enforcement in a real production run and with a real phone is **not verified** |
+| 8 | Regional map tiles | Use a regional PMTiles file only after coverage, licence, attribution and offline-use rights are confirmed; routing is configured separately | **Owner action:** choose and approve the source and area (for example Hyderabad). I could not fetch one: the sandbox cannot reach the tile builders. Attribution to the OpenStreetMap contributors is already shown in the map. See `docs/maps/OFFLINE_MAPS.md` |
+
+### GitGuardian investigation (decision 4)
+
+- The alert is "Generic Password" on `backend/tests/api/test_administration.py`.
+- That file contains **no password literal in any revision** (checked every commit that touched it). Its only password-like lines are `{"password": STRONG_PASSWORD}` and a check that responses do **not** contain the word "password".
+- `STRONG_PASSWORD` is defined in `backend/tests/fixtures/api.py` as `"correct horse battery staple 42"`, a throw-away value used to create users in an ephemeral test database. It protects nothing.
+- A scan of the working tree with `detect-secrets` found only: CI service credentials for a disposable Postgres container, placeholder values such as `CHANGE_ME`, symbol alphabets, enum labels, and test fixtures. No `.env`, key or certificate file is tracked.
+- A search of the full git history for common live-secret formats (AWS, GitHub, Google API, Slack and OpenAI-style tokens, private-key headers) found nothing.
+- **Conclusion:** the evidence points to a false positive, but I only know that by inference. **To close it:** open the alert, confirm the flagged line is `STRONG_PASSWORD` or the `"password": STRONG_PASSWORD` login payload, then dismiss it as "used in tests" with a note linking to this entry. If it names anything else, tell me the file and line.
+
+### Release restriction (unchanged)
+Do not declare production readiness until: an approved classifier exists and is evaluated on representative data; real e-mail, maps, routing and GPS are each verified; keyboard and screen-reader testing and load testing are done; and the forced two-step rule is rehearsed in production mode. Mark every item verified, verified only by CI, or not verified.

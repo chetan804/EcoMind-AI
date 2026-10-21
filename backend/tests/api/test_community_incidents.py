@@ -250,6 +250,44 @@ def test_assignment_rules(env: Env) -> None:
     assert closed.status_code == 409
 
 
+def test_an_assigned_collector_can_read_but_not_change_the_incident(env: Env) -> None:
+    """Audit finding: a collector given an incident could not open it."""
+    iid = env.report().json()["id"]
+    other = env.report("other").json()["id"]
+    c = env.h["collector"]
+    assert env.client.get(f"{BASE}/{iid}", headers=c).status_code == 404  # not yet assigned
+    assert env.client.get(BASE, headers=c).json()["total"] == 0
+    url = f"{BASE}/{iid}/assign"
+    assert (
+        env.client.post(
+            url, json={"assignee_id": str(env.ids["collector"])}, headers=env.h["manager"]
+        ).status_code
+        == 200
+    )
+    seen = env.client.get(f"{BASE}/{iid}", headers=c)
+    assert seen.status_code == 200 and seen.json()["id"] == iid
+    assert [i["id"] for i in env.client.get(BASE, headers=c).json()["items"]] == [iid]
+    # only the assigned incident: another resident's report stays hidden
+    assert env.client.get(f"{BASE}/{other}", headers=c).status_code == 404
+    # reading is not triaging
+    assert (
+        env.client.post(
+            f"{BASE}/{iid}/status", json={"status": "acknowledged"}, headers=c
+        ).status_code
+        == 403
+    )
+    assert (
+        env.client.post(url, json={"assignee_id": str(env.ids["collector"])}, headers=c).status_code
+        == 403
+    )
+    # re-assigning to someone else withdraws the access
+    again = env.client.post(
+        url, json={"assignee_id": str(env.ids["manager"])}, headers=env.h["manager"]
+    )
+    assert again.status_code == 200
+    assert env.client.get(f"{BASE}/{iid}", headers=c).status_code == 404
+
+
 def test_filters_summary_and_search(env: Env) -> None:
     a = env.report(title="Dumped sofa near the canal").json()["id"]
     b = env.report("other", incident_type="overflowing_bin", title="Market bin overflowing").json()[

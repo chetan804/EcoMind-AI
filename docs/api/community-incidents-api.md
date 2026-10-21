@@ -5,9 +5,9 @@ Base path `/api/v1/community-incidents`. Residents and field staff report proble
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `POST /community-incidents` | `incidents:create` | Report an incident (`201`) |
-| `GET /community-incidents` | `incidents:read_own` or `incidents:triage` | List. Triage staff see everything; others see only their own |
+| `GET /community-incidents` | `incidents:read_own` or `incidents:triage` | List. Triage staff see everything; others see their own reports and the incidents assigned to them |
 | `GET /community-incidents/summary` | `incidents:triage` | Totals by status and type, open and unassigned counts |
-| `GET /community-incidents/{id}` | `incidents:read_own` or `incidents:triage` | One incident. A foreign incident is `404`, indistinguishable from a missing one |
+| `GET /community-incidents/{id}` | `incidents:read_own` or `incidents:triage` | One incident. Visible to its reporter, its assignee and triage staff; anyone else gets `404`, indistinguishable from a missing one. An assignee can read but not change it |
 | `POST /community-incidents/{id}/assign` | `incidents:triage` | Assign to an active user holding `incidents:triage` or `collection:execute` |
 | `POST /community-incidents/{id}/status` | `incidents:triage` | Move along the lifecycle |
 

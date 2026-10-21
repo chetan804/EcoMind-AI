@@ -19,7 +19,7 @@ Request: `name`, `planned_date` (today or later), `start_facility_id` (required)
 ## Rules
 
 * Facilities must exist, be `active` and have coordinates (`422`).
-* Tasks must exist (`422`), be `pending` or `assigned` (`409 task_not_plannable`), have coordinates (`422`), and not already be in a `draft`, `published` or `in_progress` plan (`409 task_already_planned`).
+* Tasks must exist (`422`), be `pending` or `assigned` (`409 task_not_plannable`), have coordinates (`422`), and not already be in a `draft`, `published` or `in_progress` plan (`409 task_already_planned`). These error messages name the tasks by title (and the clashing plan by name); the machine-readable `details` list carries each task's `id` and, for a clash, the `plan_name`.
 * A vehicle must be `available` or `in_service` (`409 vehicle_unavailable`). If the **known** waste-report weight estimates of the tasks exceed its capacity: `409 capacity_exceeded`. Tasks without an estimate are not counted and a `warnings` entry says so; with no vehicle a warning says capacity was not checked.
 * `driver_id` must be an active user who can execute collection tasks (`422`).
 

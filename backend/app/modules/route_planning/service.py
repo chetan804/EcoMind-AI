@@ -116,20 +116,35 @@ def create_plan(
     missing = [str(i) for i in payload.task_ids if i not in found]
     if missing:
         raise UnprocessableError("Unknown task ids: " + ", ".join(missing))
-    wrong_status = [str(t.id) for t, _ in found.values() if t.status not in PLANNABLE]
+
+    def _named(ids: list[uuid.UUID]) -> str:
+        return ", ".join(f"“{found[i][0].title}”" for i in ids)
+
+    def _task_details(ids: list[uuid.UUID]) -> list[dict[str, str]]:
+        return [{"task_id": str(i), "title": found[i][0].title} for i in ids]
+
+    wrong_status = [t.id for t, _ in found.values() if t.status not in PLANNABLE]
     if wrong_status:
         raise TaskNotPlannableError(
-            "Only pending or assigned tasks can be planned: " + ", ".join(wrong_status)
+            "Only pending or assigned tasks can be planned. Not plannable: " + _named(wrong_status),
+            details=_task_details(wrong_status),
         )
-    no_coords = [str(t.id) for t, _ in found.values() if t.latitude is None or t.longitude is None]
+    no_coords = [t.id for t, _ in found.values() if t.latitude is None or t.longitude is None]
     if no_coords:
         raise UnprocessableError(
-            "Tasks without coordinates cannot be routed: " + ", ".join(no_coords)
+            "Tasks without coordinates cannot be routed: " + _named(no_coords),
+            details=_task_details(no_coords),
         )
     planned = repository.tasks_in_active_plans(db, payload.task_ids)
     if planned:
+        ids = sorted(planned, key=str)
         raise TaskAlreadyPlannedError(
-            "Tasks already in an active route plan: " + ", ".join(str(i) for i in sorted(planned))
+            "Already in an active route plan: "
+            + ", ".join(f"“{found[i][0].title}” (plan “{planned[i]}”)" for i in ids),
+            details=[
+                {"task_id": str(i), "title": found[i][0].title, "plan_name": planned[i]}
+                for i in ids
+            ],
         )
 
     warnings: list[str] = []
