@@ -16,6 +16,14 @@ erDiagram
         uuid acknowledged_by_id FK
         uuid id PK
     }
+    assistant_conversations {
+        uuid user_id FK
+        uuid id PK
+    }
+    assistant_messages {
+        uuid conversation_id FK
+        uuid id PK
+    }
     audit_logs {
         uuid actor_id FK
         uuid id PK
@@ -83,6 +91,11 @@ erDiagram
     forecast_results {
         uuid facility_id FK
         uuid material_category_id FK
+        uuid id PK
+    }
+    knowledge_articles {
+        uuid created_by_id FK
+        uuid updated_by_id FK
         uuid id PK
     }
     marketplace_listing_photos {
@@ -191,6 +204,17 @@ erDiagram
         uuid material_category_id FK
         uuid id PK
     }
+    support_ticket_replies {
+        uuid ticket_id FK
+        uuid author_id FK
+        uuid id PK
+    }
+    support_tickets {
+        uuid user_id FK
+        uuid assignee_id FK
+        uuid shared_conversation_id FK
+        uuid id PK
+    }
     user_roles {
         uuid user_id PK, FK
         uuid role_id PK, FK
@@ -216,6 +240,8 @@ erDiagram
     users |o--o{ anomaly_alerts : "acknowledged_by_id"
     facilities |o--o{ anomaly_alerts : "facility_id"
     material_categories |o--o{ anomaly_alerts : "material_category_id"
+    users ||--o{ assistant_conversations : "user_id"
+    assistant_conversations ||--o{ assistant_messages : "conversation_id"
     users |o--o{ audit_logs : "actor_id"
     users ||--o{ auth_sessions : "user_id"
     material_categories ||--o{ classification_predictions : "material_category_id"
@@ -246,6 +272,8 @@ erDiagram
     facilities |o--o{ fleet_vehicles : "home_facility_id"
     facilities |o--o{ forecast_results : "facility_id"
     material_categories |o--o{ forecast_results : "material_category_id"
+    users |o--o{ knowledge_articles : "created_by_id"
+    users |o--o{ knowledge_articles : "updated_by_id"
     marketplace_listings ||--o{ marketplace_listing_photos : "listing_id"
     users ||--o{ marketplace_listing_photos : "uploaded_by_id"
     users ||--o{ marketplace_listings : "created_by_id"
@@ -290,6 +318,11 @@ erDiagram
     facilities |o--o{ route_stops : "facility_id"
     route_plans ||--o{ route_stops : "route_plan_id"
     material_categories ||--o{ sorting_guidance : "material_category_id"
+    users ||--o{ support_ticket_replies : "author_id"
+    support_tickets ||--o{ support_ticket_replies : "ticket_id"
+    users |o--o{ support_tickets : "assignee_id"
+    assistant_conversations |o--o{ support_tickets : "shared_conversation_id"
+    users ||--o{ support_tickets : "user_id"
     roles ||--o{ user_roles : "role_id"
     users ||--o{ user_roles : "user_id"
     collection_tasks |o--o{ vehicle_location_events : "collection_task_id"
@@ -317,6 +350,7 @@ erDiagram
 - **rewards**: `reward_items`, `reward_ledger_entries`, `reward_redemptions`
 - **route_planning**: `route_plans`, `route_stops`
 - **sorting_guide**: `material_categories`, `sorting_guidance`
+- **support**: `assistant_conversations`, `assistant_messages`, `knowledge_articles`, `support_ticket_replies`, `support_tickets`
 - **tracking**: `vehicle_location_events`
 - **users**: `permissions`, `role_permissions`, `roles`, `user_roles`, `users`
 - **waste_reports**: `media_assets`, `waste_reports`

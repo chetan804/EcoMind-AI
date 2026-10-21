@@ -28,6 +28,7 @@ from app.modules.notifications.router import router as notifications_router
 from app.modules.rewards.router import router as rewards_router
 from app.modules.route_planning.router import router as route_planning_router
 from app.modules.sorting_guide.router import router as sorting_guide_router
+from app.modules.support.router import router as support_router
 from app.modules.tracking.router import router as tracking_router
 from app.modules.waste_reports.router import router as waste_reports_router
 
@@ -62,3 +63,4 @@ api_v1_router.include_router(analytics_router, prefix="/analytics", tags=["analy
 api_v1_router.include_router(administration_router, prefix="/admin", tags=["administration"])
 api_v1_router.include_router(marketplace_router, prefix="/marketplace", tags=["marketplace"])
 api_v1_router.include_router(tracking_router, prefix="/tracking", tags=["tracking"])
+api_v1_router.include_router(support_router, prefix="/support", tags=["support"])

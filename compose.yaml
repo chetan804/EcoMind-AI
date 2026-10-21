@@ -28,6 +28,7 @@ x-backend-environment: &backend-environment
   EMAIL_VERIFICATION_REQUIRED: ${EMAIL_VERIFICATION_REQUIRED:-false}
   # Registrations per client address per hour; the CI end-to-end run raises it (see quality-gates.yml).
   REGISTRATION_LIMIT_PER_IP_PER_HOUR: ${REGISTRATION_LIMIT_PER_IP_PER_HOUR:-10}
+  ASSISTANT_RETENTION_DAYS: ${ASSISTANT_RETENTION_DAYS:-90}
   # Optional, server-only (Routes API). Empty = road routes reported as unavailable.
   GOOGLE_MAPS_SERVER_API_KEY: ${GOOGLE_MAPS_SERVER_API_KEY:-}
 

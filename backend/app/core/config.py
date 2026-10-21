@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     # accounts from one address (the end-to-end suite), never in a deployment.
     registration_limit_per_ip_per_hour: int = Field(default=10, ge=1, le=10_000)
 
+    # Days an idle help-assistant conversation is kept before the daily purge removes it
+    # (conversations a person shared with a support ticket are kept with the ticket).
+    assistant_retention_days: int = Field(default=90, ge=1, le=3650)
+
     # How long a published marketplace listing stays on offer before it lapses (owners can renew).
     marketplace_listing_days: int = Field(default=30, ge=1, le=90)
 

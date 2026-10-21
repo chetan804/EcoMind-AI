@@ -7,6 +7,8 @@
     python -m app.cli purge-location-events                  # retention: run daily (cron/timer)
     python -m app.cli expire-marketplace-listings            # close lapsed marketplace listings
     python -m app.cli purge-account-tokens                   # delete expired reset/verify links
+    python -m app.cli seed-support-knowledge                 # load the shipped help articles
+    python -m app.cli purge-assistant-conversations          # retention: run daily (cron/timer)
     python -m app.cli mark-email-verified --email a@b.org    # operator attests an address
     python -m app.cli mark-email-verified --all-existing     # before EMAIL_VERIFICATION_REQUIRED
 
@@ -39,6 +41,8 @@ from app.modules.classification import repository as classification_repository
 from app.modules.classification import service as classification_service
 from app.modules.forecasting import importer as forecasting_importer
 from app.modules.marketplace import expiry as marketplace_expiry
+from app.modules.support import assistant as support_assistant
+from app.modules.support import knowledge as support_knowledge
 from app.modules.tracking import service as tracking_service
 from app.modules.users import repository as users
 from app.modules.users.models import User
@@ -133,6 +137,24 @@ def expire_marketplace_listings() -> str:
     return f"closed {result.closed} expired listing(s); warned owners of {result.announced}"
 
 
+def seed_support_knowledge() -> str:
+    with get_session_factory()() as db:
+        created, updated = support_knowledge.seed_platform_help(db)
+    return f"help articles: {created} created, {updated} updated (edited articles are left alone)"
+
+
+def purge_assistant_conversations() -> str:
+    settings = get_settings()
+    with get_session_factory()() as db:
+        removed = support_assistant.purge_old_conversations(
+            db, older_than_days=settings.assistant_retention_days
+        )
+    return (
+        f"removed {removed} assistant conversation(s) idle for more than "
+        f"{settings.assistant_retention_days} days (conversations shared with a ticket are kept)"
+    )
+
+
 def mark_email_verified(*, email: str | None, all_existing: bool) -> str:
     """An operator attests that addresses are genuine (audited). Never done implicitly."""
     with get_session_factory()() as db:
@@ -186,6 +208,13 @@ def main(argv: list[str] | None = None) -> int:
         help="close marketplace listings past their expiry and warn owners of those about to lapse",
     )
     sub.add_parser("purge-account-tokens", help="delete expired or used reset/verification links")
+    sub.add_parser(
+        "seed-support-knowledge", help="create or refresh the help articles that ship with the app"
+    )
+    sub.add_parser(
+        "purge-assistant-conversations",
+        help="delete assistant conversations idle for more than ASSISTANT_RETENTION_DAYS",
+    )
     verify = sub.add_parser("mark-email-verified", help="attest e-mail addresses as verified")
     target = verify.add_mutually_exclusive_group(required=True)
     target.add_argument("--email")
@@ -194,6 +223,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "expire-marketplace-listings":
         print(expire_marketplace_listings())
+        return 0
+
+    if args.command == "seed-support-knowledge":
+        print(seed_support_knowledge())
+        return 0
+
+    if args.command == "purge-assistant-conversations":
+        print(purge_assistant_conversations())
         return 0
 
     if args.command == "purge-account-tokens":

@@ -55,11 +55,15 @@ PERMISSIONS: dict[str, str] = {
     "marketplace:request": "Ask for a surplus-material listing",
     "marketplace:create": "Offer surplus material in the marketplace",
     "marketplace:manage": "Moderate and act on any marketplace listing",
+    "support:ask": "Ask the help assistant and open support tickets",
+    "support:manage": "Answer, assign and close every support ticket",
+    "knowledge:manage": "Write and publish help articles",
     "audit:read": "View the audit log",
     "settings:manage": "Change system and security settings",
 }
 
 _CITIZEN = {
+    "support:ask",
     "waste_reports:create",
     "waste_reports:read_own",
     "classification:predict",
@@ -75,6 +79,7 @@ _CITIZEN = {
 }
 
 _COLLECTOR = {
+    "support:ask",
     "fleet:track",
     "waste_reports:read_all",
     "classification:predict",
@@ -91,6 +96,7 @@ _COLLECTOR = {
 }
 
 _FACILITY_OPERATOR = {
+    "support:ask",
     "waste_reports:read_all",
     "classification:predict",
     "classification:review",
@@ -108,6 +114,8 @@ _FACILITY_OPERATOR = {
 }
 
 _MANAGER = _FACILITY_OPERATOR | {
+    "support:manage",
+    "knowledge:manage",
     "waste_reports:review",
     "collection:manage",
     "facilities:manage",

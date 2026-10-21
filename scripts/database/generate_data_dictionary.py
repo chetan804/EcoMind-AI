@@ -21,7 +21,7 @@ os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://x:x@localhost/x")
 os.environ.setdefault("SECRET_KEY", "dictionary-generation-only-secret-0123456789")
 
-from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint  # noqa: E402
+from sqlalchemy import CheckConstraint, Computed, ForeignKeyConstraint, UniqueConstraint  # noqa: E402
 from sqlalchemy.sql.elements import TextClause  # noqa: E402
 
 from app.db.base import Base  # noqa: E402
@@ -86,7 +86,9 @@ def render() -> str:
                 if column.unique:
                     notes.append("UQ")
                 default = ""
-                if column.server_default is not None:
+                if isinstance(column.server_default, Computed):
+                    default = "generated (see model)"
+                elif column.server_default is not None:
                     default = f"`{getattr(column.server_default.arg, 'text', column.server_default.arg)}`"
                 lines.append(
                     f"| `{column.name}` | {type_name(column)} | "

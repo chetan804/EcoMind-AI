@@ -795,6 +795,84 @@ Constraints:
 
 - Allowed values: `disposal_method` in (recycle, compost, reuse, landfill, hazardous_drop_off, e_waste_drop_off, special_collection)
 
+## Module `support`
+
+### `assistant_conversations`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+### `assistant_messages`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `conversation_id` | uuid | NN |  | FK -> `assistant_conversations.id` ON DELETE CASCADE |
+| `role` | varchar(17) | NN |  |  |
+| `kind` | varchar(21) | NN |  |  |
+| `content` | text | NN |  |  |
+| `sources` | jsonb | NN | `[]` |  |
+| `helpful` | boolean | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- Allowed values: `role` in (user, assistant); `kind` in (question, knowledge, account_data, no_answer, not_permitted)
+
+### `knowledge_articles`
+
+A help article. ``source`` says where its content comes from (nothing is anonymous).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `slug` | varchar(100) | NN |  | UQ |
+| `title` | varchar(200) | NN |  |  |
+| `body` | text | NN |  |  |
+| `category` | varchar(60) | NN |  |  |
+| `keywords` | text | NN | `` |  |
+| `source` | varchar(200) | NN |  |  |
+| `published` | boolean | NN | `true` |  |
+| `created_by_id` | uuid | null |  | FK -> `users.id` |
+| `updated_by_id` | uuid | null |  | FK -> `users.id` |
+| `search_vector` | tsvector | NN | generated (see model) |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+### `support_ticket_replies`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `ticket_id` | uuid | NN |  | FK -> `support_tickets.id` ON DELETE CASCADE |
+| `author_id` | uuid | NN |  | FK -> `users.id` |
+| `is_staff` | boolean | NN |  |  |
+| `body` | text | NN |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+
+### `support_tickets`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` |
+| `subject` | varchar(200) | NN |  |  |
+| `body` | text | NN |  |  |
+| `status` | varchar(19) | NN | `open` |  |
+| `assignee_id` | uuid | null |  | FK -> `users.id` |
+| `shared_conversation_id` | uuid | null |  | FK -> `assistant_conversations.id` ON DELETE SET NULL |
+| `resolved_at` | timestamptz | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- Allowed values: `status` in (open, in_progress, resolved, closed)
+
 ## Module `tracking`
 
 ### `vehicle_location_events`

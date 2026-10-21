@@ -2,7 +2,7 @@
 
 > **Generated** by `scripts/security/generate_route_matrix.py` from the mounted application and the RBAC catalog (`backend/app/modules/users/rbac.py`). Do not edit by hand; CI fails if this file is stale. `backend/tests/security/test_route_inventory.py` fails if a route becomes public or signed-in-only without being listed there.
 
-152 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
+168 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
 
 | Method | Path | Access | Roles that hold it |
 |---|---|---|---|
@@ -137,6 +137,22 @@
 | POST | `/api/v1/sorting-guide/guidance` | `sorting_guide:manage` | manager, administrator |
 | GET | `/api/v1/sorting-guide/guidance/{guidance_id}` | `sorting_guide:read` | citizen, collector, facility_operator, manager, administrator |
 | PATCH | `/api/v1/sorting-guide/guidance/{guidance_id}` | `sorting_guide:manage` | manager, administrator |
+| GET | `/api/v1/support/articles` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/articles` | `knowledge:manage` | manager, administrator |
+| GET | `/api/v1/support/articles/categories` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/articles/{article_id}` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| PATCH | `/api/v1/support/articles/{article_id}` | `knowledge:manage` | manager, administrator |
+| GET | `/api/v1/support/assistant/conversations/{conversation_id}` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/assistant/messages` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/assistant/messages/{message_id}/feedback` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/assistant/stats` | `support:manage` | manager, administrator |
+| GET | `/api/v1/support/tickets` | `support:manage` | manager, administrator |
+| POST | `/api/v1/support/tickets` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/tickets/mine` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/tickets/{ticket_id}` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| PATCH | `/api/v1/support/tickets/{ticket_id}` | `support:manage` | manager, administrator |
+| POST | `/api/v1/support/tickets/{ticket_id}/close` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/tickets/{ticket_id}/replies` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
 | GET | `/api/v1/tracking/collections/{task_id}` | `collection:read` | collector, facility_operator, manager, administrator |
 | GET | `/api/v1/tracking/config` | `fleet:read` | collector, manager, administrator |
 | GET | `/api/v1/tracking/route-plans/{plan_id}` | `routes:read` | collector, manager, administrator |
