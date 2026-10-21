@@ -1,11 +1,12 @@
 import { useState, type ComponentType } from 'react';
 import { Armchair, Box, Container, Cpu, FileText, Leaf, Shirt, Store, TreePine, Wine, Wrench } from 'lucide-react';
+import { AuthImage } from '@/components/data-display/AuthImage';
 import { Alert } from '@/components/feedback/Alert';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { QueryBoundary } from '@/components/feedback/QueryBoundary';
 import { optional, useFields } from '@/components/forms/useFields';
 import { PageHeader } from '@/components/layout/PageHeader';
-import type { BadgeTone } from '@/components/ui/Badge';
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Choice';
 import { Dialog } from '@/components/ui/Dialog';
@@ -18,7 +19,8 @@ import { useFacilityOptions } from '@/features/facilities';
 import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatDateTime, formatNumber, humanize } from '@/utils/format';
-import { CATEGORIES, CONDITIONS, UNITS, type Listing, type ListingRequest } from '../api/marketplace-api';
+import { CATEGORIES, CONDITIONS, UNITS, photoContentPath, type Listing, type ListingRequest } from '../api/marketplace-api';
+import { PhotoGallery, PhotoManager } from '../components/ListingPhotos';
 import {
   useAskForListing,
   useCloseListing,
@@ -28,6 +30,7 @@ import {
   useListings,
   useMyRequests,
   usePublishListing,
+  useRenewListing,
   useSaveListing,
 } from '../hooks/useMarketplace';
 import '../marketplace.css';
@@ -47,6 +50,9 @@ const ICONS: Record<string, ComponentType<{ size?: number }>> = {
 const LISTING_TONES: Record<string, BadgeTone> = { draft: 'neutral', published: 'success', reserved: 'warning', closed: 'neutral' };
 const REQUEST_TONES: Record<string, BadgeTone> = { pending: 'info', accepted: 'success', declined: 'neutral', withdrawn: 'neutral' };
 const label = (category: string) => (category === 'e_waste' ? 'E-waste' : humanize(category));
+const OUTCOMES: Record<string, string> = { handed_over: 'Handed over', withdrawn: 'Withdrawn', expired: 'Expired' };
+// Lifetimes offered when publishing or renewing. The first entry defers to the server's setting.
+const DURATIONS: [string, string][] = [['', 'Standard'], ['7', '7 days'], ['14', '14 days'], ['30', '30 days'], ['60', '60 days'], ['90', '90 days']];
 const quantityText = (l: Listing) => `${formatNumber(l.quantity)} ${l.unit}`;
 
 export function MarketplacePage() {
@@ -93,12 +99,19 @@ export function MarketplacePage() {
                   const Icon = ICONS[l.category] ?? Box;
                   return (
                     <li key={l.id} className="listing">
-                      <div className="listing__art" aria-hidden="true"><Icon size={40} /></div>
+                      {l.photos[0] ? (
+                        <div className="listing__art listing__art--photo">
+                          <AuthImage className="listing__cover" contentPath={photoContentPath(l.photos[0].id)} alt={l.photos[0].caption ?? `Photo of ${l.title}`} />
+                        </div>
+                      ) : (
+                        <div className="listing__art" aria-hidden="true"><Icon size={40} /></div>
+                      )}
                       <div className="listing__body">
                         <h3 className="listing__title">{l.title}</h3>
                         <p className="muted">{quantityText(l)} · {humanize(l.condition)} condition</p>
                         <div className="listing__meta">
                           <StatusBadge value={l.status} tones={LISTING_TONES} />
+                          {l.is_expired && <Badge tone="warning">Expired</Badge>}
                           <span className="muted">{label(l.category)}</span>
                           {l.is_mine && <span className="muted">Yours</span>}
                         </div>
@@ -223,14 +236,17 @@ function ListingDialog({ listing, onClose, onEdit }: { listing: Listing; onClose
   const requests = useListingRequests(current.id, controls);
   const ask = useAskForListing();
   const publish = usePublishListing();
+  const renew = useRenewListing();
   const close = useCloseListing();
   const decide = useDecideRequest();
   const [closing, setClosing] = useState(false);
-  const { values, bind } = useFields({ message: '' });
+  const [handingOver, setHandingOver] = useState(false);
+  const { values, bind } = useFields({ message: '', days: '' });
   const mineStatus = current.my_request_status;
   const canAsk = !current.is_mine && can('marketplace:request') && current.status === 'published' && (mineStatus === null || mineStatus === 'withdrawn');
   const editable = controls && (current.status === 'draft' || current.status === 'published');
-  const error = ask.error ?? publish.error ?? decide.error;
+  const error = ask.error ?? publish.error ?? renew.error ?? decide.error;
+  const days = values.days ? Number(values.days) : undefined;
 
   return (
     <>
@@ -238,8 +254,15 @@ function ListingDialog({ listing, onClose, onEdit }: { listing: Listing; onClose
         <div className="stack stack--tight">
           <div className="listing__meta">
             <StatusBadge value={current.status} tones={LISTING_TONES} />
+            {current.is_expired && <Badge tone="warning">Expired</Badge>}
             <span className="muted">{label(current.category)}</span>
           </div>
+          {current.is_expired && (
+            <Alert tone="warning" title="This listing has expired">
+              {controls ? 'Other people can no longer see or request it. Renew it to put it back on offer.' : 'It can no longer be requested.'}
+            </Alert>
+          )}
+          <PhotoGallery listing={current} />
           <dl className="detail-list">
             <dt>Quantity</dt><dd>{quantityText(current)}</dd>
             <dt>Condition</dt><dd>{humanize(current.condition)}</dd>
@@ -248,16 +271,26 @@ function ListingDialog({ listing, onClose, onEdit }: { listing: Listing; onClose
             {current.pickup_city && (<><dt>Pickup city</dt><dd>{current.pickup_city}</dd></>)}
             {current.description && (<><dt>Description</dt><dd>{current.description}</dd></>)}
             {current.published_at && (<><dt>Published</dt><dd>{formatDateTime(current.published_at)}</dd></>)}
+            {current.expires_at && current.status !== 'closed' && (<><dt>{current.is_expired ? 'Expired' : 'On offer until'}</dt><dd>{formatDateTime(current.expires_at)}</dd></>)}
+            {current.outcome && (<><dt>Outcome</dt><dd>{OUTCOMES[current.outcome]}</dd></>)}
             {current.close_reason && (<><dt>Closed because</dt><dd>{current.close_reason}</dd></>)}
           </dl>
 
           {controls && current.status !== 'closed' && (
             <div className="listing__actions" role="group" aria-label="Listing actions">
-              {current.status === 'draft' && <Button loading={publish.isPending} onClick={() => publish.mutate(current.id)}>Publish</Button>}
+              {(current.status === 'draft' || current.status === 'published') && (
+                <Field label="Stays on offer for">
+                  {(c) => <Select {...c} {...bind('days')}>{DURATIONS.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</Select>}
+                </Field>
+              )}
+              {current.status === 'draft' && <Button loading={publish.isPending} onClick={() => publish.mutate({ id: current.id, days })}>Publish</Button>}
+              {current.status === 'published' && <Button loading={renew.isPending} onClick={() => renew.mutate({ id: current.id, days })}>Renew</Button>}
+              {current.status === 'reserved' && <Button onClick={() => setHandingOver(true)}>Mark as handed over</Button>}
               {editable && <Button variant="secondary" onClick={() => onEdit(current)}>Edit</Button>}
               <Button variant="danger" onClick={() => setClosing(true)}>Close listing</Button>
             </div>
           )}
+          {controls && editable && <PhotoManager listing={current} />}
 
           {controls && (
             <section aria-label="Requests" className="stack stack--tight">
@@ -303,8 +336,21 @@ function ListingDialog({ listing, onClose, onEdit }: { listing: Listing; onClose
           destructive
           pending={close.isPending}
           error={close.error}
-          onSubmit={(reason) => close.mutate({ id: current.id, reason: reason || undefined }, { onSuccess: () => setClosing(false) })}
+          onSubmit={(reason) => close.mutate({ id: current.id, reason: reason || undefined, outcome: 'withdrawn' }, { onSuccess: () => setClosing(false) })}
           onClose={() => setClosing(false)}
+        />
+      )}
+      {handingOver && (
+        <ReasonDialog
+          title="Record the hand-over?"
+          description="Use this once the material has actually been collected. The listing is closed as handed over and the person it was reserved for is told."
+          label="Note"
+          required={false}
+          submitLabel="Mark as handed over"
+          pending={close.isPending}
+          error={close.error}
+          onSubmit={(reason) => close.mutate({ id: current.id, reason: reason || undefined, outcome: 'handed_over' }, { onSuccess: () => setHandingOver(false) })}
+          onClose={() => setHandingOver(false)}
         />
       )}
     </>

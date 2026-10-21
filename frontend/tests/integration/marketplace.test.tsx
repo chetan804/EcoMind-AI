@@ -17,7 +17,7 @@ afterEach(() => vi.unstubAllGlobals());
 const listing = (over: Record<string, unknown> = {}) => ({
   id: id(1), title: 'Office chairs', description: 'Surplus from a floor move', category: 'furniture', quantity: '30.000', unit: 'units', condition: 'good',
   facility_id: null, facility_name: null, pickup_city: 'Hyderabad', status: 'published', owner_id: id(8), owner_name: 'Oona Operator', is_mine: false,
-  pending_request_count: null, my_request_status: null, published_at: '2026-10-19T10:00:00Z', closed_at: null, close_reason: null, created_at: '2026-10-19T09:00:00Z',
+  pending_request_count: null, my_request_status: null, published_at: '2026-10-19T10:00:00Z', closed_at: null, close_reason: null, outcome: null, expires_at: '2026-11-18T10:00:00Z', is_expired: false, photos: [], created_at: '2026-10-19T09:00:00Z',
   updated_at: '2026-10-19T09:00:00Z', ...over,
 });
 const request = (over: Record<string, unknown> = {}) => ({
@@ -145,5 +145,162 @@ describe('marketplace', () => {
     const body = api.calls.find((c) => c.key === 'POST /api/v1/marketplace/listings')?.body as Record<string, unknown>;
     expect(body).toMatchObject({ title: 'Office chairs', quantity: '30', unit: 'units', category: 'furniture', condition: 'good', facility_id: null });
     expect(body).not.toHaveProperty('price');
+  });
+
+  describe('expiry, outcomes and photos', () => {
+    const L = '11111111-1111-4111-8111-111111111111';
+    const P = '55555555-5555-4555-8555-555555555555';
+    const photo = (over: Record<string, unknown> = {}) => ({ id: P, position: 0, caption: 'Front view', width_px: 640, height_px: 480, ...over });
+    const png = () => new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/png' } });
+    const open = async () => {
+      await userEvent.click(await screen.findByRole('button', { name: 'Open listing: Office chairs' }));
+      return screen.findByRole('dialog', { name: 'Office chairs' });
+    };
+    const mineListing = (over: Record<string, unknown> = {}) => listing({ is_mine: true, ...over });
+
+    it('shows a cover photo on the card and the gallery in the dialog, fetched with the session token', async () => {
+      const withPhoto = listing({ photos: [photo()] });
+      routeApi(fetchSpy, {
+        'GET /api/v1/marketplace/listings': page([withPhoto]),
+        [`GET /api/v1/marketplace/listings/${L}`]: withPhoto,
+        'GET /api/v1/marketplace/requests/mine': page([]),
+        [`GET /api/v1/marketplace/photos/${P}/content`]: () => png(),
+      }, citizen);
+      renderAt('/marketplace');
+      const cover = await screen.findByRole('img', { name: 'Front view' });
+      expect(cover).toHaveClass('listing__cover');
+      const dialog = await open();
+      expect(await within(dialog).findByRole('img', { name: 'Front view' })).toBeInTheDocument();
+      const [, init] = fetchSpy.mock.calls.find(([url]) => String(url).includes(`/marketplace/photos/${P}/content`)) as [string, RequestInit];
+      expect(init.headers).toMatchObject({ Authorization: 'Bearer test-access-token' });
+      // A citizen sees no photo controls.
+      expect(within(dialog).queryByRole('button', { name: 'Add photo' })).not.toBeInTheDocument();
+    });
+
+    it('says when a listing has expired, to the owner, with a way to renew it', async () => {
+      const lapsed = mineListing({ is_expired: true, expires_at: '2026-10-20T10:00:00Z' });
+      const api = routeApi(fetchSpy, {
+        'GET /api/v1/marketplace/listings': page([lapsed]),
+        [`GET /api/v1/marketplace/listings/${L}`]: lapsed,
+        [`GET /api/v1/marketplace/listings/${L}/requests`]: [],
+        'GET /api/v1/marketplace/requests/mine': page([]),
+        [`POST /api/v1/marketplace/listings/${L}/renew`]: mineListing(),
+      }, operator);
+      renderAt('/marketplace');
+      expect(await screen.findByText('Expired')).toBeInTheDocument();
+      const dialog = await open();
+      expect(within(dialog).getByText('This listing has expired')).toBeInTheDocument();
+      expect(within(dialog).queryByRole('button', { name: 'Request this' })).not.toBeInTheDocument();
+      await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: 'Stays on offer for' }), '14 days');
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Renew' }));
+      await waitFor(() => expect(api.calls.find((c) => c.key.endsWith('/renew'))?.body).toEqual({ duration_days: 14 }));
+    });
+
+    it('publishes with the server default unless a lifetime is chosen', async () => {
+      const draft = mineListing({ status: 'draft', published_at: null, expires_at: null });
+      const api = routeApi(fetchSpy, {
+        'GET /api/v1/marketplace/listings': page([draft]),
+        [`GET /api/v1/marketplace/listings/${L}`]: draft,
+        [`GET /api/v1/marketplace/listings/${L}/requests`]: [],
+        'GET /api/v1/marketplace/requests/mine': page([]),
+        [`POST /api/v1/marketplace/listings/${L}/publish`]: mineListing(),
+      }, operator);
+      renderAt('/marketplace');
+      const dialog = await open();
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Publish' }));
+      await waitFor(() => expect(api.calls.find((c) => c.key.endsWith('/publish'))?.body).toEqual({}));
+      await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: 'Stays on offer for' }), '7 days');
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Publish' }));
+      await waitFor(() => expect(api.calls.filter((c) => c.key.endsWith('/publish')).at(-1)?.body).toEqual({ duration_days: 7 }));
+    });
+
+    it('records a hand-over on a reserved listing, and a plain close as withdrawn', async () => {
+      const reserved = mineListing({ status: 'reserved' });
+      const closed = mineListing({ status: 'closed', outcome: 'handed_over', closed_at: '2026-10-21T10:00:00Z' });
+      const api = routeApi(fetchSpy, {
+        'GET /api/v1/marketplace/listings': page([reserved]),
+        [`GET /api/v1/marketplace/listings/${L}`]: reserved,
+        [`GET /api/v1/marketplace/listings/${L}/requests`]: [],
+        'GET /api/v1/marketplace/requests/mine': page([]),
+        [`POST /api/v1/marketplace/listings/${L}/close`]: closed,
+      }, operator);
+      renderAt('/marketplace');
+      const dialog = await open();
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Mark as handed over' }));
+      const confirm = await screen.findByRole('dialog', { name: 'Record the hand-over?' });
+      await userEvent.type(within(confirm).getByRole('textbox'), 'Collected Friday');
+      await userEvent.click(within(confirm).getByRole('button', { name: 'Mark as handed over' }));
+      await waitFor(() => expect(api.calls.find((c) => c.key.endsWith('/close'))?.body).toEqual({ reason: 'Collected Friday', outcome: 'handed_over' }));
+
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Close listing' }));
+      const sure = await screen.findByRole('dialog', { name: 'Close this listing?' });
+      await userEvent.click(within(sure).getByRole('button', { name: 'Close listing' }));
+      await waitFor(() => expect(api.calls.filter((c) => c.key.endsWith('/close')).at(-1)?.body).toEqual({ outcome: 'withdrawn' }));
+    });
+
+    it('shows how a closed listing ended', async () => {
+      const done = mineListing({ status: 'closed', outcome: 'expired', close_reason: 'The listing expired', closed_at: '2026-10-21T10:00:00Z' });
+      routeApi(fetchSpy, {
+        'GET /api/v1/marketplace/listings': page([done]),
+        [`GET /api/v1/marketplace/listings/${L}`]: done,
+        [`GET /api/v1/marketplace/listings/${L}/requests`]: [],
+        'GET /api/v1/marketplace/requests/mine': page([]),
+      }, operator);
+      renderAt('/marketplace');
+      const dialog = await open();
+      expect(within(dialog).getByText('Outcome')).toBeInTheDocument();
+      expect(within(dialog).getByText('The listing expired')).toBeInTheDocument();
+      expect(within(dialog).queryByRole('button', { name: 'Renew' })).not.toBeInTheDocument();
+      expect(within(dialog).queryByRole('button', { name: 'Add photo' })).not.toBeInTheDocument();
+    });
+
+    it('lets the owner upload a photo as a raw body with a caption, and remove one', async () => {
+      const api = routeApi(fetchSpy, {
+        'GET /api/v1/marketplace/listings': page([mineListing({ photos: [photo()] })]),
+        [`GET /api/v1/marketplace/listings/${L}`]: mineListing({ photos: [photo()] }),
+        [`GET /api/v1/marketplace/listings/${L}/requests`]: [],
+        'GET /api/v1/marketplace/requests/mine': page([]),
+        [`GET /api/v1/marketplace/photos/${P}/content`]: () => png(),
+        [`POST /api/v1/marketplace/listings/${L}/photos`]: photo({ id: '66666666-6666-4666-8666-666666666666', position: 1 }),
+        [`DELETE /api/v1/marketplace/listings/${L}/photos/${P}`]: new Response(null, { status: 204 }),
+      }, operator);
+      renderAt('/marketplace');
+      const dialog = await open();
+      const manage = await within(dialog).findByRole('region', { name: 'Manage photos' });
+      expect(within(manage).getByText('Photos (1 of 4)')).toBeInTheDocument();
+      expect(within(manage).getByRole('button', { name: 'Add photo' })).toBeDisabled();
+
+      const file = new File(['pixels'], 'chairs.png', { type: 'image/png' });
+      await userEvent.upload(within(manage).getByLabelText(/^Photo/), file);
+      await userEvent.type(within(manage).getByRole('textbox', { name: /Caption/ }), 'Side view');
+      await userEvent.click(within(manage).getByRole('button', { name: 'Add photo' }));
+      await waitFor(() => expect(api.calls.some((c) => c.key === `POST /api/v1/marketplace/listings/${L}/photos`)).toBe(true));
+      const [url, init] = fetchSpy.mock.calls.find(([u, i]) => String(u).includes('/photos?') && (i as RequestInit).method === 'POST') as [string, RequestInit];
+      expect(url).toContain('caption=Side%20view');
+      expect(init.body).toBe(file);
+      expect(init.headers).toMatchObject({ 'Content-Type': 'image/png', Authorization: 'Bearer test-access-token' });
+
+      await userEvent.click(within(manage).getByRole('button', { name: 'Remove Front view' }));
+      await waitFor(() => expect(api.calls.some((c) => c.key === `DELETE /api/v1/marketplace/listings/${L}/photos/${P}`)).toBe(true));
+    });
+
+    it('stops offering uploads at four photos and shows the server message when one is refused', async () => {
+      const four = [0, 1, 2, 3].map((n) => photo({ id: `${n}${n}${n}${n}${n}${n}${n}${n}-0000-4000-8000-000000000000`, position: n, caption: `Photo ${n}` }));
+      routeApi(fetchSpy, {
+        'GET /api/v1/marketplace/listings': page([mineListing({ photos: four })]),
+        [`GET /api/v1/marketplace/listings/${L}`]: mineListing({ photos: four }),
+        [`GET /api/v1/marketplace/listings/${L}/requests`]: [],
+        'GET /api/v1/marketplace/requests/mine': page([]),
+        [`DELETE /api/v1/marketplace/listings/${L}/photos/${four[0]?.id}`]: errorReply(409, 'invalid_listing_state', 'Photos of a reserved listing cannot be changed'),
+      }, operator);
+      fetchSpy.mockImplementation(((impl) => (url: string, init?: RequestInit) => (String(url).includes('/photos/') && String(url).endsWith('/content') ? Promise.resolve(png()) : impl(url, init)))(fetchSpy.getMockImplementation() as (u: string, i?: RequestInit) => Promise<Response>));
+      renderAt('/marketplace');
+      const dialog = await open();
+      const manage = await within(dialog).findByRole('region', { name: 'Manage photos' });
+      expect(within(manage).getByText(/up to 4 photos/)).toBeInTheDocument();
+      expect(within(manage).queryByRole('button', { name: 'Add photo' })).not.toBeInTheDocument();
+      await userEvent.click(within(manage).getByRole('button', { name: 'Remove Photo 0' }));
+      expect(await within(manage).findByText('Photos of a reserved listing cannot be changed')).toBeInTheDocument();
+    });
   });
 });

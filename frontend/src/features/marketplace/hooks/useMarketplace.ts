@@ -4,12 +4,15 @@ import {
   createListing,
   createRequest,
   decideRequest,
+  deleteListingPhoto,
   fetchListingRequests,
   fetchListing,
   fetchListings,
   fetchMyRequests,
   publishListing,
+  renewListing,
   updateListing,
+  uploadListingPhoto,
   type Listing,
   type ListingFilters,
 } from '../api/marketplace-api';
@@ -37,11 +40,26 @@ export function useSaveListing() {
 }
 export function usePublishListing() {
   const refresh = useRefresh();
-  return useMutation({ mutationFn: publishListing, onSuccess: refresh });
+  return useMutation({ mutationFn: (v: { id: string; days?: number }) => publishListing(v.id, v.days), onSuccess: refresh });
+}
+export function useRenewListing() {
+  const refresh = useRefresh();
+  return useMutation({ mutationFn: (v: { id: string; days?: number }) => renewListing(v.id, v.days), onSuccess: refresh });
 }
 export function useCloseListing() {
   const refresh = useRefresh();
-  return useMutation({ mutationFn: (v: { id: string; reason?: string }) => closeListing(v.id, v.reason), onSuccess: refresh });
+  return useMutation({
+    mutationFn: (v: { id: string; reason?: string; outcome?: 'handed_over' | 'withdrawn' }) => closeListing(v.id, v.reason, v.outcome),
+    onSuccess: refresh,
+  });
+}
+export function useUploadPhoto() {
+  const refresh = useRefresh();
+  return useMutation({ mutationFn: (v: { id: string; file: File; caption?: string }) => uploadListingPhoto(v.id, v.file, v.caption), onSuccess: refresh });
+}
+export function useDeletePhoto() {
+  const refresh = useRefresh();
+  return useMutation({ mutationFn: (v: { id: string; photoId: string }) => deleteListingPhoto(v.id, v.photoId), onSuccess: refresh });
 }
 export function useAskForListing() {
   const refresh = useRefresh();
