@@ -342,3 +342,7 @@ Role-based authentication had one open gap: two-step verification was optional f
 | Documents | `docs/security/mfa.md` (Required roles section), `docs/api/auth-api.md`, `DECISION_LOG.md` #13 (revised), `LIMITATIONS.md`, `RELEASE_CHECKLIST.md`, `TRACEABILITY_MATRIX.md`, both `.env.example` files, `compose.yaml` | `check_env_templates.py`, `check_structure.py`, route-matrix and data-dictionary `--check` pass |
 
 Not verified: no end-to-end (browser) test of the enforced flow, because the CI stack runs with `ENVIRONMENT=local` (policy off) and a browser test would need a TOTP generator and a privileged account; the API and component tests cover the behaviour. No production deployment exists to observe.
+
+## Audit (2026-10-21)
+
+A full audit was run and written up in `PROJECT_AUDIT_REPORT.md`; `docs/PROJECT_GUIDE.md` explains the whole project for a beginner and `docs/testing/MANUAL_TEST_GUIDE.md` is the A-to-Z manual test. Results: backend 763 passed / 1 skipped (coverage 97% of statements), frontend 365 passed, browser end-to-end 31 passed / 1 skipped, dependency and static-analysis scans clean. Defects fixed: collectors could not list their own incident reports (migration 0016); the landing page and several READMEs were out of date; the demo seed script needed `httpx2`. Open items are listed in the report (section 11) and `LIMITATIONS.md`. Word copies of the three documents are in `docs/exports/` (Markdown is the source).
