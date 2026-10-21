@@ -11,11 +11,12 @@
     python -m app.cli purge-assistant-conversations          # retention: run daily (cron/timer)
     python -m app.cli mark-email-verified --email a@b.org    # operator attests an address
     python -m app.cli mark-email-verified --all-existing     # before EMAIL_VERIFICATION_REQUIRED
+    python -m app.cli seed-demo-accounts                     # demo sign-ins (not in production)
 
-The password is read from the ECOMIND_ADMIN_PASSWORD environment variable or, when that is unset,
-prompted for without echo. It is never accepted as a command-line argument (it would leak into
-shell history and process listings). The account gets the ``administrator`` role and is subject to
-the normal password policy.
+The password is read from the ECOMIND_ADMIN_PASSWORD environment variable (DEMO_PASSWORD for
+seed-demo-accounts) or, when that is unset, prompted for without echo. It is never accepted as a
+command-line argument (it would leak into shell history and process listings). The account gets
+the ``administrator`` role and is subject to the normal password policy.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ from app.db.session import get_session_factory
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestContext
 from app.modules.auth import recovery
+from app.modules.auth import repository as auth_repository
 from app.modules.auth.errors import EmailAlreadyRegisteredError, WeakPasswordError
 from app.modules.auth.policy import password_problems
 from app.modules.classification import repository as classification_repository
@@ -47,8 +49,19 @@ from app.modules.support import knowledge as support_knowledge
 from app.modules.tracking import service as tracking_service
 from app.modules.users import repository as users
 from app.modules.users.models import User
+from app.modules.users.rbac import DEFAULT_REGISTRATION_ROLE
 
 ADMIN_ROLE = "administrator"
+
+# Demonstration accounts: (mailbox, full name, role). The role None means the default (citizen).
+DEMO_ACCOUNTS: tuple[tuple[str, str, str | None], ...] = (
+    ("admin", "Priya Admin", "administrator"),
+    ("manager", "Meera Manager", "manager"),
+    ("collector", "Ravi Collector", "collector"),
+    ("operator", "Omar Operator", "facility_operator"),
+    ("citizen", "Asha Citizen", None),
+    ("verifier", "Vera Verifier", "facility_operator"),
+)
 
 
 def create_admin(*, email: str, full_name: str, password: str) -> None:
@@ -180,6 +193,69 @@ def mark_email_verified(*, email: str | None, all_existing: bool) -> str:
     return f"marked {len(targets)} account(s) as e-mail verified"
 
 
+def seed_demo_accounts(*, password: str, domain: str, reset_passwords: bool) -> str:
+    """Create the labelled demonstration accounts. Idempotent; never used in production.
+
+    Existing accounts are left untouched (password included) unless ``reset_passwords`` is set,
+    which also signs them out everywhere. Accounts are marked e-mail verified because an operator
+    with shell access creates them (audited), so demo users do not see the verification banner.
+    """
+    created: list[str] = []
+    reset: list[str] = []
+    kept: list[str] = []
+    with get_session_factory()() as db:
+        for mailbox, full_name, role_name in DEMO_ACCOUNTS:
+            email = f"{mailbox}@{domain}"
+            problems = password_problems(password, email=email, full_name=full_name)
+            if problems:
+                raise WeakPasswordError(
+                    f"Password does not meet the password policy for {email}: " + " ".join(problems)
+                )
+            role = users.get_role_by_name(db, role_name or DEFAULT_REGISTRATION_ROLE)
+            if role is None:
+                raise RuntimeError(
+                    f"Role {role_name!r} is missing; run `alembic upgrade head` first"
+                )
+            existing = users.get_by_email(db, email)
+            now = utc_now()
+            if existing is None:
+                user = users.add(
+                    db, email=email, password_hash=hash_password(password), full_name=full_name
+                )
+                user.email_verified_at = now
+                users.assign_role(db, user_id=user.id, role_id=role.id)
+                audit.record(
+                    db,
+                    action="users.demo_account_seeded",
+                    entity_type="user",
+                    entity_id=user.id,
+                    changes={"role": role.name, "action": "created"},
+                    context=RequestContext(),
+                )
+                created.append(email)
+            elif reset_passwords:
+                existing.password_hash = hash_password(password)
+                if existing.email_verified_at is None:
+                    existing.email_verified_at = now
+                revoked = auth_repository.revoke_all_for_user(db, existing.id, now)
+                audit.record(
+                    db,
+                    action="users.demo_account_seeded",
+                    entity_type="user",
+                    entity_id=existing.id,
+                    changes={"action": "password_reset", "sessions_revoked": revoked},
+                    context=RequestContext(),
+                )
+                reset.append(email)
+            else:
+                kept.append(email)
+        db.commit()
+    return (
+        f"demo accounts: {len(created)} created, {len(reset)} password(s) reset, "
+        f"{len(kept)} already present and unchanged"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m app.cli",
@@ -220,7 +296,40 @@ def main(argv: list[str] | None = None) -> int:
     target = verify.add_mutually_exclusive_group(required=True)
     target.add_argument("--email")
     target.add_argument("--all-existing", action="store_true")
+    seed = sub.add_parser(
+        "seed-demo-accounts",
+        help="create the six labelled demo accounts (admin, manager, collector, operator, "
+        "citizen, verifier); refused in production",
+    )
+    seed.add_argument("--domain", default="example.org", help="mail domain (default example.org)")
+    seed.add_argument(
+        "--reset-passwords",
+        action="store_true",
+        help="also set the given password on demo accounts that already exist (signs them out)",
+    )
     args = parser.parse_args(argv)
+
+    if args.command == "seed-demo-accounts":
+        if get_settings().environment == "production":
+            print(
+                "error: seed-demo-accounts is refused when ENVIRONMENT=production "
+                "(demonstration accounts have well-known names)",
+                file=sys.stderr,
+            )
+            return 1
+        demo_password = os.environ.get("DEMO_PASSWORD") or getpass.getpass("Demo password: ")
+        try:
+            print(
+                seed_demo_accounts(
+                    password=demo_password,
+                    domain=args.domain.strip().lower(),
+                    reset_passwords=args.reset_passwords,
+                )
+            )
+        except WeakPasswordError as exc:
+            print(f"error: {exc.message}", file=sys.stderr)
+            return 1
+        return 0
 
     if args.command == "expire-marketplace-listings":
         print(expire_marketplace_listings())

@@ -1,0 +1,62 @@
+# Dataset manifest: TrashBox. RESEARCH EXPERIMENT ONLY. NOT cleared for any released model.
+# The image files are NOT in this repository (datasets/external/ is git-ignored). To obtain exactly this
+# content (a 4.5 GB archive; the repository holds every image twice, only `TrashBox_train_set` is used):
+#   curl -L -o trashbox.zip https://codeload.github.com/nikhilvenkatkumsetty/TrashBox/zip/91e66aa8fee5b02c0613f0ee0e262707cc29342f
+#   unzip trashbox.zip '*/TrashBox_train_set/*'   # -> datasets/external/trashbox-src/TrashBox_train_set
+# then verify `files_digest` below (SHA-256 over the sorted "<folder>/<file> <sha256-of-file>" lines,
+# folders in sorted order, joined with newlines).
+name: trashbox
+version: "research-1.0"
+accessed: "2026-10-21"
+description: >
+  Web-collected photographs of waste in seven material classes (README claims 17,785 images; the
+  `TrashBox_train_set` tree used here holds 14,282). Photographers and original sources are not
+  recorded in the repository.
+source:
+  url: https://github.com/nikhilvenkatkumsetty/TrashBox
+  commit: 91e66aa8fee5b02c0613f0ee0e262707cc29342f
+  citation: "IEEE FRUCT'31 (IEEE Xplore 9770922), as named in the dataset README; not independently checked."
+licence:
+  spdx: NONE
+  evidence: >
+    The repository has no LICENSE file and GitHub reports no licence field: all rights reserved by
+    default. The project owner reports (2026-10-21) that the authors gave VERBAL permission. Nothing is
+    in writing, so it is not on file and not verifiable.
+  consequence: >
+    Used only in one documented, non-released experiment (docs/ml/dataset-research/experiments/
+    trashbox-experiment.json). No model trained on it may be released, shipped, registered or
+    activated, and the images are never redistributed. A written permission AND licence statement from
+    the authors is required first. Even then it may not cover every image: 819 files in this tree are
+    byte-identical to TrashNet images (a separate, MIT-licensed project), so the dataset contains
+    material the authors did not originate.
+images:
+  total: 14282
+  format: JPEG
+  total_bytes: 2292695148
+  files_digest: 68218c3602aa5df9d612a1d8985a9d80cba26429e6992743cf18a45d96a70afb
+  undecodable: 31                 # fail the validated image loader; counted and dropped, never skipped silently
+  exact_duplicate_files_extra: 253   # byte-identical copies beyond the first, within this tree (2 hash groups span two classes)
+  exact_overlap_with_trashnet: 819   # files byte-identical to a TrashNet image
+  exact_overlap_with_realwaste: 0    # in the 7,000-image sample used by the experiment
+labels:
+  scope: material_category
+  classes:
+    - {name: cardboard, count: 1930, maps_to: cardboard}
+    - {name: glass,     count: 2022, maps_to: glass}
+    - {name: metal,     count: 2068, maps_to: metal}
+    - {name: paper,     count: 2156, maps_to: paper}
+    - {name: plastic,   count: 2135, maps_to: plastic}
+    - {name: e-waste,   count: 2406, maps_to: e_waste (experiment taxonomy only)}
+    - {name: medical,   count: 1565, maps_to: medical (experiment taxonomy only)}
+  counts_verified_against_readme: false   # README totals do not match the repository
+subset_used:
+  per_class_cap: 1000                # seeded shuffle of the sorted file list, config seed
+  note: >
+    After dropping undecodable files, exact duplicates (within TrashBox and against TrashNet) and 5
+    near-duplicates of TrashNet images (S-embedding cosine >= 0.85), 6,528 images remain.
+personal_data:
+  contains: not assessed             # web photographs; people (medical class: gloves, masks) not ruled out
+leakage:
+  near_duplicates: >
+    Near-duplicate groups (cosine >= 0.70 on S embeddings, per class) are kept whole inside one split;
+    6,528 images fall in 4,829 groups, the largest with 24 images.

@@ -10,4 +10,4 @@ Container build definitions for deploying the frontend and backend **independent
 | `map-data/` | Git-ignored folder for the offline map tile file `region.pmtiles` (README only in Git); mounted read-only into the frontend containers. See `docs/maps/OFFLINE_MAPS.md`. |
 | `scripts/` | Reserved for deployment helper scripts; none yet. |
 
-See `docs/architecture/deployment-architecture.md` for the target topology and `docs/operations/runbook.md` for the startup sequence. The local `compose.yaml` at the repository root is for development only. **No production environment is configured or claimed by this repository.**
+For a supervised demonstration on one machine see `docs/operations/supervised-demo.md`. See `docs/architecture/deployment-architecture.md` for the target topology and `docs/operations/runbook.md` for the startup sequence. The local `compose.yaml` at the repository root is for development only. **No production environment is configured or claimed by this repository.**

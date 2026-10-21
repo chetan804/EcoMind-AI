@@ -214,6 +214,8 @@ docker compose exec backend python -m app.cli seed-support-knowledge
 
 **E-mail in local mode:** the "console" backend prints verification and reset links in the server log (`docker compose logs backend`). Nothing is sent. For real e-mail, an SMTP setting is required.
 
+**Demo accounts (optional, never production):** `DEMO_PASSWORD='<your password>' python -m app.cli seed-demo-accounts` creates six labelled sign-ins (admin, manager, collector, operator, citizen, verifier at `example.org`); re-run with `--reset-passwords` to change the shared password. 
+
 **Demo data (optional):** `scripts/demo/seed_demo.py` fills a *throw-away* local database with invented, labelled records through the real API. Reference series come from `python -m app.cli import-reference-series --key austin` (needs a local clone of the public dataset).
 
 **Never** put real passwords or keys in files you commit.
