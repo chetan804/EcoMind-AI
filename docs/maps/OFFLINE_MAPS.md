@@ -66,6 +66,48 @@ same data.
 
 `VITE_MAP_TILES_URL` points to another location if the file is hosted elsewhere on your own infrastructure.
 
+## Using a MapTiler regional dataset (MBTiles, OpenMapTiles layout)
+
+The owner chose the MapTiler on-prem OpenStreetMap dataset for Hyderabad
+(https://www.maptiler.com/on-prem-datasets/dataset/osm/asia/india/hyderabad/). Area of interest:
+[`hyderabad-aoi.geojson`](hyderabad-aoi.geojson) (approximate box 78.2,17.2 to 78.65,17.6; not an official
+boundary).
+
+**Status: the dataset file has not been downloaded** (it needs the owner's MapTiler account and acceptance of its
+terms; the sandbox cannot do that). Everything below is ready for it, but it has been exercised only with a
+synthetic stand-in, never with the real file.
+
+1. Download the `.mbtiles` file from your MapTiler account. Do not commit it or put it in an image.
+2. Convert it (the app serves PMTiles):
+
+   ```bash
+   pip install --require-hashes -r scripts/maps/requirements.lock
+   python scripts/maps/mbtiles_to_pmtiles.py ~/Downloads/hyderabad.mbtiles   # -> deployment/map-data/region.pmtiles
+   ```
+
+   The script expands the MBTiles `json` metadata (the layer list), gzip-compresses tiles if needed, writes the
+   file atomically, reads it back and prints the detected layout and the attribution stored in the file.
+3. Reload the app. The app reads the file's own layer list and picks the style: **Protomaps** layout
+   (`earth`, `roads`...) or **OpenMapTiles** layout (`transportation`, `place`, `water`...). A file with neither is
+   not drawn with a wrong style: the screen shows "Base map file not recognised".
+4. **Credit and licence.** The map shows "© MapTiler © OpenStreetMap contributors" when the file identifies itself
+   as MapTiler data (OpenStreetMap is always credited). As recorded from the dataset page (not re-checked by us;
+   read the current terms at https://www.maptiler.com/terms/server-data/ and the pricing page): the free on-prem
+   tier is for evaluation and non-commercial use, with a limit of 100 monthly active users. That fits a supervised
+   demonstration or academic submission; **a public or commercial deployment needs a paid MapTiler licence or a
+   different source (for example the Protomaps/OpenStreetMap route above).** Do not redistribute the file.
+5. Zoom: the dataset goes to zoom 14; the app over-zooms it for closer views (lines and labels stay, detail does not
+   increase).
+
+**Verified (2026-10-21, Chromium with SwiftShader WebGL):** a synthetic OpenMapTiles-layout MBTiles file
+(`scripts/maps/make_openmaptiles_fixture.py`: an invented lake, park, street grid and "Test ..." place names; **not
+real data**) was converted with `mbtiles_to_pmtiles.py`, detected as OpenMapTiles, and drawn on the Facilities page
+with the facility markers, labels (Noto Sans glyphs), scale bar and attribution. Automated: 8 converter tests
+(`tests/contract/test_mbtiles_to_pmtiles.py`), 15 style/detection tests and 3 loader tests; the style is
+validated with the MapLibre style specification validator. **Not verified:** how the real dataset looks (label
+density, which fields real tiles carry, non-Latin names), conversion time and size for the real file, and the
+nginx route.
+
 ## More font ranges
 
 The repository ships the Latin glyph ranges only (Noto Sans, 864 KB in total). Labels in other scripts

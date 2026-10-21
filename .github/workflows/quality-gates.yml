@@ -71,6 +71,8 @@ jobs:
         run: |
           pip install --require-hashes -r backend/requirements-dev.lock
           pip install --no-deps -e backend
+      - name: Install the map-conversion dependency (hash-verified)
+        run: pip install --require-hashes -r scripts/maps/requirements.lock
       - run: pytest tests/contract
       - name: Data dictionary matches the models
         run: python scripts/database/generate_data_dictionary.py --check
