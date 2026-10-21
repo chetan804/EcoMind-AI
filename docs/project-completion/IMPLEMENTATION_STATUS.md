@@ -347,7 +347,7 @@ Not verified: no end-to-end (browser) test of the enforced flow, because the CI 
 
 | Item | What exists | Evidence (local sandbox unless stated) | Not verified |
 |---|---|---|---|
-| Sign-out defect | The sidebar had no sign-out control (it was only in the account menu on some widths). A "Sign out" button now ends the session from the sidebar on every page | 2 component tests; keyboard e2e (navigate and sign out) | – |
+| Sign-out defect | The sidebar had no sign-out control, found while writing the keyboard tests. A "Sign out" button now ends the session from the sidebar on every page | 2 component tests; keyboard e2e (navigate and sign out) | – |
 | Keyboard e2e | `tests/e2e/specs/keyboard.spec.ts`, 7 tests: skip link, visible focus and no trap, account menu, page-search dialog, phone drawer, keyboard sign-out | 7 passed; full suite 41 passed / 2 skipped (real-model classification; forced MFA enrolment needs the production-mode stack, run separately: `mfa.spec.ts` 4/4) | A person's keyboard review; any screen-reader review |
 | MFA browser flow | `specs/mfa.spec.ts` with an RFC 6238 generator: enrol, sign in with a code, recovery code, forced enrolment | 4/4 against a production-mode stack (`ENVIRONMENT=production`, `MFA_REQUIRED_ROLES` blank) | A real authenticator on a phone |
 | Load test | `scripts/perf/load_test.py` (read-only, local targets only) and `docs/operations/load-testing.md` | 10 users: 130 req/s, 0% errors, p95 123 ms; 50 users: 122 req/s, 0% errors, p95 639 ms (2 vCPU, one worker, everything on one machine, tiny data); 4 contract tests | Any capacity claim; target hardware; realistic data |
