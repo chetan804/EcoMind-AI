@@ -377,6 +377,8 @@ Operator → **Review queue**. **Expected:** "Nothing is waiting for review". Th
 
 By default no real e-mail is sent. The program writes the e-mail, including its link, into the **server log**.
 
+**Alternative with a visible inbox:** run `make demo-mail-up` instead of `make up`, then open `http://localhost:8025`. Each e-mail below appears there with its link; you do not need the log. (This was not run in the build environment because it has no Docker; if the inbox does not show a message, fall back to the log and tell the maintainer.)
+
 1. Show the log: `docker compose logs backend`. Search for `verify-email` or `reset-password` links (the output of `docker compose logs backend | grep -i "http"` helps).
 2. **Verify e-mail:** click `Send a new link` in the banner → find the link in the log → paste it in the browser. **Expected:** you see a confirmation page, and the banner disappears. (The page must not confirm by itself on load; a button asks you first.)
 3. **Forgot password:** `/sign-in` → `Forgot password` → enter `citizen2.test@example.org` → "Request received" (the same message whether or not the e-mail exists). Find the reset link in the log → open it → choose a new password → "You can sign in with your new password". Sign in with it.
