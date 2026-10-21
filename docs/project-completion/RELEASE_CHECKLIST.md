@@ -12,7 +12,7 @@ Tick each item with evidence (a command output, a CI run URL, a screenshot path)
 ## 2. Database
 - [ ] `alembic upgrade head` on a copy of production data; `alembic check` reports no operations.
 - [ ] Backup taken and restore rehearsed (`docs/operations/backup-and-rollback.md`); rollback plan names the migration to downgrade to and which migrations are not reversible without data loss.
-- [ ] Current head: `0015` (support). Applies after `0014`.
+- [ ] Current head: `0016` (collectors read their own incidents). Applies after `0015`.
 
 ## 3. Configuration (no secrets in the repository)
 - [ ] `SECRET_KEY` generated, `ENVIRONMENT=production`, `DATABASE_URL` set, startup validation passes.

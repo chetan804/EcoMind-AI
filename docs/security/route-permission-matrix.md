@@ -63,10 +63,10 @@
 | POST | `/api/v1/collection/tasks/{task_id}/fail` | `collection:execute` or `collection:manage` | collector, manager, administrator |
 | POST | `/api/v1/collection/tasks/{task_id}/reschedule` | `collection:manage` | manager, administrator |
 | POST | `/api/v1/collection/tasks/{task_id}/start` | `collection:execute` or `collection:manage` | collector, manager, administrator |
-| GET | `/api/v1/community-incidents` | `incidents:read_own` or `incidents:triage` | citizen, manager, administrator |
+| GET | `/api/v1/community-incidents` | `incidents:read_own` or `incidents:triage` | citizen, collector, manager, administrator |
 | POST | `/api/v1/community-incidents` | `incidents:create` | citizen, collector, administrator |
 | GET | `/api/v1/community-incidents/summary` | `incidents:triage` | manager, administrator |
-| GET | `/api/v1/community-incidents/{incident_id}` | `incidents:read_own` or `incidents:triage` | citizen, manager, administrator |
+| GET | `/api/v1/community-incidents/{incident_id}` | `incidents:read_own` or `incidents:triage` | citizen, collector, manager, administrator |
 | POST | `/api/v1/community-incidents/{incident_id}/assign` | `incidents:triage` | manager, administrator |
 | POST | `/api/v1/community-incidents/{incident_id}/status` | `incidents:triage` | manager, administrator |
 | GET | `/api/v1/facilities` | `facilities:read` | citizen, collector, facility_operator, manager, administrator |

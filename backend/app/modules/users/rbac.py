@@ -81,6 +81,7 @@ _CITIZEN = {
 _COLLECTOR = {
     "support:ask",
     "fleet:track",
+    "incidents:read_own",
     "waste_reports:read_all",
     "classification:predict",
     "collection:read",

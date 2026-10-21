@@ -18,7 +18,7 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 `main` is at `8ebe716` (PR #11 merged: offline map, optional OSRM, TACO audit). This branch carries the five production-hardening
 steps (Phase J below): supply chain and CI, account recovery, marketplace completion, reward redemption, accessibility audit, plus
 three defects found on the way. Alembic head is `0015` (0012 account tokens, 0013 marketplace, 0014 reward catalogue and redemptions, 0015 help assistant and support desk);
-46 permissions (new: `rewards:redeem`, `support:ask`, `support:manage`, `knowledge:manage`). Phase K adds the help assistant (retrieval only) and support desk. **Nothing is deployed and the branch is not merged.**
+48 permissions (new: `rewards:redeem`, `support:ask`, `support:manage`, `knowledge:manage`). Phase K adds the help assistant (retrieval only) and support desk. **Nothing is deployed and the branch is not merged.**
 
 The sections below this one that describe "this branch" in earlier phases (B to I) are history of work that is already on `main`.
 
@@ -47,7 +47,7 @@ loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only s
 | Module | Status | Notes |
 |---|---|---|
 | auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
-| users / roles / permissions | **Verified** | 46 permissions, 5 roles, drift-guard test. |
+| users / roles / permissions | **Verified** | 48 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
 | classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |

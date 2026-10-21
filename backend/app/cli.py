@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import os
+import subprocess
 import sys
 
 from sqlalchemy import select
@@ -254,6 +255,19 @@ def main(argv: list[str] | None = None) -> int:
             print(import_reference(key=args.key))
         except AppError as exc:
             print(f"error: {exc.message}", file=sys.stderr)
+            return 1
+        except (RuntimeError, OSError, ImportError, subprocess.CalledProcessError) as exc:
+            # The public series are read from a pinned, git-ignored clone that exists only in a
+            # development checkout (not in the backend image); say so instead of a traceback.
+            print(
+                "error: the public reference series could not be read "
+                f"({type(exc).__name__}). Run this from a development checkout after "
+                "`git clone https://github.com/UCloudMl/solid-waste-prediction "
+                "datasets/external/msw-src` and `git -C datasets/external/msw-src checkout "
+                "6ff6b1a073e7acbe7725150119a74c5f2fba26d2` (details: "
+                "docs/ml/dataset-research/ingestion/INGESTION_REPORT.md).",
+                file=sys.stderr,
+            )
             return 1
         return 0
 

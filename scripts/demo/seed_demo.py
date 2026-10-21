@@ -8,7 +8,7 @@ and Hyderabad addresses are invented. Reference series are imported separately w
 
 Use on a fresh database only (it is not idempotent):
   DEMO_PASSWORD=... DEMO_DSN="host=/tmp/pgdev user=postgres dbname=ecomind_demo" python scripts/demo/seed_demo.py
-Needs httpx, psycopg and pillow. Refuses to run against a non-local API.
+Needs httpx2 (or httpx), psycopg and pillow; `make setup` installs all three. Refuses to run against a non-local API.
 """
 
 import os
@@ -20,7 +20,10 @@ if not API.startswith(("http://localhost", "http://127.0.0.1")):
 import datetime as dt
 import io
 
-import httpx
+try:  # the backend's dev environment ships `httpx2`; an older environment may have `httpx`
+    import httpx2 as httpx
+except ImportError:
+    import httpx
 import psycopg
 from PIL import Image, ImageDraw
 

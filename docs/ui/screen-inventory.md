@@ -66,4 +66,4 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 | 21 Operational System Alerts | Notifications | notifications, anomaly-alerts | **Working** |
 | 22 Security and MFA | Security | settings (MFA: docs/security/mfa.md) | **Working** |
 
-Visual evidence (`docs/ui/evidence/`) exists for the first four screens only. Screenshot-versus-reference comparison for the rest is outstanding.
+Real-browser renders, side-by-side images and difference images exist in `docs/ui/evidence/` (first four screens) and `docs/ui/evidence/screens/` (the authenticated screens); the structural-similarity numbers are low for every screen and **no pixel-perfect claim is made** (see `SCREEN_TRACEABILITY.md`).

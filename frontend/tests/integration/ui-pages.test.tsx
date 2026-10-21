@@ -38,9 +38,9 @@ describe('landing page', () => {
     const demo = await screen.findByRole('button', { name: 'Watch demo' });
     expect(demo).toHaveAttribute('aria-disabled', 'true');
     expect(demo).toHaveAccessibleDescription('No product demo is available yet.');
-    expect(screen.getByText('Models trained so far')).toBeInTheDocument();
+    expect(screen.getByText('Classifiers approved for use')).toBeInTheDocument();
     expect(screen.queryByText(/accuracy/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/in early development/i)).toBeInTheDocument();
+    expect(screen.getByText(/under active development/i)).toBeInTheDocument();
   });
 
   it('exposes in-page section links that have a target', async () => {

@@ -140,3 +140,15 @@ def test_support_commands_seed_help_and_purge_old_conversations(
     with cli_env.connect() as connection:
         left = connection.execute(text("SELECT count(*) FROM assistant_conversations")).scalar_one()
     assert left == 1
+
+
+def test_reference_import_without_the_public_data_clone_explains_itself(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def missing(*, key: str) -> str:
+        raise RuntimeError(f"msw-src is not available for {key}")
+
+    monkeypatch.setattr(cli, "import_reference", missing)
+    assert cli.main(["import-reference-series", "--key", "austin"]) == 1
+    error = capsys.readouterr().err
+    assert "git clone" in error and "msw-src" in error and "Traceback" not in error

@@ -1,13 +1,13 @@
 # Feature: auth
 
-The sign-in (`/sign-in`) and sign-up (`/sign-up`) screens.
+The sign-in (`/sign-in`), sign-up (`/sign-up`), forgot-password, reset-password and verify-email screens.
 
 **Status:** implemented and wired to the backend (`/api/v1/auth/*`). Session handling is not in this feature: it is shared infrastructure in `src/services/session/` (see below).
 
 - **Forms:** `SignInForm`, `SignUpForm` (React Hook Form + Zod, `useMutation`). Server errors map to specific messages: wrong credentials, rate limiting (with the `Retry-After` wait), duplicate email (on the email field), password-policy messages (on the password field), unreachable server. The submit button shows a busy state and ignores clicks while a request is in flight.
 - **Redirects:** `RedirectIfSignedIn` keeps signed-in users off these pages and returns them to the page they originally requested. `utils/auth-errors.ts#safeRedirectTarget` accepts only same-site paths (open-redirect protection) and never an auth page.
 - **Schemas:** `schemas/auth-forms.ts`. The 12-character minimum mirrors the server policy for early feedback only; the server decides.
-- **Unavailable controls:** Google and Microsoft sign-in and "Forgot password?" stay disabled with a reason (`unavailableReason`). No identity provider or password-reset flow exists.
+- **Unavailable controls:** Google and Microsoft sign-in stay disabled with a reason (`unavailableReason`); no identity provider is connected. Password reset and e-mail confirmation are real (`/forgot-password`, `/reset-password`, `/verify-email`; see `docs/operations/account-recovery.md`). An account that needs two-step verification gets a second step after the password.
 - **Layout:** `AuthCard` (illustration panel + form panel), `AuthIllustration` (original SVG), `SocialButtons`.
 - **Public interface:** `import { SignInPage, SignUpPage } from '@/features/auth'`.
 

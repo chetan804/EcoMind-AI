@@ -41,7 +41,7 @@ files in `frontend/tests/integration/` (and `frontend/tests/unit/`). End-to-end 
 Every working screen renders loading, empty, error and success states through the shared `QueryBoundary`, `Alert` and table
 components, filters its navigation entry by permission, and is keyboard operable (dialogs trap focus; map markers have a text
 list alternative). Responsive behaviour was checked at 1440 px (0 px horizontal overflow on the 15 captured screens) and in
-`evidence/responsive-contact-sheet.jpg`. The light-theme contrast audit and a full axe-style accessibility audit are **not done**
+`evidence/responsive-contact-sheet.jpg`. Contrast of the design tokens is checked in CI (`scripts/quality/check_contrast.py`) and axe-core runs on 20 routes in both themes; keyboard-only and screen-reader review is **not done**
 (`LIMITATIONS.md`).
 
 ## Map-bearing screens (section 27)

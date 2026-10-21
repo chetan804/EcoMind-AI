@@ -2,7 +2,7 @@
 
 FastAPI modular monolith exposing the REST API under `/api/v1` (plus `/health` and `/ready`). Architecture rules: `docs/architecture/component-boundaries.md`. API rules: `docs/api/api-conventions.md`.
 
-**State:** application factory, validated configuration, structured errors, request ids, security primitives, health/readiness, complete initial schema and migration. **No module has routes yet**; module READMEs state each module's status.
+**State:** complete. 22 business modules expose 166 operations under `/api/v1` (plus `/health` and `/ready`), on a PostgreSQL schema of 46 tables built by 16 Alembic migrations (`0001` to `0016`). Application factory, validated configuration, structured errors, request ids, security primitives, role-based access and MFA are all in place. Per-module status: each module's README, `docs/project-completion/IMPLEMENTATION_STATUS.md`, and the audit in `docs/project-completion/PROJECT_AUDIT_REPORT.md`.
 
 ## Layout
 | Path | Responsibility |
