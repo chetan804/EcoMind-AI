@@ -1,0 +1,8 @@
+.reward-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+@media (max-width: 1199px) { .reward-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 719px) { .reward-grid { grid-template-columns: minmax(0, 1fr); } }
+.reward { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg, 12px); }
+.reward__title { margin: 0; font-size: var(--font-size-md, 1rem); font-weight: var(--font-weight-semibold); }
+.reward__cost { font-size: var(--font-size-lg, 1.25rem); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+.reward__actions { margin-top: auto; display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.claim-code { display: block; padding: var(--space-4); text-align: center; font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--font-size-xl, 1.5rem); letter-spacing: 0.12em; font-weight: var(--font-weight-semibold); background: var(--color-surface-raised); border: 1px dashed var(--color-border-strong); border-radius: 8px; user-select: all; }
