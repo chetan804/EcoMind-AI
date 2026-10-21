@@ -43,7 +43,14 @@ Decisions taken during the autonomous build, newest last. Architectural ones hav
 - `STRONG_PASSWORD` is defined in `backend/tests/fixtures/api.py` as `"correct horse battery staple 42"`, a throw-away value used to create users in an ephemeral test database. It protects nothing.
 - A scan of the working tree with `detect-secrets` found only: CI service credentials for a disposable Postgres container, placeholder values such as `CHANGE_ME`, symbol alphabets, enum labels, and test fixtures. No `.env`, key or certificate file is tracked.
 - A search of the full git history for common live-secret formats (AWS, GitHub, Google API, Slack and OpenAI-style tokens, private-key headers) found nothing.
-- **Conclusion:** the evidence points to a false positive, but I only know that by inference. **To close it:** open the alert, confirm the flagged line is `STRONG_PASSWORD` or the `"password": STRONG_PASSWORD` login payload, then dismiss it as "used in tests" with a note linking to this entry. If it names anything else, tell me the file and line.
+- **Update 2026-10-21 (exact line found).** GitGuardian's check-run on PR #9 is readable through the GitHub API (`gh api repos/chetan804/EcoMind-AI/check-runs/118817526692`). It names incident **38745160**, detector "Generic Password", commit `402a5852ce2cf68c3a2f52bb8cfb0fe7246fe7cf`, file `backend/tests/api/test_administration.py`, **line 255**. That line (checked with `git show 402a585:backend/tests/api/test_administration.py`) is:
+
+  ```python
+  for forbidden in ("secret", "password", "postgresql", "database_url", "storage_path"):
+  ```
+
+  inside `test_system_info_exposes_no_secrets`: a list of words the system-info response must **not** contain. It is not a credential and has no value; the detector matched the word "password" next to "postgresql". (The earlier guess that it was `STRONG_PASSWORD` was wrong; that constant is a throw-away test value and was not flagged.) The only scan that flagged anything was this one (PR #9); PRs #10, #11 and #12 scanned clean, and that line no longer exists in the current file.
+- **Conclusion:** false positive, now confirmed from the scanner's own output. **Dismissal is still owner-only** (I have no access to the GitGuardian dashboard): open https://dashboard.gitguardian.com/workspace/778224/incidents/38745160, choose "Ignore" > "False positive" (or "used in tests") and note "word list in a test asserting that responses contain no secret words; see DECISION_LOG decision 4".
 
 ### Release restriction (unchanged)
 Do not declare production readiness until: an approved classifier exists and is evaluated on representative data; real e-mail, maps, routing and GPS are each verified; keyboard and screen-reader testing and load testing are done; and the forced two-step rule is rehearsed in production mode. Mark every item verified, verified only by CI, or not verified.
