@@ -20,12 +20,12 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
   beat the baseline on two of four usable series. Anomaly detection has no labels, so no precision/recall.
 
 ## Product
-- **Marketplace** (reference 08) is a matching board only: no price, payment, delivery, photos, chat, expiry, partial fulfilment or link to recovery records. Its notifications use the `system` category. **Smart bins and telemetry** (17, 19):
+- **Marketplace** (reference 08) is a matching board only: no price, payment, delivery, chat, partial fulfilment or link to recovery records. Listings expire (default 30 days, renewable), closing records an outcome and up to four photos are re-encoded with metadata removed, but expiry runs only when the `expire-marketplace-listings` job is scheduled by the operator. Its notifications use the `system` category. **Smart bins and telemetry** (17, 19):
   excluded by product decision; no sensor integration.
 - **Zones** have no boundary geometry (no verified boundary data), so no polygon or coverage figure is drawn. Collection tasks are not linked to zones.
 - Route plans are ordered by straight-line distance and store no ETA. A road route (geometry, distance, duration, no live traffic) is fetched on demand only when a routing provider is enabled (`ROUTING_PROVIDER`: Google Routes with a server key, or an OSRM server the operator runs); it is not stored and the order is not re-optimised for roads. Both providers are tested with mocked transports only.
-- Rewards have no redemption. Impact is reported as recovered weight; no emission coefficients are used.
-- No e-mail verification and no password reset. No notification delivery beyond in-app.
+- **Rewards** redemption is a hand-over workflow: staff enter the catalogue (no partner integration, stock feed, payment or delivery), a citizen's points are spent against a claim code, and staff fulfil or cancel at the counter. Item stock and the per-citizen limit are enforced, but nothing is ever shipped or paid by the platform. Impact is reported as recovered weight; no emission coefficients are used.
+- Password reset and e-mail verification exist, but **no e-mail has been delivered through a real SMTP server** (only the console backend and mocked transport were exercised). Verification is not required by default (`EMAIL_VERIFICATION_REQUIRED`). No notification delivery beyond in-app and these account e-mails.
 
 ## Maps and tracking (details: `docs/maps/OFFLINE_MAPS.md`, `ROUTING_PROVIDERS.md`, `GOOGLE_MAPS_INTEGRATION.md`)
 - **The default offline map has only been rendered with synthetic tiles.** The basemap needs an owner-prepared PMTiles file from OpenStreetMap data (`scripts/maps/prepare_offline_maps.py tiles`, needs the `pmtiles` CLI and network); without it the screens draw markers and routes on a plain background and say "Base map not installed". How a real OSM region looks with this style, labels in non-Latin scripts (only Latin glyph ranges are shipped) and city-scale performance are unverified. It is an original OSM-based style, not a copy of Google Maps. No geocoding or turn-by-turn navigation.
@@ -37,7 +37,7 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - The simulator exists for demonstrations (managers only, off by default in production); simulated positions are always labelled and kept apart, and they follow straight lines unless provider geometry is supplied.
 - Not mapped, because the data does not exist: zone boundaries, heatmaps, marketplace listing location, passport movement, geographic analytics.
 - CSP omits `'unsafe-eval'` for Maps; if live testing shows it is needed, the policy must be amended.
-- The local e2e suite stays within the 10 registrations per IP per hour limit (about 8 are used); adding specs that register users needs a larger budget or seeded accounts.
+- The e2e suite registers 9 accounts from one address per run (more on a Playwright retry), which exceeds the production limit of 10 per address per hour once retries happen (this is what failed CI on `a97911d` and `b9704d0`). The limit is now the setting `REGISTRATION_LIMIT_PER_IP_PER_HOUR` (default 10); only the throw-away CI stack raises it. A local run needs a fresh hour or the same override.
 
 ## Security (details: `docs/security/security-review.md`)
 - MFA is TOTP only and not forced for any role; rotating `SECRET_KEY` invalidates stored MFA secrets.
@@ -45,15 +45,15 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - Registration reveals whether an e-mail exists (409). Password check is a small denylist.
 - No antivirus scan on uploads; no automatic purge of orphaned uploads.
 - CSP `connect-src` must be narrowed per deployment; nginx config untested locally.
-- Backend dependencies use ranges (no lock file); no scheduled dependency audit.
+- Backend and ML dependencies are pinned by hash-locked files, and Dependabot plus the `security.yml` audit run on a schedule, but base images cannot be pinned by digest from the build sandbox and Dependabot cannot rewrite the `.lock` files (regenerate them with `scripts/dependencies/lock_backend.sh`).
 - Incident photos need `waste_reports:create`; managers hold `users:read` (design choices to confirm).
 
 ## Engineering and quality
 - Docker was unavailable in the build sandbox: Compose, images and the nginx file are validated only by CI.
-- Light-theme contrast has not been audited; `ToastProvider` is not mounted.
+- **Accessibility is partly automated.** Token contrast is checked by `scripts/quality/check_contrast.py` (in CI) and axe-core runs on 20 routes in both themes. Automated tools catch only a minority of WCAG issues (commonly estimated at around a third, which is a general industry estimate and not a measurement of this product). Keyboard-only and screen-reader review remains manual and has **not been done**. The e2e database holds little data, so contrast of populated tables, charts, status chips and overlay gradients is unscanned; the landing and public pages and the Google Maps view are outside the axe run; the offline map canvas is excluded.
 - Visual similarity to the reference images is low (SSIM about 0.26 to 0.58 across screens); the references
   are small blurry composites, and **no fidelity claim is made**.
 - Users search and audit filters query on each keystroke. Some IntegrityError race paths are untested.
 - `seed_demo.py` has not been tested end to end in CI. `Settings.environment` is `local|test|production`.
-- GitHub's `ubuntu-latest` label began migrating to Ubuntu 26 on 2026-10-19; CI has not been pinned.
+- Workflows pin `ubuntu-24.04` and every action by commit SHA; the two runner pins need a manual bump when a runner image is retired.
 - GitGuardian reports one false positive (a test credential in `test_administration.py`); it remains in history.

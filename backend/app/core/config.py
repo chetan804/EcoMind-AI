@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     file_storage_local_path: Path = Path("./var/storage")
     max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1)
 
+    # New accounts one client address may create per hour (counted from the audit log). The default
+    # is the production policy; raise it only for a throw-away test stack that registers many
+    # accounts from one address (the end-to-end suite), never in a deployment.
+    registration_limit_per_ip_per_hour: int = Field(default=10, ge=1, le=10_000)
+
     # How long a published marketplace listing stays on offer before it lapses (owners can renew).
     marketplace_listing_days: int = Field(default=30, ge=1, le=90)
 

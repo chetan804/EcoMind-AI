@@ -96,7 +96,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Create .env with generated secrets
-        run: python scripts/setup/init_env.py
+        run: |
+          python scripts/setup/init_env.py
+          # The suite registers a dozen throw-away accounts (more on a retry) from one address, which
+          # the production limit of 10 per hour refuses. Only this disposable stack is relaxed.
+          printf "\nREGISTRATION_LIMIT_PER_IP_PER_HOUR=200\n" >> .env
       - name: Start stack (db -> migrate -> backend -> frontend)
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Smoke test

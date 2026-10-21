@@ -22,7 +22,6 @@ LOGIN_WINDOW = timedelta(minutes=15)
 MAX_FAILED_LOGINS_PER_EMAIL = 5
 MAX_FAILED_LOGINS_PER_IP = 30
 REGISTER_WINDOW = timedelta(hours=1)
-MAX_REGISTRATIONS_PER_IP = 10
 
 # Account e-mails (password reset, address verification). A per-address cap that is exceeded sends
 # nothing but still answers 202 (so the endpoint never reveals whether an address has an account);

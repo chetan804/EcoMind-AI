@@ -175,11 +175,11 @@ def register(
             action=repository.REGISTERED,
             ip_address=context.ip_address,
             since=now - policy.REGISTER_WINDOW,
-            limit=policy.MAX_REGISTRATIONS_PER_IP,
+            limit=settings.registration_limit_per_ip_per_hour,
         )
         _enforce_limit(
             recent,
-            maximum=policy.MAX_REGISTRATIONS_PER_IP,
+            maximum=settings.registration_limit_per_ip_per_hour,
             window=policy.REGISTER_WINDOW,
             now=now,
             message="Too many accounts created from this address. Try again later.",

@@ -8,7 +8,7 @@ from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
 from app.modules.auth import policy
-from tests.fixtures.api import STRONG_PASSWORD, create_user
+from tests.fixtures.api import STRONG_PASSWORD, ClientFactory, create_user
 
 LOGIN = "/api/v1/auth/login"
 REGISTER = "/api/v1/auth/register"
@@ -80,10 +80,8 @@ def test_failures_are_limited_per_address_across_many_emails(
     assert _fail(client, "spray99@example.org") == 429
 
 
-def test_registrations_are_limited_per_address(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(policy, "MAX_REGISTRATIONS_PER_IP", 2)
+def test_registrations_are_limited_per_address(make_client: ClientFactory) -> None:
+    client = make_client(registration_limit_per_ip_per_hour=2)
     for index in range(2):
         response = client.post(
             REGISTER,
