@@ -49,6 +49,26 @@ The local Compose stack runs with `ENVIRONMENT=local`, so the console backend pr
 docker compose logs -f backend | grep -A12 "EMAIL (console"
 ```
 
+### Demo inbox with Mailpit (no real provider)
+
+For a supervised demo where people should *see* the message arrive, the Compose file has an optional
+[Mailpit](https://mailpit.axllent.org/) catcher. It accepts every message and shows it in a web inbox;
+nothing leaves the machine.
+
+```bash
+make demo-mail-up        # creates .env.demo-mail (random SMTP credentials, git-ignored) and starts the stack
+# inbox: http://localhost:8025   (backend: EMAIL_BACKEND=smtp, SMTP_HOST=mailpit, port 1025)
+python3 scripts/setup/init_demo_mail.py --rotate   # new credentials; then `make demo-mail-up` again
+make demo-mail-down
+```
+
+This path uses `SMTP_SECURITY=none` inside the Compose network, which the backend refuses when
+`ENVIRONMENT=production`; that is intended, because Mailpit is a demonstration tool. Not verified in
+this repository: running the Mailpit container itself (the build environment has no Docker). What was
+verified: the SMTP settings reach the adapter, and the adapter against an independent SMTP server
+(`scripts/demo/verify_smtp_local.py`: STARTTLS and mandatory AUTH succeed; a wrong password and an
+untrusted certificate are both refused).
+
 ### Verified against a real mail server?
 
 Tested locally: the SMTP adapter against a protocol-level server inside the unit tests (message structure, header-injection refusal, connection failure, STARTTLS refusal when unsupported) and the whole flow in a real browser with the console backend. **Not tested: delivery through a real provider (TLS handshake with a real certificate, authentication, spam filtering, SPF/DKIM/DMARC alignment).** Before enabling in production: configure the provider, send a test reset to a mailbox you control, and publish SPF and DKIM records for the sending domain.

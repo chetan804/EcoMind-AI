@@ -1,0 +1,542 @@
+{
+  "experiment_only": true,
+  "licence_note": "TrashBox: no licence in the repository; verbal permission reported by the owner, nothing in writing. RealWaste (external test only): CC BY-NC-SA 4.0. No model from this experiment is released, registered or activated.",
+  "taxonomy": [
+    "cardboard",
+    "glass",
+    "metal",
+    "paper",
+    "plastic",
+    "trash",
+    "e_waste",
+    "medical"
+  ],
+  "per_class_cap": 1000,
+  "trashbox_audit": {
+    "available": {
+      "cardboard": 1930,
+      "glass": 2022,
+      "metal": 2068,
+      "paper": 2156,
+      "plastic": 2135,
+      "e_waste": 2406,
+      "medical": 1565
+    },
+    "selected": {
+      "cardboard": 1000,
+      "glass": 1000,
+      "metal": 1000,
+      "paper": 1000,
+      "plastic": 1000,
+      "e_waste": 1000,
+      "medical": 1000
+    },
+    "exact_duplicates_dropped": {
+      "within_trashbox": 68,
+      "against_trashnet": 385,
+      "against_realwaste": 0
+    },
+    "undecodable_dropped": [
+      "cardboard/cardboard 1075.jpg",
+      "cardboard/cardboard 1094.jpg",
+      "cardboard/cardboard 2076.jpg",
+      "metal/metal 1772.jpg",
+      "metal/metal 2008.jpg",
+      "paper/paper 1001.jpg",
+      "paper/paper 1919.jpg",
+      "paper/paper 2273.jpg",
+      "paper/paper 942.jpg",
+      "plastic/plastic 1237.jpg",
+      "plastic/plastic 1426.jpg",
+      "e_waste/e-waste 1483.jpg",
+      "e_waste/e-waste 759.jpg",
+      "medical/medical 1385.jpg"
+    ],
+    "near_duplicates_vs_other_datasets": {
+      "metric": "max cosine similarity of S embeddings, TrashBox image vs any TrashNet image",
+      "images_at_or_above": {
+        "0.7": 82,
+        "0.8": 9,
+        "0.85": 5,
+        "0.9": 3
+      },
+      "dropped_threshold": 0.85,
+      "realwaste_images_at_or_above": {
+        "0.7": 479,
+        "0.8": 4,
+        "0.85": 0,
+        "0.9": 0
+      }
+    },
+    "images_used": 6528,
+    "groups": 4829,
+    "largest_group": 24,
+    "split_sizes": {
+      "TN": {
+        "train": 1684,
+        "val": 422,
+        "test": 421
+      },
+      "TB": {
+        "train": 4352,
+        "val": 1088,
+        "test": 1088
+      }
+    }
+  },
+  "realwaste_external_images": 3092,
+  "seed": 42,
+  "c_grid": [
+    0.01,
+    0.03,
+    0.1,
+    0.3
+  ],
+  "config_sha256": "5898e145369a0b23868ee2c64be423e7f67fffc5338187dec7a32cd62ce9a4d2",
+  "results": {
+    "M|TN": {
+      "train_images": 1684,
+      "validation_images": 422,
+      "C": 0.3,
+      "temperature": 1.0306,
+      "review_rule": {
+        "min_confidence": 0.78,
+        "min_novelty_similarity": 0.5698,
+        "target_precision": 0.95,
+        "target_met_on_validation": true
+      },
+      "classes_in_training": [
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "trash"
+      ],
+      "val_macro_f1": 0.6291,
+      "test": {
+        "TN_shared5": {
+          "n": 398,
+          "accuracy": 0.8819,
+          "accuracy_ci95": [
+            0.8329,
+            0.9268
+          ],
+          "macro_f1_present_classes": 0.8872,
+          "macro_f1_ci95": [
+            0.834,
+            0.9292
+          ],
+          "ece": 0.033,
+          "coverage_auto_accepted": 0.8015,
+          "accuracy_on_auto_accepted": 0.9436,
+          "per_class_f1": {
+            "cardboard": 0.9394,
+            "glass": 0.8533,
+            "metal": 0.8299,
+            "paper": 0.9246,
+            "plastic": 0.8889
+          },
+          "per_class_support": {
+            "cardboard": 67,
+            "glass": 83,
+            "metal": 68,
+            "paper": 99,
+            "plastic": 81
+          }
+        },
+        "TB_shared5": {
+          "n": 756,
+          "accuracy": 0.541,
+          "accuracy_ci95": [
+            0.4872,
+            0.5898
+          ],
+          "macro_f1_present_classes": 0.5517,
+          "macro_f1_ci95": [
+            0.5011,
+            0.5979
+          ],
+          "ece": 0.1908,
+          "coverage_auto_accepted": 0.1825,
+          "accuracy_on_auto_accepted": 0.7101,
+          "per_class_f1": {
+            "cardboard": 0.7168,
+            "glass": 0.6326,
+            "metal": 0.5199,
+            "paper": 0.4211,
+            "plastic": 0.4679
+          },
+          "per_class_support": {
+            "cardboard": 136,
+            "glass": 156,
+            "metal": 166,
+            "paper": 131,
+            "plastic": 167
+          }
+        },
+        "TB_all7": {
+          "n": 1088,
+          "accuracy": 0.3759,
+          "accuracy_ci95": [
+            0.3357,
+            0.4167
+          ],
+          "macro_f1_present_classes": 0.3375,
+          "macro_f1_ci95": [
+            0.3058,
+            0.3666
+          ],
+          "ece": 0.322,
+          "coverage_auto_accepted": 0.1379,
+          "accuracy_on_auto_accepted": 0.6533,
+          "per_class_f1": {
+            "cardboard": 0.639,
+            "glass": 0.5577,
+            "metal": 0.4762,
+            "paper": 0.3095,
+            "plastic": 0.3802,
+            "e_waste": 0.0,
+            "medical": 0.0
+          },
+          "per_class_support": {
+            "cardboard": 136,
+            "glass": 156,
+            "metal": 166,
+            "paper": 131,
+            "plastic": 167,
+            "e_waste": 166,
+            "medical": 166
+          }
+        },
+        "RW_external_shared5": {
+          "n": 3092,
+          "accuracy": 0.4622,
+          "accuracy_ci95": [
+            0.429,
+            0.493
+          ],
+          "macro_f1_present_classes": 0.5128,
+          "macro_f1_ci95": [
+            0.4797,
+            0.5437
+          ],
+          "ece": 0.2608,
+          "coverage_auto_accepted": 0.414,
+          "accuracy_on_auto_accepted": 0.575,
+          "per_class_f1": {
+            "cardboard": 0.3685,
+            "glass": 0.4603,
+            "metal": 0.6343,
+            "paper": 0.4833,
+            "plastic": 0.6177
+          },
+          "per_class_support": {
+            "cardboard": 461,
+            "glass": 420,
+            "metal": 790,
+            "paper": 500,
+            "plastic": 921
+          }
+        }
+      }
+    },
+    "M|TB": {
+      "train_images": 4352,
+      "validation_images": 1088,
+      "C": 0.1,
+      "temperature": 0.8905,
+      "review_rule": {
+        "min_confidence": 0.75,
+        "min_novelty_similarity": 0.5074,
+        "target_precision": 0.95,
+        "target_met_on_validation": true
+      },
+      "classes_in_training": [
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "e_waste",
+        "medical"
+      ],
+      "val_macro_f1": 0.7689,
+      "test": {
+        "TN_shared5": {
+          "n": 398,
+          "accuracy": 0.6608,
+          "accuracy_ci95": [
+            0.5824,
+            0.7303
+          ],
+          "macro_f1_present_classes": 0.6992,
+          "macro_f1_ci95": [
+            0.6067,
+            0.7574
+          ],
+          "ece": 0.1043,
+          "coverage_auto_accepted": 0.5829,
+          "accuracy_on_auto_accepted": 0.8534,
+          "per_class_f1": {
+            "cardboard": 0.8201,
+            "glass": 0.695,
+            "metal": 0.6579,
+            "paper": 0.6784,
+            "plastic": 0.6447
+          },
+          "per_class_support": {
+            "cardboard": 67,
+            "glass": 83,
+            "metal": 68,
+            "paper": 99,
+            "plastic": 81
+          }
+        },
+        "TB_shared5": {
+          "n": 756,
+          "accuracy": 0.8452,
+          "accuracy_ci95": [
+            0.813,
+            0.875
+          ],
+          "macro_f1_present_classes": 0.8599,
+          "macro_f1_ci95": [
+            0.8286,
+            0.8853
+          ],
+          "ece": 0.0221,
+          "coverage_auto_accepted": 0.7474,
+          "accuracy_on_auto_accepted": 0.9487,
+          "per_class_f1": {
+            "cardboard": 0.8731,
+            "glass": 0.8805,
+            "metal": 0.8902,
+            "paper": 0.8074,
+            "plastic": 0.8481
+          },
+          "per_class_support": {
+            "cardboard": 136,
+            "glass": 156,
+            "metal": 166,
+            "paper": 131,
+            "plastic": 167
+          }
+        },
+        "TB_all7": {
+          "n": 1088,
+          "accuracy": 0.8667,
+          "accuracy_ci95": [
+            0.8442,
+            0.8892
+          ],
+          "macro_f1_present_classes": 0.8645,
+          "macro_f1_ci95": [
+            0.8383,
+            0.8867
+          ],
+          "ece": 0.021,
+          "coverage_auto_accepted": 0.7721,
+          "accuracy_on_auto_accepted": 0.9619,
+          "per_class_f1": {
+            "cardboard": 0.8571,
+            "glass": 0.8716,
+            "metal": 0.8696,
+            "paper": 0.7956,
+            "plastic": 0.8454,
+            "e_waste": 0.9281,
+            "medical": 0.8843
+          },
+          "per_class_support": {
+            "cardboard": 136,
+            "glass": 156,
+            "metal": 166,
+            "paper": 131,
+            "plastic": 167,
+            "e_waste": 166,
+            "medical": 166
+          }
+        },
+        "RW_external_shared5": {
+          "n": 3092,
+          "accuracy": 0.4602,
+          "accuracy_ci95": [
+            0.4261,
+            0.4955
+          ],
+          "macro_f1_present_classes": 0.5064,
+          "macro_f1_ci95": [
+            0.4697,
+            0.5433
+          ],
+          "ece": 0.2075,
+          "coverage_auto_accepted": 0.3742,
+          "accuracy_on_auto_accepted": 0.6785,
+          "per_class_f1": {
+            "cardboard": 0.3994,
+            "glass": 0.5101,
+            "metal": 0.5975,
+            "paper": 0.5211,
+            "plastic": 0.504
+          },
+          "per_class_support": {
+            "cardboard": 461,
+            "glass": 420,
+            "metal": 790,
+            "paper": 500,
+            "plastic": 921
+          }
+        }
+      }
+    },
+    "M|TN+TB": {
+      "train_images": 6036,
+      "validation_images": 1510,
+      "C": 0.3,
+      "temperature": 1.1066,
+      "review_rule": {
+        "min_confidence": 0.76,
+        "min_novelty_similarity": 0.5183,
+        "target_precision": 0.95,
+        "target_met_on_validation": true
+      },
+      "classes_in_training": [
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "trash",
+        "e_waste",
+        "medical"
+      ],
+      "val_macro_f1": 0.8391,
+      "test": {
+        "TN_shared5": {
+          "n": 398,
+          "accuracy": 0.8618,
+          "accuracy_ci95": [
+            0.8186,
+            0.8998
+          ],
+          "macro_f1_present_classes": 0.8745,
+          "macro_f1_ci95": [
+            0.8213,
+            0.9079
+          ],
+          "ece": 0.0163,
+          "coverage_auto_accepted": 0.7538,
+          "accuracy_on_auto_accepted": 0.9533,
+          "per_class_f1": {
+            "cardboard": 0.916,
+            "glass": 0.8987,
+            "metal": 0.8227,
+            "paper": 0.8889,
+            "plastic": 0.8462
+          },
+          "per_class_support": {
+            "cardboard": 67,
+            "glass": 83,
+            "metal": 68,
+            "paper": 99,
+            "plastic": 81
+          }
+        },
+        "TB_shared5": {
+          "n": 756,
+          "accuracy": 0.8373,
+          "accuracy_ci95": [
+            0.8042,
+            0.8658
+          ],
+          "macro_f1_present_classes": 0.8538,
+          "macro_f1_ci95": [
+            0.8216,
+            0.8789
+          ],
+          "ece": 0.0162,
+          "coverage_auto_accepted": 0.7262,
+          "accuracy_on_auto_accepted": 0.9362,
+          "per_class_f1": {
+            "cardboard": 0.8722,
+            "glass": 0.8581,
+            "metal": 0.8896,
+            "paper": 0.8284,
+            "plastic": 0.821
+          },
+          "per_class_support": {
+            "cardboard": 136,
+            "glass": 156,
+            "metal": 166,
+            "paper": 131,
+            "plastic": 167
+          }
+        },
+        "TB_all7": {
+          "n": 1088,
+          "accuracy": 0.8594,
+          "accuracy_ci95": [
+            0.8356,
+            0.8826
+          ],
+          "macro_f1_present_classes": 0.8592,
+          "macro_f1_ci95": [
+            0.8327,
+            0.8817
+          ],
+          "ece": 0.013,
+          "coverage_auto_accepted": 0.7491,
+          "accuracy_on_auto_accepted": 0.9509,
+          "per_class_f1": {
+            "cardboard": 0.8561,
+            "glass": 0.8493,
+            "metal": 0.8739,
+            "paper": 0.8132,
+            "plastic": 0.816,
+            "e_waste": 0.9194,
+            "medical": 0.8862
+          },
+          "per_class_support": {
+            "cardboard": 136,
+            "glass": 156,
+            "metal": 166,
+            "paper": 131,
+            "plastic": 167,
+            "e_waste": 166,
+            "medical": 166
+          }
+        },
+        "RW_external_shared5": {
+          "n": 3092,
+          "accuracy": 0.4787,
+          "accuracy_ci95": [
+            0.4497,
+            0.5083
+          ],
+          "macro_f1_present_classes": 0.5234,
+          "macro_f1_ci95": [
+            0.4921,
+            0.5532
+          ],
+          "ece": 0.2139,
+          "coverage_auto_accepted": 0.4133,
+          "accuracy_on_auto_accepted": 0.6534,
+          "per_class_f1": {
+            "cardboard": 0.4024,
+            "glass": 0.4583,
+            "metal": 0.6377,
+            "paper": 0.5171,
+            "plastic": 0.6017
+          },
+          "per_class_support": {
+            "cardboard": 461,
+            "glass": 420,
+            "metal": 790,
+            "paper": 500,
+            "plastic": 921
+          }
+        }
+      }
+    }
+  }
+}

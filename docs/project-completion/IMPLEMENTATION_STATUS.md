@@ -343,6 +343,22 @@ Role-based authentication had one open gap: two-step verification was optional f
 
 Not verified: no end-to-end (browser) test of the enforced flow, because the CI stack runs with `ENVIRONMENT=local` (policy off) and a browser test would need a TOTP generator and a privileged account; the API and component tests cover the behaviour. No production deployment exists to observe.
 
+### Phase M: owner follow-ups after PR #17 (branch `arena/94d6b905-ecomind-ai`, started from `main` at `59b337e`)
+
+| Item | What exists | Evidence (local sandbox unless stated) | Not verified |
+|---|---|---|---|
+| Sign-out defect | The sidebar had no sign-out control, found while writing the keyboard tests. A "Sign out" button now ends the session from the sidebar on every page | 2 component tests; keyboard e2e (navigate and sign out) | – |
+| Keyboard e2e | `tests/e2e/specs/keyboard.spec.ts`, 7 tests: skip link, visible focus and no trap, account menu, page-search dialog, phone drawer, keyboard sign-out | 7 passed; full suite 41 passed / 2 skipped (real-model classification; forced MFA enrolment needs the production-mode stack, run separately: `mfa.spec.ts` 4/4) | A person's keyboard review; any screen-reader review |
+| MFA browser flow | `specs/mfa.spec.ts` with an RFC 6238 generator: enrol, sign in with a code, recovery code, forced enrolment | 4/4 against a production-mode stack (`ENVIRONMENT=production`, `MFA_REQUIRED_ROLES` blank) | A real authenticator on a phone |
+| Load test | `scripts/perf/load_test.py` (read-only, local targets only) and `docs/operations/load-testing.md` | 10 users: 130 req/s, 0% errors, p95 123 ms; 50 users: 122 req/s, 0% errors, p95 639 ms (2 vCPU, one worker, everything on one machine, tiny data); 4 contract tests | Any capacity claim; target hardware; realistic data |
+| Offline map from a MapTiler MBTiles file | `scripts/maps/mbtiles_to_pmtiles.py`, OpenMapTiles layout recognised next to Protomaps, style and loader patches, `docs/maps/hyderabad-aoi.geojson` | 8 converter tests, 18 frontend map tests, real-browser render against a **synthetic** tile file | A real MapTiler file (the owner has not downloaded it) |
+| Demo mail | `make demo-mail-up` (Mailpit), `scripts/setup/init_demo_mail.py`, `scripts/demo/verify_smtp_local.py` | 4 SMTP backend tests; the verify script against an independent `aiosmtpd` server (STARTTLS + AUTH succeed; wrong password and untrusted certificate refused) | The Mailpit container (no Docker here); any real provider |
+| Demo accounts | `python -m app.cli seed-demo-accounts [--domain] [--reset-passwords]`, password from `DEMO_PASSWORD`; idempotent, audited, refused in production | 5 backend tests (creates six verified working accounts; second run changes nothing; reset changes password and signs out; refused in production; weak password creates nothing; custom domain) | Inside Docker |
+| TrashBox research experiment | `ml/waste_classification/research/trashbox_experiment.py`, manifest, `experiments/trashbox-experiment.json`, report section 4b | 3 ML tests; the experiment was run once. Result: helps on TrashBox-like photos, not on RealWaste (0.46–0.48). No model written | Licence (verbal permission only); anything about a released model |
+| Dependencies and security | `@types/node` pinned to 22, Dependabot config, `@vitest/coverage-v8`, GitGuardian incident located and documented (dismissal is owner-only) | `npm ci`, lint, typecheck clean | – |
+
+Local totals on this branch: ML 61 passed; backend `tests/integration/test_cli.py` 11 passed; frontend lint and typecheck clean; e2e as above.
+
 ## Audit (2026-10-21)
 
 A full audit was run and written up in `PROJECT_AUDIT_REPORT.md`; `docs/PROJECT_GUIDE.md` explains the whole project for a beginner and `docs/testing/MANUAL_TEST_GUIDE.md` is the A-to-Z manual test. Results: backend 763 passed / 1 skipped (coverage 97% of statements), frontend 365 passed, browser end-to-end 31 passed / 1 skipped, dependency and static-analysis scans clean. Defects fixed: collectors could not list their own incident reports (migration 0016); the landing page and several READMEs were out of date; the demo seed script needed `httpx2`. Open items are listed in the report (section 11) and `LIMITATIONS.md`. Word copies of the three documents are in `docs/exports/` (Markdown is the source).
