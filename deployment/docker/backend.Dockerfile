@@ -13,7 +13,10 @@ RUN useradd --create-home --uid 10001 ecomind \
     && chown -R ecomind /var/lib/ecomind
 
 WORKDIR /srv/backend
-COPY backend/pyproject.toml backend/README.md ./
+COPY backend/pyproject.toml backend/README.md backend/requirements.lock ./
+# Third-party dependencies come from the hash-verified lock file (the exact versions CI tested),
+# in their own layer so application changes do not reinstall them.
+RUN pip install --require-hashes -r requirements.lock
 COPY backend/app ./app
 COPY backend/alembic.ini ./
 COPY backend/migrations ./migrations
@@ -23,9 +26,10 @@ COPY backend/migrations ./migrations
 COPY ml/__init__.py /srv/ml/__init__.py
 COPY ml/time_series/__init__.py /srv/ml/time_series/__init__.py
 COPY ml/time_series/algorithms.py /srv/ml/time_series/algorithms.py
-# Installs the dependencies; PYTHONPATH makes /srv/backend/app (which also holds alembic.ini and
-# migrations next to it) the package that is imported, so mounted dev code wins in compose.
-RUN pip install .
+# Installs the application itself (dependencies are already pinned above); PYTHONPATH makes
+# /srv/backend/app (which also holds alembic.ini and migrations next to it) the package that is
+# imported, so mounted dev code wins in compose.
+RUN pip install --no-deps .
 
 USER ecomind
 EXPOSE 8000

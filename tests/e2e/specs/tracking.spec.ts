@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
-import { E2E_EMAIL, E2E_PASSWORD, SESSION_HINT_KEY } from './fixtures';
+import { E2E_EMAIL, E2E_PASSWORD, SESSION_HINT_KEY, ensureAccount } from './fixtures';
 
 /**
  * Vehicle and collection tracking in a real browser against the real stack, no stubbing:
@@ -78,6 +78,9 @@ test('collector shares a real position; the fleet shows LIVE GPS, never-reported
   expect(granted.ok(), 'grant collector').toBe(true);
   const c = await signIn(api, collector.email);
   const m = admin; // the administrator holds every fleet permission, including fleet:manage
+  // This spec does not use the signed-in `test` fixture, so on a fresh database it may be the first
+  // spec to need the shared no-role account; make sure it exists instead of relying on spec order.
+  await ensureAccount(api);
   const citizen = await signIn(api, E2E_EMAIL, E2E_PASSWORD);
 
   const vehicles: Record<string, string> = {};

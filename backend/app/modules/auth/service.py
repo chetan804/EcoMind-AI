@@ -36,11 +36,13 @@ from app.core.security import (
     password_needs_rehash,
     verify_password,
 )
+from app.integrations.email.base import EmailMessage
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestContext
-from app.modules.auth import mfa, policy, repository
+from app.modules.auth import mfa, policy, recovery, repository
 from app.modules.auth.errors import (
     EmailAlreadyRegisteredError,
+    EmailNotVerifiedError,
     InvalidCredentialsError,
     InvalidRefreshTokenError,
     RefreshTokenRaceError,
@@ -59,6 +61,8 @@ class UserView:
     full_name: str
     roles: list[str]
     permissions: list[str]
+    email_verified: bool = False
+    mfa_enrollment_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -67,6 +71,8 @@ class AuthResult:
     access_token: str
     refresh_token: str
     expires_in: int
+    # Messages the router sends after the response (verification link, security notice).
+    emails: tuple[EmailMessage, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -87,13 +93,16 @@ def _email_digest(email: str) -> str:
     return hashlib.sha256(users.normalize_email(email).encode()).hexdigest()
 
 
-def user_view(db: Session, user: User) -> UserView:
+def user_view(db: Session, settings: Settings, user: User) -> UserView:
+    roles = users.role_names(db, user.id)
     return UserView(
         id=user.id,
         email=user.email,
         full_name=user.full_name,
-        roles=users.role_names(db, user.id),
+        roles=roles,
         permissions=sorted(users.permission_codes(db, user.id)),
+        email_verified=user.email_verified_at is not None,
+        mfa_enrollment_required=mfa.enrollment_required(db, settings, user.id, roles),
     )
 
 
@@ -169,11 +178,11 @@ def register(
             action=repository.REGISTERED,
             ip_address=context.ip_address,
             since=now - policy.REGISTER_WINDOW,
-            limit=policy.MAX_REGISTRATIONS_PER_IP,
+            limit=settings.registration_limit_per_ip_per_hour,
         )
         _enforce_limit(
             recent,
-            maximum=policy.MAX_REGISTRATIONS_PER_IP,
+            maximum=settings.registration_limit_per_ip_per_hour,
             window=policy.REGISTER_WINDOW,
             now=now,
             message="Too many accounts created from this address. Try again later.",
@@ -204,12 +213,17 @@ def register(
         context=context,
         changes={"role": DEFAULT_REGISTRATION_ROLE},
     )
+    verification = recovery.verification_for_new_account(
+        db, settings, user, context=context, now=now
+    )
     access, refresh, expires_in = _issue_tokens(
         db, settings, user, family_id=uuid.uuid4(), context=context, now=now
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
-    return AuthResult(view, access, refresh, expires_in)
+    return AuthResult(
+        view, access, refresh, expires_in, emails=(verification,) if verification else ()
+    )
 
 
 def login(
@@ -266,6 +280,12 @@ def login(
         db.commit()  # the failure must be counted even though this request errors
         raise InvalidCredentialsError("Invalid email or password")
 
+    if settings.email_verification_required and user.email_verified_at is None:
+        # Only after the password was proven, so this reveals nothing to someone without it.
+        raise EmailNotVerifiedError(
+            "Confirm your e-mail address to sign in. Request a new confirmation link from the "
+            "sign-in page."
+        )
     if password_needs_rehash(user.password_hash):
         user.password_hash = hash_password(password)
     if mfa.is_enabled(db, user.id):
@@ -294,7 +314,7 @@ def finish_login(
         context=context,
         changes={"email_sha256": _email_digest(user.email)},
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
     return AuthResult(view, access, refresh, expires_in)
 
@@ -342,7 +362,7 @@ def refresh(
     access, new_refresh, expires_in = _issue_tokens(
         db, settings, user, family_id=session.family_id, context=context, now=now
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
     return AuthResult(view, access, new_refresh, expires_in)
 
@@ -417,6 +437,9 @@ def change_password(
         context=context,
         changes={"sessions_revoked": revoked},
     )
-    view = user_view(db, user)
+    view = user_view(db, settings, user)
     db.commit()
-    return AuthResult(view, access, refresh_token, expires_in)
+    notice = recovery.password_changed_notice(user, how="from the account page")
+    return AuthResult(
+        view, access, refresh_token, expires_in, emails=(notice,) if settings.email_enabled else ()
+    )

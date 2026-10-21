@@ -42,6 +42,7 @@ PERMISSIONS: dict[str, str] = {
     "incidents:triage": "View, assign and resolve all incidents",
     "rewards:read_own": "View the user's own rewards ledger",
     "rewards:manage": "Adjust rewards and review the full ledger",
+    "rewards:redeem": "Spend reward points on catalogue items",
     "notifications:read_own": "View the user's notifications",
     "forecasting:read": "View fill-level and volume forecasts",
     "forecasting:run": "Run forecasting jobs",
@@ -54,11 +55,15 @@ PERMISSIONS: dict[str, str] = {
     "marketplace:request": "Ask for a surplus-material listing",
     "marketplace:create": "Offer surplus material in the marketplace",
     "marketplace:manage": "Moderate and act on any marketplace listing",
+    "support:ask": "Ask the help assistant and open support tickets",
+    "support:manage": "Answer, assign and close every support ticket",
+    "knowledge:manage": "Write and publish help articles",
     "audit:read": "View the audit log",
     "settings:manage": "Change system and security settings",
 }
 
 _CITIZEN = {
+    "support:ask",
     "waste_reports:create",
     "waste_reports:read_own",
     "classification:predict",
@@ -67,13 +72,16 @@ _CITIZEN = {
     "incidents:create",
     "incidents:read_own",
     "rewards:read_own",
+    "rewards:redeem",
     "notifications:read_own",
     "marketplace:read",
     "marketplace:request",
 }
 
 _COLLECTOR = {
+    "support:ask",
     "fleet:track",
+    "incidents:read_own",
     "waste_reports:read_all",
     "classification:predict",
     "collection:read",
@@ -89,6 +97,7 @@ _COLLECTOR = {
 }
 
 _FACILITY_OPERATOR = {
+    "support:ask",
     "waste_reports:read_all",
     "classification:predict",
     "classification:review",
@@ -106,6 +115,8 @@ _FACILITY_OPERATOR = {
 }
 
 _MANAGER = _FACILITY_OPERATOR | {
+    "support:manage",
+    "knowledge:manage",
     "waste_reports:review",
     "collection:manage",
     "facilities:manage",

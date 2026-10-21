@@ -1,0 +1,281 @@
+[
+  {
+    "slug": "how-to-report-waste",
+    "category": "Reporting waste",
+    "title": "How do I report waste?",
+    "body": "Open Reports (the Waste intake records screen) and choose Report waste. Give a short title, say where it is, add a photo if you can, and send it. Each report goes through review: submitted, under review, then verified or rejected, and finally closed. You can follow its status on the same screen.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "rubbish trash garbage litter dumped submit send new complain"
+  },
+  {
+    "slug": "report-statuses",
+    "category": "Reporting waste",
+    "title": "What do the waste report statuses mean?",
+    "body": "Submitted means your report arrived and nobody has looked at it yet. Under review means a staff member is checking it. Verified means it was accepted and can become a collection task. Rejected means it was not accepted. Closed means it is archived. Ask the support team if a rejection is unclear.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "state progress stage approved declined pending checked"
+  },
+  {
+    "slug": "report-photo",
+    "category": "Reporting waste",
+    "title": "Can I add a photo to a waste report?",
+    "body": "Yes. Choose a photo when you report waste. Use a clear photo of the waste itself and avoid people, faces and number plates. Photos can be JPEG, PNG or WebP, and location metadata is removed. A file over the size limit is refused with a message that names the limit.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "picture image upload attach file size limit megabytes camera"
+  },
+  {
+    "slug": "classify-item",
+    "category": "Reporting waste",
+    "title": "How does the waste classification screen work?",
+    "body": "The Classification screen (AI waste classification) suggests a material type for a photo. It is a suggestion, not a decision: when the model is unsure, the photo goes to a person for review. The screen says so plainly when no model has been activated by the administrators, and then it offers no classification.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "classify classifier identify recognise recognize detect scan material type photo suggestion model machine learning AI camera"
+  },
+  {
+    "slug": "missed-collection",
+    "category": "Collections",
+    "title": "My waste was not collected. What should I do?",
+    "body": "Report a community incident with the type Missed collection from the Incidents screen. Staff acknowledge it, assign it and mark it resolved or dismissed, and you are notified of the changes. If nobody answers, send a support request.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "not collected skipped missed bin pickup rubbish trash garbage waited"
+  },
+  {
+    "slug": "collection-statuses",
+    "category": "Collections",
+    "title": "What do the collection task statuses mean?",
+    "body": "A collection task is pending until it is assigned to a collector. Assigned means a collector has it. In progress means the collector started it. Completed means it was finished and the collected weight was recorded. Failed or cancelled means it was not done; it may be rescheduled.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "pickup task assigned started finished done failed cancelled rescheduled driver"
+  },
+  {
+    "slug": "report-incident",
+    "category": "Community incidents",
+    "title": "How do I report illegal dumping, an overflowing bin or hazardous waste?",
+    "body": "Use the Incidents screen and pick the incident type: illegal dumping, overflowing bin, hazardous waste, missed collection, open burning or other. Describe what you see and where. Do not approach hazardous waste or open burning yourself, and call emergency services if anyone is in danger.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "dumping fly-tipping overflowing full bin dustbin burning smoke hazard chemical dangerous complaint problem"
+  },
+  {
+    "slug": "incident-statuses",
+    "category": "Community incidents",
+    "title": "What do the incident statuses mean?",
+    "body": "Open means your incident arrived. Acknowledged means staff have seen it. In progress means someone is working on it. Resolved means it was dealt with. Dismissed means staff decided no action was needed. Other people cannot see who reported an incident on the maps.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "progress state acknowledged resolved dismissed anonymous reporter identity privacy"
+  },
+  {
+    "slug": "earn-points",
+    "category": "Rewards",
+    "title": "How do I earn reward points?",
+    "body": "Points are earned when a collection that came from your report is completed and the collected weight is recorded. The operator sets the rate; by default it is 10 points for every verified kilogram. Points are never added for reports that are only submitted.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "reward points kilogram weight score credits collect get gain"
+  },
+  {
+    "slug": "redeem-reward",
+    "category": "Rewards",
+    "title": "How do I redeem my points for a reward?",
+    "body": "Open Rewards, choose the Redeem tab, look through the catalogue and press Redeem on an item you can afford. You receive a claim code made of two groups of five characters. Show the code to the staff member who hands the reward over. The platform itself does not ship or pay anything.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "spend use exchange claim code voucher catalogue gift prize"
+  },
+  {
+    "slug": "cancel-redemption",
+    "category": "Rewards",
+    "title": "Can I cancel a redemption and get my points back?",
+    "body": "Yes, while the redemption is still pending. Open My redemptions and cancel it, and the points are returned to your balance. Once staff have handed the reward over and marked it fulfilled, it can no longer be cancelled.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "undo reverse refund return points back pending cancel"
+  },
+  {
+    "slug": "reward-unavailable",
+    "category": "Rewards",
+    "title": "Why can I not redeem a reward?",
+    "body": "A reward may be out of stock, past its end date, switched off by staff, or limited per person and already redeemed by you. You also need enough points. The message shown when you press Redeem names the reason.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "stock sold out unavailable expired limit enough points cannot redeem blocked"
+  },
+  {
+    "slug": "marketplace-how",
+    "category": "Marketplace",
+    "title": "How does the surplus marketplace work?",
+    "body": "The marketplace is a matching board for surplus materials. Facility staff offer materials. Anyone with access can browse and ask for a listing. The owner accepts or declines the request, and an accepted request reserves the listing. There is no price and no payment on the platform, and no delivery.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "surplus materials listing offer request reserve sell buy price pay payment delivery board exchange"
+  },
+  {
+    "slug": "marketplace-expiry",
+    "category": "Marketplace",
+    "title": "Why did a marketplace listing disappear or close?",
+    "body": "Published listings expire after 30 days by default unless the owner renews them, and the owner is warned shortly before. A listing also closes when the owner closes it and records the outcome. Expired listings no longer accept requests.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "expire expires lapsed closed disappeared renew days published removed"
+  },
+  {
+    "slug": "marketplace-photos",
+    "category": "Marketplace",
+    "title": "Can I add photos to a marketplace listing?",
+    "body": "Owners can attach up to four photos to a listing. Photos are re-encoded and their metadata, including any location, is removed before they are shown to others.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "pictures images upload attach metadata location privacy exif number"
+  },
+  {
+    "slug": "forgot-password",
+    "category": "Account",
+    "title": "I forgot my password. How do I reset it?",
+    "body": "Choose Forgot password on the sign-in page and enter your e-mail address. If an account exists you receive a one-time link that works for a short time, 30 minutes by default. The page gives the same answer whether or not the address is registered. Open the link, choose a new password and sign in again. If the page says the server cannot send e-mail, ask an administrator to reset your access.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "reset lost forgotten password link recover access email"
+  },
+  {
+    "slug": "verify-email",
+    "category": "Account",
+    "title": "How do I confirm my e-mail address?",
+    "body": "After you sign up, an e-mail contains a confirmation link that works for 24 hours by default. Open it and press the confirm button. If sign-in says your address is not confirmed, choose Send a new confirmation link. Some deployments require a confirmed address before signing in.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "confirm confirmation address verification link not confirmed unconfirmed"
+  },
+  {
+    "slug": "account-locked",
+    "category": "Account",
+    "title": "Why does sign-in say too many attempts or my account is locked?",
+    "body": "After 5 wrong passwords within 15 minutes the account is paused for a while to protect it. Wait for the time shown and try again, or reset your password. Staff cannot read your password, and nobody from support will ask for it.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "locked lockout blocked too many attempts wrong password paused sign-in login"
+  },
+  {
+    "slug": "password-rules",
+    "category": "Account",
+    "title": "What are the password rules?",
+    "body": "Use a long passphrase that is not your name or e-mail address and is not a common password. The sign-up form tells you what is wrong with a password it refuses.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "passphrase strength requirements acceptable accepted weak common secure policy"
+  },
+  {
+    "slug": "two-factor",
+    "category": "Account",
+    "title": "How do I turn on two-step verification?",
+    "body": "Open Settings, then Security, and follow the steps to add an authenticator app. You will get recovery codes; keep them somewhere safe because they are shown only once. If you lose both the app and the codes, an administrator can reset your two-step verification after checking who you are.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "2fa mfa totp authenticator app recovery codes two-step second factor security lost phone"
+  },
+  {
+    "slug": "roles",
+    "category": "Account",
+    "title": "What are the roles and who sets them?",
+    "body": "New accounts are citizens. Collector, facility operator, manager and administrator roles are given only by an administrator. Your role decides which screens and actions you see; if something you expect is missing, ask the support team.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "role permissions access rights administrator manager collector citizen operator screens menu missing forbidden allowed"
+  },
+  {
+    "slug": "notifications",
+    "category": "Account",
+    "title": "Where do I see my notifications?",
+    "body": "The bell in the top bar shows how many notifications are unread. Open the Notifications screen to read them. They cover your reports, incidents, collections, rewards, marketplace and support replies.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "alerts bell icon unread messages inbox updates"
+  },
+  {
+    "slug": "sorting-guide",
+    "category": "Sorting guide",
+    "title": "Where do I find out how to sort or dispose of a material?",
+    "body": "Open Guide, the Material sorting guide. It lists materials with disposal instructions that your operators entered, each with its source or a note that no source is cited. If a material is not listed, the assistant will say so instead of guessing.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "sort separate recycle recycling dispose disposal throw battery batteries glass plastic paper metal bin which"
+  },
+  {
+    "slug": "vehicle-tracking",
+    "category": "Tracking",
+    "title": "What do LIVE, DELAYED, STALE and unavailable mean for a vehicle?",
+    "body": "LIVE GPS means a position was reported a moment ago. Delayed and stale mean the last report is getting old. Historical means the last report is old. Location unavailable means the vehicle has never reported a position. Simulated positions are always labelled Simulated and are kept apart from real ones.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "truck van fleet gps live delayed stale historical simulated position location status map"
+  },
+  {
+    "slug": "map-blank",
+    "category": "Tracking",
+    "title": "Why is the map background empty?",
+    "body": "The map works without any key or Google account. The background map needs a map file that your operator installs. Without it the screens show your markers and routes on a plain background with the note Base map not installed, and the same information is available in the list below the map.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "map blank empty background tiles base map not installed grey plain"
+  },
+  {
+    "slug": "share-position",
+    "category": "Tracking",
+    "title": "How does a collector share a position?",
+    "body": "Collectors press Share my position in the task dialog while a task is in progress. The browser asks permission, reports the position at most every 15 seconds and stops when the page is closed. It does not track in the background.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "gps location driver collector position report frequency seconds tracking permission browser"
+  },
+  {
+    "slug": "route-plans",
+    "category": "Operations",
+    "title": "How are route plans ordered?",
+    "body": "A route plan is a proposed order of stops that keeps the straight-line distance for one vehicle short. It stays a draft until it is published and it does not change the collection tasks. It does not predict arrival times. When your operator has enabled a road routing service, the road route can be fetched for a plan on demand; it is not stored and the order is not recomputed for roads.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "route stops order plan sequence distance arrival time eta road navigation"
+  },
+  {
+    "slug": "forecasts-anomalies",
+    "category": "Operations",
+    "title": "What do forecasts and anomaly alerts mean?",
+    "body": "A forecast is a statistical estimate of future fill levels or volumes, shown with how it compared with a naive baseline. An anomaly alert is a suspected anomaly: something that looks unusual compared with past data. Neither is a fact; a person decides what to do.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "forecast prediction estimate fill level volume anomaly unusual alert suspected reliable accuracy"
+  },
+  {
+    "slug": "material-passport",
+    "category": "Operations",
+    "title": "What is a material passport?",
+    "body": "A material passport records the chain of custody of a batch of recovered material: who handled it and when. The integrity check on a passport only confirms that its recorded history is consistent; it does not prove the material itself.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "passport chain custody integrity check batch recovered traceability"
+  },
+  {
+    "slug": "about-assistant",
+    "category": "Help",
+    "title": "What can the help assistant do?",
+    "body": "The assistant answers from the help articles and from the sorting guide, and quotes them with their names. It can also tell you your own points balance, how many waste reports you have and the state of your support requests. It does not invent answers: when it cannot find one it says so and offers to send your question to the support team.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "chatbot bot assistant AI artificial intelligence answers invented made up sources how it works what can you do"
+  },
+  {
+    "slug": "contact-support",
+    "category": "Help",
+    "title": "How do I contact the support team?",
+    "body": "Ask the assistant first. If it cannot help, press Send this to the support team under its answer, or open Support and choose New request. You can choose to share the assistant conversation with the team, otherwise they do not see it. You are notified when staff reply, and you can close a request yourself.",
+    "source": "platform-help",
+    "published": true,
+    "keywords": "support team human person agent staff help desk ticket request talk contact email phone"
+  }
+]

@@ -6,6 +6,7 @@ from sqlalchemy import Engine, text
 
 from app import cli
 from app.db import session as db_session_module
+from tests.conftest import SettingsFactory
 from tests.fixtures.api import bearer, login
 
 
@@ -108,3 +109,46 @@ def test_model_commands_fail_clearly_when_there_is_nothing_to_use(
     assert "No artifact" in capsys.readouterr().err
     assert cli.main(["activate-model", "--version", "9.9.9"]) == 1
     assert "Expected exactly one registered model" in capsys.readouterr().err
+
+
+def test_support_commands_seed_help_and_purge_old_conversations(
+    cli_env: Engine,
+    make_settings: SettingsFactory,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # Settings are built explicitly: the test must not depend on the shell's environment.
+    monkeypatch.setattr(cli, "get_settings", lambda: make_settings(assistant_retention_days=90))
+    assert cli.main(["seed-support-knowledge"]) == 0
+    assert "31 created, 0 updated" in capsys.readouterr().out
+    assert cli.main(["seed-support-knowledge"]) == 0  # idempotent
+    assert "0 created, 0 updated" in capsys.readouterr().out
+
+    from tests.fixtures.api import create_user
+
+    user = create_user(cli_env, email="chatter@example.org")
+    with cli_env.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO assistant_conversations (user_id, updated_at) "
+                "VALUES (:u, now() - interval '400 days'), (:u, now())"
+            ),
+            {"u": user},
+        )
+    assert cli.main(["purge-assistant-conversations"]) == 0
+    assert "removed 1 assistant conversation" in capsys.readouterr().out
+    with cli_env.connect() as connection:
+        left = connection.execute(text("SELECT count(*) FROM assistant_conversations")).scalar_one()
+    assert left == 1
+
+
+def test_reference_import_without_the_public_data_clone_explains_itself(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def missing(*, key: str) -> str:
+        raise RuntimeError(f"msw-src is not available for {key}")
+
+    monkeypatch.setattr(cli, "import_reference", missing)
+    assert cli.main(["import-reference-series", "--key", "austin"]) == 1
+    error = capsys.readouterr().err
+    assert "git clone" in error and "msw-src" in error and "Traceback" not in error

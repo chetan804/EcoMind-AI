@@ -613,3 +613,82 @@ def test_route_tracking_hides_vehicle_from_unrelated_collector(env: Env) -> None
     theirs = env.client.get(f"{BASE}/route-plans/{plan_id}", headers=env.h["collector2"]).json()
     assert theirs["vehicle"] is None and theirs["path"] == []
     assert len(theirs["stops"]) == 2  # the plan itself is visible to every routes:read role
+
+
+def _insert_event(
+    db: Session,
+    vehicle: str,
+    *,
+    recorded_at: dt.datetime,
+    received_at: dt.datetime,
+    latitude: str,
+    source: str = "gps_device",
+    event_id: uuid.UUID | None = None,
+) -> uuid.UUID:
+    row_id = event_id or uuid.uuid4()
+    db.execute(
+        text(
+            "INSERT INTO vehicle_location_events (id, vehicle_id, latitude, longitude, recorded_at, "
+            "received_at, source, quality) VALUES (:id, :v, :lat, 78.48, :rec, :recv, :src, 'accepted')"
+        ),
+        {
+            "id": row_id,
+            "v": vehicle,
+            "lat": latitude,
+            "rec": recorded_at,
+            "recv": received_at,
+            "src": source,
+        },
+    )
+    return row_id
+
+
+def test_latest_per_vehicle_query_handles_ties_history_and_simulation(env: Env) -> None:
+    """The query itself, against PostgreSQL: newest per vehicle, ties, empty and mixed sources."""
+    from app.modules.tracking import repository
+
+    moment = now().replace(microsecond=0) - dt.timedelta(minutes=10)
+    low, high = sorted([uuid.uuid4(), uuid.uuid4()])
+    with Session(env.engine) as db:
+        _insert_event(db, env.vehicle, recorded_at=moment, received_at=moment, latitude="17.100000")
+        # Written later but measured earlier: must not win.
+        _insert_event(
+            db,
+            env.vehicle,
+            recorded_at=moment - dt.timedelta(minutes=5),
+            received_at=moment + dt.timedelta(minutes=1),
+            latitude="17.200000",
+        )
+        # Two sources reporting the same instant (tied on both timestamps): the larger id wins,
+        # every time. (The same source cannot repeat an instant: the database forbids it.)
+        tied = moment + dt.timedelta(minutes=2)
+        _insert_event(
+            db, env.vehicle, recorded_at=tied, received_at=tied, latitude="17.300000", event_id=low
+        )
+        winner = _insert_event(
+            db,
+            env.vehicle,
+            recorded_at=tied,
+            received_at=tied,
+            latitude="17.400000",
+            source="mobile_client",
+            event_id=high,
+        )
+        simulated = _insert_event(
+            db,
+            env.vehicle,
+            recorded_at=moment + dt.timedelta(minutes=5),
+            received_at=moment + dt.timedelta(minutes=5),
+            latitude="17.900000",
+            source="simulator",
+        )
+        db.commit()
+
+        vehicles = [uuid.UUID(env.vehicle), uuid.UUID(env.other_vehicle)]
+        real = repository.latest_per_vehicle(db, vehicles, include_simulated=False)
+        assert [e.id for e in real] == [winner]  # the other vehicle has no events: absent
+
+        both = repository.latest_per_vehicle(db, vehicles, include_simulated=True)
+        assert {e.id for e in both} == {winner, simulated}  # one real and one simulated, apart
+
+        assert repository.latest_per_vehicle(db, [], include_simulated=True) == []

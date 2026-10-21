@@ -6,15 +6,17 @@ import { PublicHeader } from '../components/PublicHeader';
 import '../landing.css';
 
 /**
- * These four are facts about the repository today, not performance claims. The design reference
- * shows accuracy/cost/response/user-count statistics; none can be substantiated (no model is
- * trained, no service is deployed), so they are intentionally not reproduced.
+ * These four are facts about the product today, not performance claims. The design reference
+ * shows accuracy/cost/response/user-count statistics; none can be substantiated (no service is
+ * deployed and the only trained classifier is an unapproved candidate), so they are intentionally
+ * not reproduced. Keep every value true when features change (the project audit found the earlier
+ * "planned, none available" copy outdated).
  */
 const projectFacts = [
-  { icon: <Boxes size={28} />, value: '19', label: 'Planned platform modules' },
-  { icon: <Layers size={28} />, value: '6', label: 'Waste classes in scope' },
-  { icon: <Cpu size={28} />, value: '3', label: 'Planned ML capabilities' },
-  { icon: <Brain size={28} />, value: '0', label: 'Models trained so far' },
+  { icon: <Boxes size={28} />, value: '5', label: 'User roles with separate permissions' },
+  { icon: <Layers size={28} />, value: '6', label: 'Waste classes the classifier knows' },
+  { icon: <Cpu size={28} />, value: '3', label: 'ML capabilities built: classifier, forecasts, anomaly flags' },
+  { icon: <Brain size={28} />, value: '0', label: 'Classifiers approved for use' },
 ];
 
 const capabilities = [
@@ -24,7 +26,7 @@ const capabilities = [
   { icon: <Recycle size={28} />, title: 'Enable reuse, recycling and resource recovery' },
 ];
 
-/** Public landing page. It describes the product's direction; capabilities are planned, not shipped. */
+/** Public landing page. Describes what the product does and states plainly what is not yet approved. */
 export function LandingPage() {
   return (
     <div className="landing" id="top">
@@ -88,7 +90,7 @@ export function LandingPage() {
               </li>
             ))}
           </ul>
-          <p className="landing__status">EcoMind AI is in early development. These capabilities are planned; none is available yet.</p>
+          <p className="landing__status">EcoMind AI is under active development and is not deployed anywhere yet. The screens work end to end on demonstration data; the waste-image classifier is an unapproved research candidate, so no performance or impact figures are published.</p>
         </section>
 
         <section className="section" id="impact" aria-labelledby="impact-title">

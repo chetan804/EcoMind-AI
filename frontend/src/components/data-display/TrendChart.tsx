@@ -7,7 +7,7 @@ import './data-display.css';
 export interface TrendSeries {
   id: string;
   label: string;
-  /** CSS color (use a token, e.g. 'var(--color-teal)'). */
+  /** CSS color (use a token, e.g. 'var(--color-accent-text)'). */
   color: string;
   values: Array<number | null>;
   /** Fill the area under the line. */

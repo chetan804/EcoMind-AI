@@ -56,15 +56,15 @@ remains open.
 - **No forced MFA** for any role; MFA is TOTP only. Rotating `SECRET_KEY` invalidates stored MFA secrets
   (recovery: administrator reset).
 - **Account enumeration at registration:** `409 email_already_registered`.
-- **Passwords:** a small denylist, not a breached-password corpus; no password reset or e-mail
-  verification flow exists.
+- **Passwords:** a small denylist, not a breached-password corpus. Password reset and e-mail verification
+  exist (see "Supply chain and account recovery" below) but need a configured, tested mail server.
 - **Uploads:** no antivirus scan; unattached uploads are not purged automatically.
 - **Authorization subtleties:** incident photos need `waste_reports:create`; managers hold `users:read`.
   Both are documented design choices that an owner may want to change.
 - **CSP `connect-src`** must be narrowed per deployment (above); `style-src 'unsafe-inline'` remains for
   React `style` attributes.
-- **Dependencies:** the backend uses version ranges, not a lock file; no Dependabot or scheduled audit is
-  configured. `pip-audit`, `npm audit` and `bandit` were run by hand once and are not CI gates.
+- **Dependencies:** now hash-locked and audited in CI (see "Supply chain and account recovery" below);
+  base images are tagged, not digest-pinned.
 - **Not done:** DAST/penetration testing, container image scanning, threat-model review by a second
   person, load testing.
 
@@ -93,3 +93,19 @@ remains open.
 - **Static analysis.** After this change `bandit -r backend/app -ll` reported one Medium (B310 on the Google
   Routes `urlopen`, a constant https URL; a false positive that the added scheme guard and a `nosec B310` with
   its reason now document); the earlier "13 Low, none Medium/High" figure predates the Routes adapter.
+
+## Supply chain and account recovery (added 2026-10-22)
+
+**Supply chain** (`docs/operations/dependency-management.md`)
+
+- Python installs come from hash-verified universal lock files (`backend/requirements*.lock`, `ml/requirements-dev.lock`) in CI and the backend image; `make check-locks` fails CI when `pyproject.toml` and the locks disagree.
+- Every GitHub Action is pinned to a commit SHA and the runner is `ubuntu-24.04`, not `ubuntu-latest`.
+- The **Security** workflow (push, pull request, weekly) fails on any `pip-audit` finding in the backend or ML locks, on high or critical `npm audit` findings (frontend and e2e, dev dependencies included) and on bandit findings of medium severity or higher. At the time of writing all three were clean (0 vulnerabilities, 0 findings). The weekly run exists because that is a point-in-time statement. CodeQL (`security-extended`) runs for Python and JavaScript/TypeScript.
+- **Gaps:** base images are not digest-pinned (registry unreachable from the build sandbox), no container image scan, no DAST, no automated licence review of transitive packages.
+- **Secret scanner finding:** the GitGuardian "Generic Password" alert on `backend/tests/api/test_administration.py` was a word list in a test; the test now uses one regular expression. The alert on the earlier commit remains in history and must be dismissed in the GitGuardian dashboard (owner action).
+
+**Account recovery** (`docs/operations/account-recovery.md`)
+
+- One-time, 256-bit, hashed, expiring links; a newer link replaces older ones; the token travels in the URL fragment; the answers of both request endpoints are identical for every address; limits per address and per IP; a reset revokes all sessions, clears the lockout, keeps two-factor authentication and sends a notice; audit rows hold digests, never addresses or tokens.
+- Attack surface added: four public endpoints. Limits come from the audit log (shared across workers). The `console` and `memory` e-mail backends are refused in production, because the console backend writes links to the log.
+- **Residual risks:** e-mail is only as secure as the mailbox (that is why 2FA is not bypassed); no CAPTCHA, so a determined attacker can still fill a victim's inbox with up to three messages an hour; delivery through a real provider is untested here.

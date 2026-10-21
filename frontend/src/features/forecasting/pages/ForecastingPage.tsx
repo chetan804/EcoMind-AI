@@ -60,7 +60,7 @@ export function ForecastingPage() {
         {
           id: 'observed',
           label: 'Observed',
-          color: 'var(--color-teal)',
+          color: 'var(--color-accent-text)',
           area: true,
           values: [...hist.map((p) => p.value), ...Array<null>(forecastPoints.length).fill(null)],
         },

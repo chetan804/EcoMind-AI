@@ -60,6 +60,7 @@ def _outs(db: Session, rows: list[User]) -> list[UserAdminOut]:
             full_name=u.full_name,
             is_active=u.is_active,
             mfa_enabled=u.id in with_mfa,
+            email_verified=u.email_verified_at is not None,
             roles=roles[u.id],
             created_at=u.created_at,
             last_login_at=u.last_login_at,

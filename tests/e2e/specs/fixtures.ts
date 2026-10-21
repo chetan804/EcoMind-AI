@@ -17,7 +17,7 @@ export const SESSION_HINT_KEY = 'ecomind.session-hint';
 
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:5173';
 
-async function ensureAccount(api: APIRequestContext): Promise<void> {
+export async function ensureAccount(api: APIRequestContext): Promise<void> {
   // Register first, then sign in. Signing in first would record a *failed* login on a fresh
   // database, and a few parallel workers doing that would trip the brute-force lockout.
   // 409 (already registered) is expected on every run after the first and is not a failure event.

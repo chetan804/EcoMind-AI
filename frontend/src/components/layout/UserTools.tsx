@@ -68,13 +68,19 @@ export function UserTools({ showSearch = true }: { showSearch?: boolean }) {
       </span>
       <Menu
         label="Account menu"
+        triggerText={[user?.full_name ?? 'Guest', role].filter(Boolean).join(' ')}
         align="end"
         trigger={
           <>
             <Avatar name={user?.full_name} />
             <span className="user-tools__name">
               {user?.full_name ?? 'Guest'}
-              {role && <span className="user-tools__role">{role}</span>}
+              {role && (
+                <>
+                  {' '}
+                  <span className="user-tools__role">{role}</span>
+                </>
+              )}
             </span>
           </>
         }

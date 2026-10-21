@@ -40,7 +40,7 @@ h4 {
 }
 
 a {
-  color: var(--color-teal);
+  color: var(--color-accent-text);
   text-underline-offset: 3px;
 }
 

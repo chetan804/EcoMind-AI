@@ -2,7 +2,7 @@
 
 > **Generated** by `scripts/security/generate_route_matrix.py` from the mounted application and the RBAC catalog (`backend/app/modules/users/rbac.py`). Do not edit by hand; CI fails if this file is stale. `backend/tests/security/test_route_inventory.py` fails if a route becomes public or signed-in-only without being listed there.
 
-133 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
+168 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
 
 | Method | Path | Access | Roles that hold it |
 |---|---|---|---|
@@ -24,6 +24,9 @@
 | POST | `/api/v1/anomalies/{alert_id}/false-positive` | `anomalies:manage` | manager, administrator |
 | POST | `/api/v1/anomalies/{alert_id}/resolve` | `anomalies:manage` | manager, administrator |
 | POST | `/api/v1/auth/change-password` | signed in | any signed-in user |
+| GET | `/api/v1/auth/config` | public | anyone |
+| POST | `/api/v1/auth/email-verification/confirm` | public | anyone |
+| POST | `/api/v1/auth/email-verification/request` | public | anyone |
 | POST | `/api/v1/auth/login` | public | anyone |
 | POST | `/api/v1/auth/logout` | public (cookie + CSRF header) | anyone |
 | GET | `/api/v1/auth/me` | signed in | any signed-in user |
@@ -33,6 +36,8 @@
 | POST | `/api/v1/auth/mfa/enroll` | signed in | any signed-in user |
 | POST | `/api/v1/auth/mfa/recovery-codes` | signed in | any signed-in user |
 | POST | `/api/v1/auth/mfa/verify` | public | anyone |
+| POST | `/api/v1/auth/password-reset/confirm` | public | anyone |
+| POST | `/api/v1/auth/password-reset/request` | public | anyone |
 | POST | `/api/v1/auth/refresh` | public (cookie + CSRF header) | anyone |
 | POST | `/api/v1/auth/register` | public | anyone |
 | GET | `/api/v1/circular-economy/recovery-records` | `circular_economy:read` | facility_operator, manager, administrator |
@@ -58,10 +63,10 @@
 | POST | `/api/v1/collection/tasks/{task_id}/fail` | `collection:execute` or `collection:manage` | collector, manager, administrator |
 | POST | `/api/v1/collection/tasks/{task_id}/reschedule` | `collection:manage` | manager, administrator |
 | POST | `/api/v1/collection/tasks/{task_id}/start` | `collection:execute` or `collection:manage` | collector, manager, administrator |
-| GET | `/api/v1/community-incidents` | `incidents:read_own` or `incidents:triage` | citizen, manager, administrator |
+| GET | `/api/v1/community-incidents` | `incidents:read_own` or `incidents:triage` | citizen, collector, manager, administrator |
 | POST | `/api/v1/community-incidents` | `incidents:create` | citizen, collector, administrator |
 | GET | `/api/v1/community-incidents/summary` | `incidents:triage` | manager, administrator |
-| GET | `/api/v1/community-incidents/{incident_id}` | `incidents:read_own` or `incidents:triage` | citizen, manager, administrator |
+| GET | `/api/v1/community-incidents/{incident_id}` | `incidents:read_own` or `incidents:triage` | citizen, collector, manager, administrator |
 | POST | `/api/v1/community-incidents/{incident_id}/assign` | `incidents:triage` | manager, administrator |
 | POST | `/api/v1/community-incidents/{incident_id}/status` | `incidents:triage` | manager, administrator |
 | GET | `/api/v1/facilities` | `facilities:read` | citizen, collector, facility_operator, manager, administrator |
@@ -81,9 +86,13 @@
 | GET | `/api/v1/marketplace/listings/{listing_id}` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
 | PATCH | `/api/v1/marketplace/listings/{listing_id}` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/marketplace/listings/{listing_id}/close` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/listings/{listing_id}/photos` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| DELETE | `/api/v1/marketplace/listings/{listing_id}/photos/{photo_id}` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/marketplace/listings/{listing_id}/publish` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/marketplace/listings/{listing_id}/renew` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
 | GET | `/api/v1/marketplace/listings/{listing_id}/requests` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/marketplace/listings/{listing_id}/requests` | `marketplace:request` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/marketplace/photos/{photo_id}/content` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
 | GET | `/api/v1/marketplace/requests/mine` | `marketplace:request` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/marketplace/requests/{request_id}/accept` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/marketplace/requests/{request_id}/decline` | `marketplace:read` | citizen, collector, facility_operator, manager, administrator |
@@ -100,11 +109,21 @@
 | GET | `/api/v1/notifications/unread-count` | `notifications:read_own` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/notifications/{notification_id}/read` | `notifications:read_own` | citizen, collector, facility_operator, manager, administrator |
 | POST | `/api/v1/rewards/adjustments` | `rewards:manage` | manager, administrator |
+| GET | `/api/v1/rewards/catalog` | `rewards:read_own` | citizen, administrator |
+| POST | `/api/v1/rewards/catalog/{item_id}/redeem` | `rewards:redeem` | citizen, administrator |
 | POST | `/api/v1/rewards/entries/{entry_id}/reverse` | `rewards:manage` | manager, administrator |
+| GET | `/api/v1/rewards/items` | `rewards:manage` | manager, administrator |
+| POST | `/api/v1/rewards/items` | `rewards:manage` | manager, administrator |
+| PATCH | `/api/v1/rewards/items/{item_id}` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/rewards/ledger` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/rewards/ledger/summary` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/rewards/me/balance` | `rewards:read_own` | citizen, administrator |
 | GET | `/api/v1/rewards/me/entries` | `rewards:read_own` | citizen, administrator |
+| GET | `/api/v1/rewards/me/redemptions` | `rewards:read_own` | citizen, administrator |
+| POST | `/api/v1/rewards/me/redemptions/{redemption_id}/cancel` | `rewards:redeem` | citizen, administrator |
+| GET | `/api/v1/rewards/redemptions` | `rewards:manage` | manager, administrator |
+| POST | `/api/v1/rewards/redemptions/{redemption_id}/cancel` | `rewards:manage` | manager, administrator |
+| POST | `/api/v1/rewards/redemptions/{redemption_id}/fulfil` | `rewards:manage` | manager, administrator |
 | GET | `/api/v1/route-planning/plans` | `routes:read` | collector, manager, administrator |
 | POST | `/api/v1/route-planning/plans` | `routes:manage` | manager, administrator |
 | GET | `/api/v1/route-planning/plans/{plan_id}` | `routes:read` | collector, manager, administrator |
@@ -118,6 +137,22 @@
 | POST | `/api/v1/sorting-guide/guidance` | `sorting_guide:manage` | manager, administrator |
 | GET | `/api/v1/sorting-guide/guidance/{guidance_id}` | `sorting_guide:read` | citizen, collector, facility_operator, manager, administrator |
 | PATCH | `/api/v1/sorting-guide/guidance/{guidance_id}` | `sorting_guide:manage` | manager, administrator |
+| GET | `/api/v1/support/articles` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/articles` | `knowledge:manage` | manager, administrator |
+| GET | `/api/v1/support/articles/categories` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/articles/{article_id}` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| PATCH | `/api/v1/support/articles/{article_id}` | `knowledge:manage` | manager, administrator |
+| GET | `/api/v1/support/assistant/conversations/{conversation_id}` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/assistant/messages` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/assistant/messages/{message_id}/feedback` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/assistant/stats` | `support:manage` | manager, administrator |
+| GET | `/api/v1/support/tickets` | `support:manage` | manager, administrator |
+| POST | `/api/v1/support/tickets` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/tickets/mine` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| GET | `/api/v1/support/tickets/{ticket_id}` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| PATCH | `/api/v1/support/tickets/{ticket_id}` | `support:manage` | manager, administrator |
+| POST | `/api/v1/support/tickets/{ticket_id}/close` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
+| POST | `/api/v1/support/tickets/{ticket_id}/replies` | `support:ask` | citizen, collector, facility_operator, manager, administrator |
 | GET | `/api/v1/tracking/collections/{task_id}` | `collection:read` | collector, facility_operator, manager, administrator |
 | GET | `/api/v1/tracking/config` | `fleet:read` | collector, manager, administrator |
 | GET | `/api/v1/tracking/route-plans/{plan_id}` | `routes:read` | collector, manager, administrator |

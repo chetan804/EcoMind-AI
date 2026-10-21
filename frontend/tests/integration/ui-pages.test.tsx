@@ -38,9 +38,9 @@ describe('landing page', () => {
     const demo = await screen.findByRole('button', { name: 'Watch demo' });
     expect(demo).toHaveAttribute('aria-disabled', 'true');
     expect(demo).toHaveAccessibleDescription('No product demo is available yet.');
-    expect(screen.getByText('Models trained so far')).toBeInTheDocument();
+    expect(screen.getByText('Classifiers approved for use')).toBeInTheDocument();
     expect(screen.queryByText(/accuracy/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/in early development/i)).toBeInTheDocument();
+    expect(screen.getByText(/under active development/i)).toBeInTheDocument();
   });
 
   it('exposes in-page section links that have a target', async () => {
@@ -108,7 +108,7 @@ describe('application navigation', () => {
 
   it('the account menu shows the real signed-in user and offers only what exists', async () => {
     renderAt('/classify');
-    const trigger = await screen.findByRole('button', { name: 'Account menu' });
+    const trigger = await screen.findByRole('button', { name: /account menu/i });
     expect(trigger).toHaveTextContent('Asha Verma');
     expect(trigger).toHaveTextContent('Citizen');
     expect(trigger).not.toHaveTextContent('Guest');
@@ -125,11 +125,11 @@ describe('application navigation', () => {
     window.localStorage.removeItem('ecomind.theme');
     renderAt('/classify');
     expect(document.documentElement.dataset.theme).toBe('dark');
-    await userEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
+    await userEvent.click(await screen.findByRole('button', { name: /account menu/i }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Use light theme' }));
     expect(window.localStorage.getItem('ecomind.theme')).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
-    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+    await userEvent.click(screen.getByRole('button', { name: /account menu/i }));
     expect(screen.getByRole('menuitem', { name: 'Use dark theme' })).toBeInTheDocument();
     window.localStorage.removeItem('ecomind.theme');
   });
@@ -139,7 +139,7 @@ describe('application navigation', () => {
       url.endsWith('/auth/logout') ? new Response(null, { status: 204 }) : new Response('{}', { status: 404 }),
     );
     renderAt('/classify');
-    await userEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
+    await userEvent.click(await screen.findByRole('button', { name: /account menu/i }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     const logout = fetchSpy.mock.calls.find(([url]) => String(url).endsWith('/auth/logout'));
@@ -261,11 +261,12 @@ describe('sign-in', () => {
     expect(screen.queryByRole('heading', { name: 'Welcome back' })).not.toBeInTheDocument();
   });
 
-  it('social sign-in and password reset are visibly unavailable', async () => {
+  it('social sign-in is visibly unavailable, and password reset is a real link', async () => {
     renderAt('/sign-in');
-    for (const name of ['Google', 'Microsoft', 'Forgot password?']) {
+    for (const name of ['Google', 'Microsoft']) {
       expect(await screen.findByRole('button', { name })).toHaveAttribute('aria-disabled', 'true');
     }
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
   });
 
   it('switches to sign-up and validates the confirmation', async () => {

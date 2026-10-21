@@ -15,7 +15,7 @@ export function CollectedWeightChart({ trend, height = 220 }: { trend: WeeklyTre
         {
           id: 'collected',
           label: 'Collected weight',
-          color: 'var(--color-teal)',
+          color: 'var(--color-accent-text)',
           area: true,
           values: trend.points.map((p) => p.collected_weight_kg),
         },

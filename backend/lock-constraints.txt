@@ -1,0 +1,6 @@
+# Constraints applied when the lock files are generated (scripts/dependencies/lock_backend.sh).
+#
+# ai-edge-litert depends on backports.strenum without an environment marker. Version 1.3.1 of that
+# package declares Requires-Python <3.11 and cannot be installed on the Python versions this project
+# supports (3.11 and 3.12), but uv's universal resolver selects it. 1.2.8 installs on both.
+backports-strenum<1.3

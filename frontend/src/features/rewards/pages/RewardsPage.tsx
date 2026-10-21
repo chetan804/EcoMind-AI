@@ -19,6 +19,8 @@ import { getErrorMessage } from '@/services/error-handler';
 import { useAuth } from '@/services/session';
 import { formatDateTime, formatKg, formatNumber, humanize } from '@/utils/format';
 import { ENTRY_TYPES, SOURCE_TYPES, type Entry } from '../api/rewards-api';
+import { CatalogueTab, MyRedemptionsTab } from '../components/CatalogueTabs';
+import { ItemsTab, QueueTab } from '../components/StaffTabs';
 import { useAdjust, useBalance, useLedger, useLedgerSummary, useMyEntries, useReverse, useUserOptions } from '../hooks/useRewards';
 
 const TONES: Record<string, BadgeTone> = { earned: 'success', redeemed: 'info', adjustment: 'warning', reversal: 'danger' };
@@ -28,13 +30,15 @@ export function RewardsPage() {
   const { can } = useAuth();
   const mine = can('rewards:read_own');
   const manage = can('rewards:manage');
+  const redeem = can('rewards:redeem');
   const tabs = [
     ...(mine ? [{ id: 'mine', label: 'My points', panel: <MyPoints /> }] : []),
-    ...(manage ? [{ id: 'ledger', label: 'Ledger', panel: <Ledger /> }] : []),
+    ...(redeem ? [{ id: 'redeem', label: 'Redeem', panel: <CatalogueTab /> }, { id: 'redemptions', label: 'My redemptions', panel: <MyRedemptionsTab /> }] : []),
+    ...(manage ? [{ id: 'ledger', label: 'Ledger', panel: <Ledger /> }, { id: 'items', label: 'Reward items', panel: <ItemsTab /> }, { id: 'queue', label: 'Redemption queue', panel: <QueueTab /> }] : []),
   ];
   return (
     <section aria-labelledby="rewards-title" className="stack stack--tight">
-      <PageHeader title="Rewards and impact ledger" titleId="rewards-title" subtitle="Points are earned from verified collections and recorded in an append-only ledger. Points cannot be redeemed yet." />
+      <PageHeader title="Rewards and impact ledger" titleId="rewards-title" subtitle="Points are earned from verified collections and recorded in an append-only ledger. Staff decide what they can be spent on." />
       <Tabs label="Rewards views" items={tabs} />
     </section>
   );

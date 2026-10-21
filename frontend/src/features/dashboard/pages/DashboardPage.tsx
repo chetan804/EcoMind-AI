@@ -13,7 +13,7 @@ import { useAuth } from '@/services/session';
 import { formatKg, formatPercent, humanize } from '@/utils/format';
 import '../dashboard.css';
 
-const SEGMENT_COLORS = ['var(--color-teal)', 'var(--color-info)', 'var(--color-warning)', 'var(--color-danger)', 'var(--color-success)', 'var(--color-text-muted)'];
+const SEGMENT_COLORS = ['var(--color-accent-text)', 'var(--color-info)', 'var(--color-warning)', 'var(--color-danger)', 'var(--color-success)', 'var(--color-text-muted)'];
 
 function greeting(date = new Date()): string {
   const hour = date.getHours();
@@ -103,7 +103,7 @@ function OperationsOverview() {
                         segments={statuses.map((c, i) => ({
                           label: humanize(c.key),
                           value: (c.count / total) * 100,
-                          color: SEGMENT_COLORS[i % SEGMENT_COLORS.length] ?? 'var(--color-teal)',
+                          color: SEGMENT_COLORS[i % SEGMENT_COLORS.length] ?? 'var(--color-accent-text)',
                         }))}
                       />
                     )}

@@ -19,6 +19,15 @@ PUBLIC = {
     ("POST", "/api/v1/auth/mfa/verify"): "second step of sign-in, needs the challenge token",
     ("POST", "/api/v1/auth/refresh"): "refresh cookie plus CSRF header",
     ("POST", "/api/v1/auth/logout"): "refresh cookie plus CSRF header",
+    ("GET", "/api/v1/auth/config"): "tells the sign-in page which e-mail features are enabled",
+    ("POST", "/api/v1/auth/password-reset/request"): (
+        "same answer for every address; rate limited per address and per IP"
+    ),
+    ("POST", "/api/v1/auth/password-reset/confirm"): "needs the one-time token from the e-mail",
+    ("POST", "/api/v1/auth/email-verification/request"): (
+        "same answer for every address; rate limited per address and per IP"
+    ),
+    ("POST", "/api/v1/auth/email-verification/confirm"): "needs the one-time token from the e-mail",
 }
 
 # Routes open to any signed-in user without a named permission: each acts only on the caller's own

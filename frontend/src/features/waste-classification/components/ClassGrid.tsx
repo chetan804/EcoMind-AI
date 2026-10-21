@@ -6,7 +6,7 @@ const CATEGORIES: { id: string; label: string; icon: LucideIcon; tone: string }[
   { id: 'plastic', label: 'Plastic', icon: Container, tone: 'var(--color-info)' },
   { id: 'paper', label: 'Paper', icon: Newspaper, tone: 'var(--color-text-secondary)' },
   { id: 'cardboard', label: 'Cardboard', icon: Box, tone: 'var(--color-warning)' },
-  { id: 'glass', label: 'Glass', icon: Wine, tone: 'var(--color-teal)' },
+  { id: 'glass', label: 'Glass', icon: Wine, tone: 'var(--color-accent-text)' },
   { id: 'metal', label: 'Metal', icon: Cylinder, tone: 'var(--color-primary)' },
   { id: 'trash', label: 'Other waste', icon: Trash2, tone: 'var(--color-danger)' },
 ];

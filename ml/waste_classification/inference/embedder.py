@@ -19,13 +19,16 @@ from pathlib import Path
 from typing import Protocol
 
 import numpy as np
-from ai_edge_litert.interpreter import Interpreter
 from numpy.typing import NDArray
 from PIL import Image
 
 from ml.common.preprocessing.images import resize_to_square
 
 FloatArray = NDArray[np.float32]
+
+
+class InferenceRuntimeMissingError(RuntimeError):
+    """The TFLite runtime (``ai-edge-litert``) is not installed in this environment."""
 
 
 class ArtifactIntegrityError(RuntimeError):
@@ -52,6 +55,13 @@ class TFLiteEmbedder:
     def __init__(self, model_path: Path, *, expected_sha256: str | None = None, threads: int = 2):
         if expected_sha256 is not None and sha256_file(model_path) != expected_sha256:
             raise ArtifactIntegrityError(f"{model_path.name} does not match its recorded SHA-256")
+        try:  # imported here so that data, metrics and time-series code work without the runtime
+            from ai_edge_litert.interpreter import Interpreter
+        except ImportError as exc:
+            raise InferenceRuntimeMissingError(
+                "ai-edge-litert is not installed; run `pip install -r ml/requirements.txt` "
+                "(Python 3.11 or 3.12 on Linux x86-64/arm64, macOS or Windows) to run inference"
+            ) from exc
         self._interpreter = Interpreter(model_path=str(model_path), num_threads=threads)
         self._interpreter.allocate_tensors()
         inp = self._interpreter.get_input_details()[0]

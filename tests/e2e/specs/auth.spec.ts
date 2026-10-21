@@ -28,10 +28,10 @@ publicTest.describe('authentication journey', () => {
     await page.getByLabel(/Email address/).fill(E2E_EMAIL);
     await page.getByLabel(/^Password/).fill(E2E_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('button', { name: 'Account menu' })).toContainText(E2E_NAME);
+    await expect(page.getByRole('button', { name: /account menu/i })).toContainText(E2E_NAME);
 
     await page.reload();
-    await expect(page.getByRole('button', { name: 'Account menu' })).toContainText(E2E_NAME);
+    await expect(page.getByRole('button', { name: /account menu/i })).toContainText(E2E_NAME);
 
     // Browser-side secrecy: the refresh cookie is HttpOnly and scoped; no token in web storage.
     const cookie = (await context.cookies()).find((c) => c.name === 'ecomind_refresh');
@@ -48,7 +48,7 @@ publicTest.describe('authentication journey', () => {
     await page.getByLabel(/Email address/).fill(E2E_EMAIL);
     await page.getByLabel(/^Password/).fill(E2E_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await page.getByRole('button', { name: 'Account menu' }).click();
+    await page.getByRole('button', { name: /account menu/i }).click();
     await page.getByRole('menuitem', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/sign-in$/);
 

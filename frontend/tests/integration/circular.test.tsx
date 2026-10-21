@@ -76,7 +76,7 @@ describe('rewards', () => {
     expect(screen.getByText('Points are awarded per kilogram of verified collection.')).toBeInTheDocument();
     expect(screen.getByText('+375')).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Ledger' })).not.toBeInTheDocument();
-    expect(screen.getByText(/cannot be redeemed yet/)).toBeInTheDocument();
+    expect(screen.getByText(/Staff decide what they can be spent on/)).toBeInTheDocument();
   });
 
   it('a manager adjusts points with bounds, and reverses an entry with a reason', async () => {

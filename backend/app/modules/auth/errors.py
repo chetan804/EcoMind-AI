@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from app.core.exceptions import AppError, ConflictError, UnauthenticatedError
+from app.core.exceptions import (
+    AppError,
+    BadRequestError,
+    ConflictError,
+    ForbiddenError,
+    UnauthenticatedError,
+)
 
 
 class InvalidCredentialsError(UnauthenticatedError):
@@ -41,6 +47,18 @@ class WeakPasswordError(AppError):
     code = "weak_password"
 
 
+class MfaEnrollmentRequiredError(ForbiddenError):
+    """The person's role requires two-step verification and it is not switched on yet."""
+
+    code = "mfa_enrollment_required"
+
+
+class MfaRequiredForRoleError(ConflictError):
+    """Two-step verification cannot be switched off while a role of the person requires it."""
+
+    code = "mfa_required_for_role"
+
+
 class MfaAlreadyEnabledError(ConflictError):
     code = "mfa_already_enabled"
 
@@ -71,3 +89,25 @@ class MfaUnavailableError(AppError):
 
     status_code = 409
     code = "mfa_secret_unreadable"
+
+
+class InvalidAccountTokenError(BadRequestError):
+    """The reset or verification link is unknown, expired, already used or for another purpose.
+
+    One message for every reason, so the response reveals nothing about which tokens exist.
+    """
+
+    code = "invalid_or_expired_token"
+
+
+class EmailNotVerifiedError(ForbiddenError):
+    """The password was right, but this deployment requires a verified address to sign in."""
+
+    code = "email_not_verified"
+
+
+class EmailNotConfiguredError(AppError):
+    """E-mail delivery is not configured, so a link could never arrive."""
+
+    status_code = 503
+    code = "email_not_configured"

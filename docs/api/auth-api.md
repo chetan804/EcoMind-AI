@@ -34,6 +34,7 @@ Body: `{"email", "password"}`. Returns `AuthResponse` and sets the refresh cooki
 | Status | `error.code` | When |
 |---|---|---|
 | 401 | `invalid_credentials` | Unknown email, wrong password or deactivated account (indistinguishable) |
+| 403 | `email_not_verified` | Right password, but `EMAIL_VERIFICATION_REQUIRED=true` and the address is not verified (only ever sent after the password was proven) |
 | 429 | `rate_limited` | 5 failed attempts for this email, or 30 from this address, within 15 minutes (`Retry-After`) |
 
 ### Two-factor authentication (TOTP)
@@ -48,6 +49,8 @@ Details, threat model and limits: `docs/security/mfa.md`.
 | `POST /mfa/activate` | Bearer | Body `{code}`. Confirms enrolment; returns ten recovery codes once. `422 invalid_mfa_code`, `409 mfa_enrollment_not_started` |
 | `POST /mfa/disable` | Bearer | Body `{password, code}` (code may be a recovery code). `204`. `401 invalid_credentials`, `422 invalid_mfa_code`, `409 mfa_not_enabled` |
 | `POST /mfa/recovery-codes` | Bearer | Body `{password, code}`. Replaces all recovery codes; returns ten new ones once |
+
+`mfa_enrollment_required` (on `GET /me`, the sign-in responses and the refresh response) is `true` when a role of the person requires two-step verification (`MFA_REQUIRED_ROLES`, default administrator and manager in production) that is not switched on. Every endpoint outside `/auth` then answers `403 mfa_enrollment_required`, and `POST /mfa/disable` answers `409 mfa_required_for_role` for such roles. See `docs/security/mfa.md`.
 
 Second-step errors: `401 invalid_mfa_code` (wrong code, replayed code, expired or invalid `mfa_token`, deactivated account; deliberately one code), `429 rate_limited` after five wrong codes in 15 minutes. An administrator can remove a locked-out user's authenticator with `POST /api/v1/admin/users/{id}/reset-mfa`.
 
@@ -64,11 +67,32 @@ Cookie + CSRF header. Rotates the refresh token and returns a new `AuthResponse`
 Cookie + CSRF header. Revokes the presenting device's session family and clears the cookie. Idempotent; never reveals whether the token was valid.
 
 ### `GET /me` → `200`
-Bearer token. Returns `{id, email, full_name, roles[], permissions[]}` read fresh from the database.
+Bearer token. Returns `{id, email, full_name, roles[], permissions[], email_verified}` read fresh from the database.
 
 ### `POST /change-password` → `200`
 Bearer token. Body: `{"current_password", "new_password"}`. Revokes **all** sessions, then starts a new one for this device (new cookie, new `AuthResponse`).
 `401 invalid_credentials` (wrong current password, audited), `422 weak_password` (also when the new password equals the current one).
+
+### Account recovery: password reset and e-mail verification
+
+Concept, limits and operations: `docs/operations/account-recovery.md`. All four endpoints are public (no bearer token, no cookie).
+
+| Endpoint | Body | Success | Notes |
+|---|---|---|---|
+| `GET /config` | – | `200 {password_reset_available, email_verification_available, email_verification_required}` | What this server can actually do. Both "available" flags are false when no e-mail backend is configured |
+| `POST /password-reset/request` | `{email}` | `202 {detail}` | **Identical answer for known, unknown, deactivated and malformed addresses and for per-address throttling.** The link is e-mailed after the response |
+| `POST /password-reset/confirm` | `{token, new_password}` | `204` | One-time link. Sets the password, revokes **every** refresh session, clears the sign-in lockout, verifies the address and e-mails a notice. Two-factor authentication stays on |
+| `POST /email-verification/request` | `{email}` | `202 {detail}` | Same enumeration-safe answer. Sends nothing when the address is unknown, inactive or already verified |
+| `POST /email-verification/confirm` | `{token}` | `204` | One-time link. Fails when the account's address changed after the link was sent |
+
+| Status | `error.code` | When |
+|---|---|---|
+| 400 | `invalid_or_expired_token` | Link unknown, expired, already used, replaced by a newer one, or for another purpose (one message for all) |
+| 422 | `weak_password` | The new password violates the policy. The link stays valid for another try |
+| 429 | `rate_limited` | More than 10 requests per address per hour, or more than 20 rejected links per address per 15 minutes (`Retry-After`) |
+| 503 | `email_not_configured` | `EMAIL_BACKEND` is `none`: a link could never arrive, so the request is refused instead of pretending |
+
+Links look like `{APP_BASE_URL}/reset-password#token=…` and `{APP_BASE_URL}/verify-email#token=…`. The token is in the URL *fragment*, so browsers never send it to a server or in a `Referer` header.
 
 ## `AuthResponse`
 ```json
@@ -76,7 +100,7 @@ Bearer token. Body: `{"current_password", "new_password"}`. Revokes **all** sess
   "access_token": "<jwt>",
   "token_type": "bearer",
   "expires_in": 900,
-  "user": {"id": "…", "email": "…", "full_name": "…", "roles": ["citizen"], "permissions": ["waste_reports:create", "…"]}
+  "user": {"id": "…", "email": "…", "full_name": "…", "roles": ["citizen"], "permissions": ["waste_reports:create", "…"], "email_verified": false}
 }
 ```
 

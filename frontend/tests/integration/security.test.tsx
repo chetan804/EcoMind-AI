@@ -141,12 +141,56 @@ describe('security page', () => {
   });
 });
 
+describe('a role that must use two-step verification', () => {
+  const required = userWith([], { roles: ['administrator'], mfa_enrollment_required: true });
+
+  it('is sent to the Security page from anywhere else and told why', async () => {
+    const api = routeApi(fetchSpy, { 'GET /api/v1/auth/mfa': status() }, required);
+    renderAt('/dashboard');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Security' })).toBeInTheDocument();
+    expect(screen.getByText('Set up two-step verification to continue')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Set up two-step verification' })).toBeInTheDocument();
+    expect(api.unmatched).toEqual([]);
+  });
+
+  it('is released as soon as the code is confirmed, without signing in again', async () => {
+    let enabled = false;
+    routeApi(
+      fetchSpy,
+      {
+        'GET /api/v1/auth/mfa': () => status(enabled ? { enabled: true, enabled_at: '2026-10-20T00:00:00Z', recovery_codes_remaining: 2 } : {}),
+        'POST /api/v1/auth/mfa/enroll': enrollment,
+        'POST /api/v1/auth/mfa/activate': () => {
+          enabled = true;
+          return { recovery_codes: ['AAAA-BBBB-CCCC'] };
+        },
+        'GET /api/v1/auth/me': () => ({ ...required, mfa_enrollment_required: false }),
+      },
+      required,
+    );
+    renderAt('/settings/security');
+    await userEvent.click(await screen.findByRole('button', { name: 'Set up two-step verification' }));
+    await userEvent.type(await screen.findByLabelText('Code from your app'), '654321');
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm and turn on' }));
+    expect(await screen.findByRole('list', { name: 'Recovery codes' })).toBeInTheDocument();
+    expect(screen.queryByText('Set up two-step verification to continue')).not.toBeInTheDocument();
+  });
+
+  it('leaves everyone else alone', async () => {
+    routeApi(fetchSpy, { 'GET /api/v1/auth/mfa': status() }, user);
+    renderAt('/settings/security');
+    await screen.findByRole('button', { name: 'Set up two-step verification' });
+    expect(screen.queryByText('Set up two-step verification to continue')).not.toBeInTheDocument();
+  });
+});
+
 const row = (over: Record<string, unknown> = {}) => ({
   id: '77777777-7777-4777-8777-777777777777',
   email: 'ravi@example.org',
   full_name: 'Ravi Kumar',
   is_active: true,
   mfa_enabled: true,
+  email_verified: true,
   roles: ['collector'],
   created_at: '2026-09-01T00:00:00Z',
   last_login_at: null,

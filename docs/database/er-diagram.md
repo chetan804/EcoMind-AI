@@ -6,10 +6,22 @@ Entities show their primary and foreign key columns only; the full column list, 
 
 ```mermaid
 erDiagram
+    account_tokens {
+        uuid user_id FK
+        uuid id PK
+    }
     anomaly_alerts {
         uuid facility_id FK
         uuid material_category_id FK
         uuid acknowledged_by_id FK
+        uuid id PK
+    }
+    assistant_conversations {
+        uuid user_id FK
+        uuid id PK
+    }
+    assistant_messages {
+        uuid conversation_id FK
         uuid id PK
     }
     audit_logs {
@@ -81,6 +93,16 @@ erDiagram
         uuid material_category_id FK
         uuid id PK
     }
+    knowledge_articles {
+        uuid created_by_id FK
+        uuid updated_by_id FK
+        uuid id PK
+    }
+    marketplace_listing_photos {
+        uuid listing_id FK
+        uuid uploaded_by_id FK
+        uuid id PK
+    }
     marketplace_listings {
         uuid created_by_id FK
         uuid facility_id FK
@@ -138,10 +160,23 @@ erDiagram
         uuid series_id FK
         uuid id PK
     }
+    reward_items {
+        uuid created_by_id FK
+        uuid id PK
+    }
     reward_ledger_entries {
         uuid user_id FK
         uuid reverses_entry_id FK
         uuid created_by_id FK
+        uuid id PK
+    }
+    reward_redemptions {
+        uuid user_id FK
+        uuid item_id FK
+        uuid ledger_entry_id FK
+        uuid refund_entry_id FK
+        uuid fulfilled_by_id FK
+        uuid cancelled_by_id FK
         uuid id PK
     }
     role_permissions {
@@ -169,6 +204,17 @@ erDiagram
         uuid material_category_id FK
         uuid id PK
     }
+    support_ticket_replies {
+        uuid ticket_id FK
+        uuid author_id FK
+        uuid id PK
+    }
+    support_tickets {
+        uuid user_id FK
+        uuid assignee_id FK
+        uuid shared_conversation_id FK
+        uuid id PK
+    }
     user_roles {
         uuid user_id PK, FK
         uuid role_id PK, FK
@@ -190,9 +236,12 @@ erDiagram
     zones {
         uuid id PK
     }
+    users ||--o{ account_tokens : "user_id"
     users |o--o{ anomaly_alerts : "acknowledged_by_id"
     facilities |o--o{ anomaly_alerts : "facility_id"
     material_categories |o--o{ anomaly_alerts : "material_category_id"
+    users ||--o{ assistant_conversations : "user_id"
+    assistant_conversations ||--o{ assistant_messages : "conversation_id"
     users |o--o{ audit_logs : "actor_id"
     users ||--o{ auth_sessions : "user_id"
     material_categories ||--o{ classification_predictions : "material_category_id"
@@ -223,6 +272,10 @@ erDiagram
     facilities |o--o{ fleet_vehicles : "home_facility_id"
     facilities |o--o{ forecast_results : "facility_id"
     material_categories |o--o{ forecast_results : "material_category_id"
+    users |o--o{ knowledge_articles : "created_by_id"
+    users |o--o{ knowledge_articles : "updated_by_id"
+    marketplace_listings ||--o{ marketplace_listing_photos : "listing_id"
+    users ||--o{ marketplace_listing_photos : "uploaded_by_id"
     users ||--o{ marketplace_listings : "created_by_id"
     facilities |o--o{ marketplace_listings : "facility_id"
     marketplace_listings ||--o{ marketplace_requests : "listing_id"
@@ -244,9 +297,16 @@ erDiagram
     material_categories ||--o{ recovery_records : "material_category_id"
     users |o--o{ recovery_records : "verified_by_id"
     reference_series ||--o{ reference_series_points : "series_id"
+    users ||--o{ reward_items : "created_by_id"
     users |o--o{ reward_ledger_entries : "created_by_id"
     reward_ledger_entries |o--o{ reward_ledger_entries : "reverses_entry_id"
     users ||--o{ reward_ledger_entries : "user_id"
+    users |o--o{ reward_redemptions : "cancelled_by_id"
+    users |o--o{ reward_redemptions : "fulfilled_by_id"
+    reward_items ||--o{ reward_redemptions : "item_id"
+    reward_ledger_entries ||--o{ reward_redemptions : "ledger_entry_id"
+    reward_ledger_entries |o--o{ reward_redemptions : "refund_entry_id"
+    users ||--o{ reward_redemptions : "user_id"
     permissions ||--o{ role_permissions : "permission_id"
     roles ||--o{ role_permissions : "role_id"
     users ||--o{ route_plans : "created_by_id"
@@ -258,6 +318,11 @@ erDiagram
     facilities |o--o{ route_stops : "facility_id"
     route_plans ||--o{ route_stops : "route_plan_id"
     material_categories ||--o{ sorting_guidance : "material_category_id"
+    users ||--o{ support_ticket_replies : "author_id"
+    support_tickets ||--o{ support_ticket_replies : "ticket_id"
+    users |o--o{ support_tickets : "assignee_id"
+    assistant_conversations |o--o{ support_tickets : "shared_conversation_id"
+    users ||--o{ support_tickets : "user_id"
     roles ||--o{ user_roles : "role_id"
     users ||--o{ user_roles : "user_id"
     collection_tasks |o--o{ vehicle_location_events : "collection_task_id"
@@ -271,7 +336,7 @@ erDiagram
 
 - **anomaly_detection**: `anomaly_alerts`
 - **audit**: `audit_logs`
-- **auth**: `auth_sessions`, `mfa_factors`, `mfa_recovery_codes`
+- **auth**: `account_tokens`, `auth_sessions`, `mfa_factors`, `mfa_recovery_codes`
 - **circular_economy**: `recovery_records`
 - **classification**: `classification_model_versions`, `classification_predictions`
 - **collection**: `collection_assignments`, `collection_events`, `collection_task_status_history`, `collection_tasks`
@@ -279,12 +344,13 @@ erDiagram
 - **facilities**: `facilities`, `zones`
 - **fleet**: `fleet_vehicles`
 - **forecasting**: `forecast_results`, `reference_series`, `reference_series_points`
-- **marketplace**: `marketplace_listings`, `marketplace_requests`
+- **marketplace**: `marketplace_listing_photos`, `marketplace_listings`, `marketplace_requests`
 - **material_passports**: `custody_events`, `material_passports`
 - **notifications**: `notifications`
-- **rewards**: `reward_ledger_entries`
+- **rewards**: `reward_items`, `reward_ledger_entries`, `reward_redemptions`
 - **route_planning**: `route_plans`, `route_stops`
 - **sorting_guide**: `material_categories`, `sorting_guidance`
+- **support**: `assistant_conversations`, `assistant_messages`, `knowledge_articles`, `support_ticket_replies`, `support_tickets`
 - **tracking**: `vehicle_location_events`
 - **users**: `permissions`, `role_permissions`, `roles`, `user_roles`, `users`
 - **waste_reports**: `media_assets`, `waste_reports`

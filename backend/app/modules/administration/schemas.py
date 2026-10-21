@@ -17,6 +17,7 @@ class UserAdminOut(BaseModel):
     full_name: str
     is_active: bool
     mfa_enabled: bool
+    email_verified: bool
     roles: list[str]
     created_at: dt.datetime
     last_login_at: dt.datetime | None

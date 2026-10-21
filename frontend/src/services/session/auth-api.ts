@@ -6,6 +6,10 @@ export interface SessionUser {
   full_name: string;
   roles: string[];
   permissions: string[];
+  /** The address was confirmed through a link sent to it. */
+  email_verified: boolean;
+  /** A role requires two-step verification that is not set up yet: only the Security page works. */
+  mfa_enrollment_required: boolean;
 }
 
 export interface AuthResponse {
@@ -50,3 +54,30 @@ export const fetchMe = () => apiRequest<SessionUser>('/auth/me');
 
 export const changePassword = (input: { current_password: string; new_password: string }) =>
   apiRequest<AuthResponse>('/auth/change-password', { method: 'POST', body: input });
+
+/** What the server can do for account recovery (false when no e-mail delivery is configured). */
+export interface AuthConfig {
+  password_reset_available: boolean;
+  email_verification_available: boolean;
+  email_verification_required: boolean;
+}
+
+export const fetchAuthConfig = (signal?: AbortSignal) =>
+  apiRequest<AuthConfig>('/auth/config', { authenticated: false, signal });
+
+/** Always answers 202 with the same body: it never reveals whether an account exists. */
+export const requestPasswordReset = (email: string) =>
+  apiRequest<{ detail: string }>('/auth/password-reset/request', { method: 'POST', body: { email }, authenticated: false });
+
+export const confirmPasswordReset = (token: string, newPassword: string) =>
+  apiRequest<null>('/auth/password-reset/confirm', {
+    method: 'POST',
+    body: { token, new_password: newPassword },
+    authenticated: false,
+  });
+
+export const requestEmailVerification = (email: string) =>
+  apiRequest<{ detail: string }>('/auth/email-verification/request', { method: 'POST', body: { email }, authenticated: false });
+
+export const confirmEmailVerification = (token: string) =>
+  apiRequest<null>('/auth/email-verification/confirm', { method: 'POST', body: { token }, authenticated: false });

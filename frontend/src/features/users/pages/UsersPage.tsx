@@ -73,6 +73,7 @@ export function UsersPage() {
                     <th scope="col">Name</th>
                     <th scope="col">Roles</th>
                     <th scope="col">Status</th>
+                    <th scope="col">Email</th>
                     <th scope="col">Two-step</th>
                     <th scope="col">Last sign-in</th>
                     {manage && (
@@ -91,6 +92,7 @@ export function UsersPage() {
                       </th>
                       <td>{u.roles.map(humanize).join(', ') || '—'}</td>
                       <td>{u.is_active ? <Badge tone="success">Active</Badge> : <Badge tone="neutral">Deactivated</Badge>}</td>
+                      <td>{u.email_verified ? <Badge tone="success">Verified</Badge> : <Badge tone="neutral">Not verified</Badge>}</td>
                       <td>{u.mfa_enabled ? <Badge tone="success">On</Badge> : <Badge tone="neutral">Off</Badge>}</td>
                       <td>{formatDateTime(u.last_login_at)}</td>
                       {manage && (

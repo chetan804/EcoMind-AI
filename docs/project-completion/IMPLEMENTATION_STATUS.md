@@ -13,16 +13,18 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Where the project stands (branch `arena/cb4875bc-ecomind-ai`, started from `main` at `4b805ec`)
+## 1. Where the project stands (branch `arena/34eb0c5c-ecomind-ai`, draft PR #12, started from `main` at `8ebe716`)
 
-`main` is at `4b805ec` (PR #10 merged: Google Maps integration and vehicle tracking, master prompt section 27). This branch
-makes the **offline OpenStreetMap map the default (no key)**, adds an **optional OSRM routing adapter** and records the **TACO licence audit** (Phase I below). The earlier branch (`arena/483a088d-ecomind-ai`, PR #10)
-added **Google Maps integration and vehicle tracking**. Alembic head is `0011`
-(`vehicle_location_events`); 42 permissions (new: `fleet:track`, `fleet:simulate`); about 125 API operations.
+`main` is at `8ebe716` (PR #11 merged: offline map, optional OSRM, TACO audit). This branch carries the five production-hardening
+steps (Phase J below): supply chain and CI, account recovery, marketplace completion, reward redemption, accessibility audit, plus
+three defects found on the way. Alembic head is `0015` (0012 account tokens, 0013 marketplace, 0014 reward catalogue and redemptions, 0015 help assistant and support desk);
+48 permissions (new: `rewards:redeem`, `support:ask`, `support:manage`, `knowledge:manage`). Phase K adds the help assistant (retrieval only) and support desk. **Nothing is deployed and the branch is not merged.**
+
+The sections below this one that describe "this branch" in earlier phases (B to I) are history of work that is already on `main`.
 
 **Baseline at the start of this branch (before any change, same sandbox):** backend 524 passed / 1 skipped, vitest 220 passed, `tsc` clean.
 
-Latest local results on this branch (run in this sandbox; remote CI is reported separately in the verification log):
+Local results at the end of Phase I (the state of `main` at `8ebe716`; Phase J results are listed under that phase):
 
 | Suite | Result |
 |---|---|
@@ -40,12 +42,12 @@ loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only s
 
 ## 2. Capability matrix
 
-### Backend modules (all 20 have routes, tests and an API document under `docs/api/`)
+### Backend modules (all 21 have routes, tests and an API document under `docs/api/`)
 
 | Module | Status | Notes |
 |---|---|---|
 | auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
-| users / roles / permissions | **Verified** | 42 permissions, 5 roles, drift-guard test. |
+| users / roles / permissions | **Verified** | 48 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
 | classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
@@ -59,7 +61,8 @@ loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only s
 | sorting_guide | **Verified** | Ships no rules; entries are created by managers. |
 | circular_economy (material recovery) | **Verified** | Verification needs a different person than the recorder. |
 | material_passports | **Verified** | Chain of custody; integrity check is a consistency check only. |
-| rewards | **Verified** | Append-only ledger, no redemption. |
+| rewards | **Verified** | Append-only ledger, staff catalogue, claim-code redemption (hand-over only). |
+| support (help assistant, knowledge base, support requests) | **Verified; retrieval only** | Migration 0015, 3 permissions, 38 API tests plus 4 quality tests over two question sets, 11 mutation checks caught; no generative model (ADR-0003); held-out top-1 0.55, contaminated (`docs/ml/support-assistant.md`). |
 | notifications | **Verified** | |
 | community_incidents | **Verified** | 9 tests; 6 mutations (2 equivalent survivors). |
 | analytics | **Verified** | Query-based; `recovery_rate` is null without verified input. |
@@ -279,3 +282,67 @@ Production-grade, licence-clean choices (decision: `docs/decisions/ADR-0002-opti
 | Dataset policy | RealWaste (NC) and TrashBox (no licence) are not used for any released model; the only model remains the TrashNet candidate (non-default) | `datasets/README.md`, manifests |
 
 Remote CI for this branch: not yet checked at the time of writing (see the verification log of the pull request).
+
+### Phase J: production hardening, steps 1 to 5 (branch `arena/34eb0c5c-ecomind-ai`, PR #12)
+
+| Step | What exists | Evidence (local, this sandbox) |
+|---|---|---|
+| 1 Supply chain and CI | Actions pinned by commit SHA, runners pinned to `ubuntu-24.04`, hash-locked `backend/requirements.lock`, `backend/requirements-dev.lock`, `ml/requirements-dev.lock` (`scripts/dependencies/lock_backend.sh [--check]`), `scripts/security/run_audits.sh`, workflows `security.yml` and `codeql.yml`, `dependabot.yml`, `docs/operations/dependency-management.md` | `lock_backend.sh --check`, `run_audits.sh` clean; CI green on `455deb4` |
+| 2 Account recovery | Password reset and e-mail verification (`/auth/password-reset/*`, `/auth/email-verification/*`, `GET /auth/config`), console/SMTP e-mail backends, migration 0012, CLI `purge-account-tokens` / `mark-email-verified`, three public pages, `docs/operations/account-recovery.md` | backend tests, vitest, e2e `account-recovery.spec.ts`; **no real SMTP delivery tried** |
+| 3 Marketplace | Listing expiry (`MARKETPLACE_LISTING_DAYS`), renew, closing outcome, up to four re-encoded photos, CLI `expire-marketplace-listings`, migration 0013, `docs/api/marketplace-api.md` | 26 backend tests plus 5 mutation checks; 14 frontend tests plus 4 mutation checks; e2e with real PNGs |
+| 4 Rewards | Staff-entered catalogue, idempotent redemption against a claim code, hand-over, cancel with refund, migration 0014, `docs/api/rewards-api.md`, UI | `test_rewards_catalogue.py` 13 tests plus mutation checks; e2e `rewards-redemption.spec.ts` |
+| 5 Accessibility | `scripts/quality/check_contrast.py` (CI step), token fixes (`--color-control-border`, `--color-danger-solid`, `--color-accent-text`, icon text tokens), `ToastProvider` mounted, axe e2e on 20 routes in both themes | one real axe finding (WCAG 2.5.3 on the user-menu trigger) fixed; coverage limits are in `LIMITATIONS.md` |
+
+Defects found by checking, not by being told:
+
+| Defect | Cause and fix |
+|---|---|
+| Tracking `latest_per_vehicle` used `sqlalchemy.dialects.postgresql.distinct_on`, which exists only in SQLAlchemy 2.1+, while `pyproject.toml` allows `>=2.0,<3` | Rewritten with `row_number()` ordered by `recorded_at desc, received_at desc, id desc` (the `id` tie-break is new; a test fails without it). 43 tracking tests pass on SQLAlchemy 2.1.5 and 2.0.50, and the rest of the backend suite (664 passed, 1 skipped) passes on 2.0.50, so the declared floor is honest |
+| `ml/waste_classification/inference/embedder.py` imported `ai_edge_litert` at module level, so importing anything from the package failed without it | Import is lazy and raises `InferenceRuntimeMissingError` naming the fix; new test. 58 ML tests pass in a venv built from `ml/requirements-dev.lock` |
+| CI end-to-end job failed on `a97911d` and `b9704d0` | The job's 14 failures were `429 rate_limited` on registration: the suite registers 9 accounts from one address and a Playwright retry registers more, against a hard-coded limit of 10 per address per hour. The limit is now `REGISTRATION_LIMIT_PER_IP_PER_HOUR` (default 10, validated); only the disposable CI stack sets 200. A second, independent race then showed: `tracking.spec.ts` signed in as the shared e2e account without making sure it existed, so it failed when it ran first on a fresh database; it now calls `ensureAccount`. A GitHub annotations reporter was added to the CI Playwright run because the log API in this sandbox cannot be read |
+
+Local results for the branch: backend 706 passed / 1 skipped before the tracking change (the tracking file now has 43 tests); vitest 345; contract 37;
+ML 58; e2e 29 passed / 1 skipped on the run before the registration-limit change. **See the PR for the CI result of the final head; it is not recorded here to avoid a stale claim.**
+
+### Phase K: help assistant and support desk (branch `arena/34eb0c5c-ecomind-ai`, PR #12)
+
+Request: "complete the rest of the project: frontend, backend, database, role based auth, ml and an AI chatbot to solve the customer queries". The rest of the areas were already built (see section 2); the missing piece was the chatbot, plus three directive documents.
+
+| Item | What exists | Evidence (local, this sandbox) |
+|---|---|---|
+| Backend | `backend/app/modules/support/` (retrieval, own-data intents, assistant, knowledge base, tickets), migration 0015 (knowledge articles with a generated search vector, conversations, messages, tickets, replies, 3 permissions), CLI `seed-support-knowledge` / `purge-assistant-conversations`, `ASSISTANT_RETENTION_DAYS` | `test_support.py` 38 tests; `test_cli.py` 5; mutation checks (conversation ownership, feedback target, ticket visibility, reopen on reply, assignee must be staff, purge cutoff, seed keeps edits, transcript consent and audit, procedural-question rule, anchor rule) all failed the suite as they should |
+| Quality | 31 starter articles; two author-written question sets in `backend/tests/data/assistant_eval.json`, gated in CI | Development top-1 0.953 (tuned), held-out 0.550 (contaminated), wrong-article 0.031 / 0.000, false answers to out-of-scope questions 0.050 / 0.000; see `docs/ml/support-assistant.md` |
+| Frontend | `/assistant` chat (origin label, sources, related articles, feedback, send-to-staff with opt-in chat sharing) and `/support` (my requests; staff queue, usage, article editor); nav entries "Help assistant" and "Support" | vitest 362 passed (17 new); `docs/ui/evidence/screens/assistant-render.png`, `support-queue-render.png`, `support-articles-render.png` |
+| End to end | `tests/e2e/specs/support.spec.ts` (two tests), `/assistant` and `/support` added to the axe scan; CI seeds the starter articles | full e2e run on this branch: 31 passed / 1 skipped (`--workers=2`, includes axe in both themes over 22 routes) |
+| Documents | `docs/api/support-api.md`, ADR-0003, `docs/ml/support-assistant.md`, runbook section, `LIMITATIONS.md`, `DECISION_LOG.md`, `RELEASE_CHECKLIST.md`, `TRACEABILITY_MATRIX.md`; data dictionary, ER diagram and route matrix regenerated | `--check` of each generator and `check_structure.py` |
+
+Defects found by checking:
+
+| Defect | Cause and fix |
+|---|---|
+| "How do I redeem my points?" answered with the user's balance | The own-points pattern matched "my points". Added a rule that how-to phrasing with an action verb goes to the help articles; parametrised test |
+| Body-only word matches (e.g. "time", "name") produced answers to unrelated questions | Added the anchor rule (title or keyword match required); out-of-scope false answers on the held-out set fell from 2 of 16 to 0 |
+| Data-dictionary generator crashed on a generated (`Computed`) column | Handles `Computed` columns |
+| Notification "Mark as read" button's accessible name did not contain its visible text (axe `label-content-name-mismatch`, WCAG 2.5.3) | Hidden until the e2e account had a notification; label is now `Mark as read: <title>` and tests updated |
+| Security workflow failed on bandit B608 (f-string SQL in the sorting-guide search) | Replaced by one fixed statement with a subquery; `scripts/security/run_audits.sh bandit` now run locally before pushing |
+| Backend CI failed on a new CLI test | The test relied on `SECRET_KEY`/`DATABASE_URL` exported in my shell; it now builds its settings explicitly. Reproduced with `env -i` and the full suite re-run that way (750 passed / 1 skipped) |
+| Several help articles named screens or buttons wrongly (found by checking each claim against the UI and code) | Corrected: Waste intake records screen, Classification screen title, Guide, Redeem tab, "Send this to the support team", route-plan wording |
+
+Local results at the end of Phase K: backend 750 passed / 1 skipped (full run in a clean environment, `env -i` with only `TEST_DATABASE_URL`); vitest 362; contract 37; e2e 31 passed / 1 skipped; ML unchanged (58, not re-run). **See the PR for the CI result of the final head; it is not recorded here to avoid a stale claim.**
+
+### Phase L: MFA required for privileged roles (branch `arena/34eb0c5c-ecomind-ai`, PR #12)
+
+Role-based authentication had one open gap: two-step verification was optional for everyone, including administrators (previous DECISION_LOG #13). It is now enforced, by policy, in production.
+
+| Item | What exists | Evidence (local, this sandbox) |
+|---|---|---|
+| Policy | `MFA_REQUIRED_ROLES` (comma-separated roles). Blank/unset: `administrator,manager` in production, nobody elsewhere. `none` opts out. Unknown role names stop startup | `tests/unit/test_config.py` (3 new tests, including "a blank variable does not switch it off") |
+| Enforcement | `Principal.mfa_enrollment_required` is computed from the database on every request. `require_permissions`, `require_any_permission` and the new `ActivePrincipal` (used by `GET /classification/model`) answer `403 mfa_enrollment_required`; `/auth/*` stays reachable so the person can enrol. `POST /auth/mfa/disable` is refused (`409 mfa_required_for_role`) for required roles | `tests/api/test_mfa_enforcement.py`, 9 tests: blocked until enrolled; a pending (unconfirmed) factor does not count; a second, unrestricted role does not escape; released immediately after confirmation without a new token; citizens unaffected; not enforced by default outside production. Mutations (removing the check, removing the disable refusal) each failed the suite |
+| Client | `mfa_enrollment_required` on `/auth/me` and the sign-in/refresh responses; `RequireAuth` sends such a person to Settings, Security, where a banner explains why; the session user is reloaded when the code is confirmed | `tests/integration/security.test.tsx` 3 new tests (redirect and banner; released after confirmation; others unaffected); the redirect mutation failed the first test |
+| Documents | `docs/security/mfa.md` (Required roles section), `docs/api/auth-api.md`, `DECISION_LOG.md` #13 (revised), `LIMITATIONS.md`, `RELEASE_CHECKLIST.md`, `TRACEABILITY_MATRIX.md`, both `.env.example` files, `compose.yaml` | `check_env_templates.py`, `check_structure.py`, route-matrix and data-dictionary `--check` pass |
+
+Not verified: no end-to-end (browser) test of the enforced flow, because the CI stack runs with `ENVIRONMENT=local` (policy off) and a browser test would need a TOTP generator and a privileged account; the API and component tests cover the behaviour. No production deployment exists to observe.
+
+## Audit (2026-10-21)
+
+A full audit was run and written up in `PROJECT_AUDIT_REPORT.md`; `docs/PROJECT_GUIDE.md` explains the whole project for a beginner and `docs/testing/MANUAL_TEST_GUIDE.md` is the A-to-Z manual test. Results: backend 763 passed / 1 skipped (coverage 97% of statements), frontend 365 passed, browser end-to-end 31 passed / 1 skipped, dependency and static-analysis scans clean. Defects fixed: collectors could not list their own incident reports (migration 0016); the landing page and several READMEs were out of date; the demo seed script needed `httpx2`. Open items are listed in the report (section 11) and `LIMITATIONS.md`. Word copies of the three documents are in `docs/exports/` (Markdown is the source).

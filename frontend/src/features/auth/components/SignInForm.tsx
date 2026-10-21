@@ -4,12 +4,13 @@ import { Link } from 'react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Alert } from '@/components/feedback/Alert';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input, PasswordInput } from '@/components/ui/Input';
+import { requestEmailVerification } from '@/services/session';
 import { signIn } from '@/services/session/session-store';
 import { signInSchema, type SignInValues } from '../schemas/auth-forms';
-import { describeAuthError } from '../utils/auth-errors';
+import { describeAuthError, isEmailNotVerified } from '../utils/auth-errors';
 import { MfaStep } from './MfaStep';
 import { SocialButtons } from './SocialButtons';
 
@@ -24,12 +25,16 @@ export function SignInForm() {
     formState: { errors },
   } = useForm<SignInValues>({ resolver: zodResolver(signInSchema), defaultValues: { email: '', password: '' } });
   const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const mutation = useMutation({
     mutationFn: (values: SignInValues) => signIn(values.email, values.password),
+    onMutate: (values) => setSubmittedEmail(values.email),
     onSuccess: (result) => {
       if (result.status === 'mfa_required') setMfaToken(result.mfaToken);
     },
   });
+  // Shown when the server requires a verified address: lets the person ask for a fresh link.
+  const resend = useMutation({ mutationFn: () => requestEmailVerification(submittedEmail) });
 
   if (mfaToken !== null) {
     return (
@@ -57,14 +62,28 @@ export function SignInForm() {
           {(control) => <PasswordInput {...control} size="lg" autoComplete="current-password" {...register('password')} />}
         </Field>
         <div className="auth-form__aside">
-          <Button variant="ghost" unavailableReason="Password reset is not available yet.">
+          <ButtonLink variant="ghost" to="/forgot-password">
             Forgot password?
-          </Button>
+          </ButtonLink>
         </div>
         {mutation.isError && (
           <Alert tone="danger" title="Could not sign in">
             {describeAuthError(mutation.error)}
           </Alert>
+        )}
+        {mutation.isError && isEmailNotVerified(mutation.error) && (
+          <>
+            {resend.isSuccess ? (
+              <Alert tone="success" title="Link requested">
+                If an account exists for {submittedEmail}, a new confirmation link is on its way.
+              </Alert>
+            ) : (
+              <Button variant="secondary" fullWidth loading={resend.isPending} onClick={() => resend.mutate()}>
+                Send a new confirmation link
+              </Button>
+            )}
+            {resend.isError && <Alert tone="danger">{describeAuthError(resend.error)}</Alert>}
+          </>
         )}
         <Button type="submit" size="lg" fullWidth loading={mutation.isPending}>
           Sign in

@@ -8,8 +8,8 @@ order, record the collected weight, and follow the material through facilities w
 chain-of-custody passport. Reward points and impact figures are computed only from verified, recorded
 quantities, and analytics are queries over the same database, so they are correct after a restart.
 
-The system is a modular monolith: a React and TypeScript front end, a FastAPI back end with 20 modules over
-PostgreSQL (SQLAlchemy and Alembic, ten migrations), and an isolated `ml/` package for training and
+The system is a modular monolith: a React and TypeScript front end, a FastAPI back end with 22 modules over
+PostgreSQL (SQLAlchemy and Alembic, sixteen migrations), and an isolated `ml/` package for training and
 evaluation. It includes role-based access control with optional TOTP multi-factor authentication, an audit log,
 weekly fill-volume forecasting with a naive baseline, a robust-score anomaly detector, and an exact or
 heuristic route-ordering optimiser validated against a public routing dataset.

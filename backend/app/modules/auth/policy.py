@@ -22,7 +22,15 @@ LOGIN_WINDOW = timedelta(minutes=15)
 MAX_FAILED_LOGINS_PER_EMAIL = 5
 MAX_FAILED_LOGINS_PER_IP = 30
 REGISTER_WINDOW = timedelta(hours=1)
-MAX_REGISTRATIONS_PER_IP = 10
+
+# Account e-mails (password reset, address verification). A per-address cap that is exceeded sends
+# nothing but still answers 202 (so the endpoint never reveals whether an address has an account);
+# the per-IP cap answers 429. Rejected one-time links are capped per IP so tokens cannot be guessed.
+ACCOUNT_EMAIL_WINDOW = timedelta(hours=1)
+MAX_ACCOUNT_EMAILS_PER_ADDRESS = 3
+MAX_ACCOUNT_EMAIL_REQUESTS_PER_IP = 10
+TOKEN_REJECT_WINDOW = timedelta(minutes=15)
+MAX_TOKEN_REJECTIONS_PER_IP = 20
 
 # A rotated refresh token replayed within this many seconds is treated as a benign race (two tabs
 # refreshing at once): the request is refused but the session family is NOT revoked. Replays after

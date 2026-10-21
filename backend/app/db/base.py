@@ -126,11 +126,16 @@ def fk_uuid(
     nullable: bool = False,
     ondelete: str | None = None,
     index: bool = True,
+    unique: bool = False,
 ) -> MappedColumn[uuid.UUID]:
-    """UUID foreign key column. Default ``ondelete`` is RESTRICT (no silent cascades)."""
+    """UUID foreign key column. Default ``ondelete`` is RESTRICT (no silent cascades).
+
+    ``unique=True`` makes the (indexed) column a unique index: at most one row per target.
+    """
     return mapped_column(
         UUID(as_uuid=True),
         ForeignKey(target, ondelete=ondelete),
         nullable=nullable,
         index=index,
+        unique=unique,
     )

@@ -132,3 +132,13 @@ def generate_refresh_token() -> str:
 def hash_refresh_token(token: str) -> str:
     """Digest stored in the database; the raw token is never persisted."""
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def generate_one_time_token() -> str:
+    """A new single-use link token (256 bits of randomness), for e-mailed links."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_one_time_token(token: str) -> str:
+    """Digest stored in the database; the raw token exists only in the e-mailed link."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()

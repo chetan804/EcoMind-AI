@@ -7,7 +7,7 @@
 3. **Design:** modular monolith, PostgreSQL as the only authority, RBAC, audit, MFA, isolated ML package.
 4. **Evidence:** held-out accuracy 0.867, but only 0.454 on real facility photos: I report both, and the
    system abstains and asks for review instead of pretending.
-5. **Completeness:** 20 backend modules, 20 of 22 reference screens, ten migrations, end-to-end tests.
+5. **Completeness:** 22 backend modules, 20 of 22 reference screens (the other two are excluded or ambiguous), sixteen migrations, end-to-end tests.
 6. **Limits:** marketplace without payment or photos, no sensors, no map geometry, no redemption, straight-line routes.
 
 ## Demonstration order (about 8 minutes)

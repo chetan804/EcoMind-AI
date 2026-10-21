@@ -1,12 +1,14 @@
 import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
 import { SESSION_HINT_KEY } from './fixtures';
+import { solidPng } from './png';
 
 /**
  * Marketplace journey in a real browser against the real stack, no stubbing:
  *
  *   an operator drafts and publishes a listing -> a citizen finds it and asks for it -> the owner
  *   sees the request and accepts it -> the listing is reserved and the citizen sees the decision,
- *   still true after a reload.
+ *   still true after a reload -> the owner records the hand-over and the listing closes as handed over.
+ *   The listing carries a real uploaded photo that the citizen can see.
  *
  * Needs E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD (roles are granted by an administrator); without
  * them the spec FAILS rather than skips.
@@ -65,7 +67,14 @@ test('offer, request, accept and reserve a surplus listing', async ({ browser, p
   await operator.getByRole('button', { name: `Open listing: ${title}` }).click();
   const detail = operator.getByRole('dialog', { name: title });
   await expect(detail.getByText('Draft')).toBeVisible();
+  // A real photo (re-encoded by the server) added while it is still a draft.
+  const photos = detail.getByRole('region', { name: 'Manage photos' });
+  await photos.getByLabel(/^Photo/).setInputFiles({ name: 'chairs.png', mimeType: 'image/png', buffer: solidPng(64, 48) });
+  await photos.getByRole('textbox', { name: /Caption/ }).fill('Front view');
+  await photos.getByRole('button', { name: 'Add photo' }).click();
+  await expect(detail.getByRole('img', { name: 'Front view' })).toBeVisible();
   await detail.getByRole('button', { name: 'Publish' }).click();
+  await expect(detail.getByText('On offer until')).toBeVisible();
   await expect(detail.getByText('Published', { exact: true }).first()).toBeVisible();
   await operator.keyboard.press('Escape');
 
@@ -76,6 +85,7 @@ test('offer, request, accept and reserve a surplus listing', async ({ browser, p
   await citizen.getByRole('searchbox', { name: 'Search' }).fill(run);
   await citizen.getByRole('button', { name: `Open listing: ${title}` }).click();
   const ask = citizen.getByRole('dialog', { name: title });
+  await expect(ask.getByRole('img', { name: 'Front view' })).toBeVisible();
   await ask.getByRole('textbox', { name: /Message to the owner/ }).fill('For a community hall');
   await ask.getByRole('button', { name: 'Request this' }).click();
   await expect(ask.getByText('Pending')).toBeVisible();
@@ -89,6 +99,13 @@ test('offer, request, accept and reserve a surplus listing', async ({ browser, p
   await expect(owner.getByText(citizenEmail)).toBeVisible();
   await owner.getByRole('button', { name: /^Accept request from/ }).click();
   await expect(owner.getByText('Reserved', { exact: true }).first()).toBeVisible();
+
+  // Owner: the material is collected, so the hand-over is recorded and the listing closes.
+  await owner.getByRole('button', { name: 'Mark as handed over' }).click();
+  const confirm = operator.getByRole('dialog', { name: 'Record the hand-over?' });
+  await confirm.getByRole('button', { name: 'Mark as handed over' }).click();
+  await expect(owner.getByText('Handed over')).toBeVisible();
+  await expect(owner.getByText('Closed', { exact: true }).first()).toBeVisible();
 
   // Citizen: the decision is persisted and visible after a reload; a notification arrived.
   await citizen.reload();

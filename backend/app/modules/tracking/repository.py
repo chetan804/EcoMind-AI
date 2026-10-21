@@ -7,7 +7,6 @@ import uuid
 from collections.abc import Sequence
 
 from sqlalchemy import ColumnElement, delete, func, select
-from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.orm import Session
 
 from app.common.pagination import PageParams
@@ -67,16 +66,27 @@ def latest_per_vehicle(
     """Newest event per (vehicle, real|simulated) using the (vehicle_id, recorded_at DESC) index."""
     if not vehicle_ids:
         return []
+    # A window function rather than PostgreSQL's DISTINCT ON: SQLAlchemy's construct for that
+    # (`distinct_on`) only exists from 2.1, while this form works on 2.0 too. The final `id`
+    # tie-break makes the answer deterministic when two events share both timestamps.
+    rank = (
+        func.row_number()
+        .over(
+            partition_by=(Event.vehicle_id, _IS_SIMULATED),
+            order_by=(Event.recorded_at.desc(), Event.received_at.desc(), Event.id.desc()),
+        )
+        .label("rank")
+    )
+    candidates = select(Event.id.label("event_id"), rank).where(Event.vehicle_id.in_(vehicle_ids))
+    if not include_simulated:
+        candidates = candidates.where(~_IS_SIMULATED)
+    newest = candidates.subquery()
     stmt = (
         select(Event)
-        .ext(distinct_on(Event.vehicle_id, _IS_SIMULATED))
-        .where(Event.vehicle_id.in_(vehicle_ids))
-        .order_by(
-            Event.vehicle_id, _IS_SIMULATED, Event.recorded_at.desc(), Event.received_at.desc()
-        )
+        .join(newest, newest.c.event_id == Event.id)
+        .where(newest.c.rank == 1)
+        .order_by(Event.vehicle_id, _IS_SIMULATED)
     )
-    if not include_simulated:
-        stmt = stmt.where(~_IS_SIMULATED)
     return list(db.scalars(stmt))
 
 

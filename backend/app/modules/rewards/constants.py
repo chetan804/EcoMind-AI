@@ -16,3 +16,17 @@ class LedgerSourceType(StrEnum):
     RECOVERY_RECORD = "recovery_record"
     COMMUNITY_INCIDENT = "community_incident"
     MANUAL = "manual"
+    REWARD_REDEMPTION = "reward_redemption"
+
+
+class RedemptionStatus(StrEnum):
+    """``pending``: points are spent and the reward is waiting to be handed over."""
+
+    PENDING = "pending"
+    FULFILLED = "fulfilled"
+    CANCELLED = "cancelled"
+
+
+CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # no 0/O, 1/I/L: read aloud and typed by hand
+CODE_LENGTH = 10
+MAX_ITEM_COST = 1_000_000

@@ -6,6 +6,7 @@
 .shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
 .shell__main { min-width: 0; padding: var(--space-8) var(--content-padding) var(--space-12); }
 .shell__main:focus { outline: none; }
+.shell__notice { margin-bottom: var(--space-6); }
 .shell__bar { display: none; }
 .shell__backdrop { display: none; }
 
@@ -44,7 +45,7 @@
   display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--control-height); padding: 0 var(--space-4);
   border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-field); color: var(--color-text-muted); text-align: left;
 }
-.search-trigger:hover { border-color: var(--color-teal); }
+.search-trigger:hover { border-color: var(--color-accent-text); }
 .user-tools { display: flex; align-items: center; gap: var(--space-1); }
 .user-tools__name { display: flex; flex-direction: column; align-items: flex-start; font-size: var(--text-base); line-height: 1.2; color: var(--color-text-secondary); }
 .user-tools__role { font-size: var(--text-sm); color: var(--color-text-muted); }
@@ -81,5 +82,5 @@
 .user-tools__bell { position: relative; display: inline-flex; }
 .user-tools__badge {
   position: absolute; top: 0; right: 0; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center;
-  border-radius: 9px; background: var(--color-danger); color: #fff; font-size: 11px; font-weight: var(--font-weight-bold); pointer-events: none;
+  border-radius: 9px; background: var(--color-danger-solid); color: #fff; font-size: 11px; font-weight: var(--font-weight-bold); pointer-events: none;
 }

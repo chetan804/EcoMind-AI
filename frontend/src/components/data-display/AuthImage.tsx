@@ -14,7 +14,19 @@ async function toDataUrl(blob: Blob): Promise<string> {
  * would be refused; the bytes are fetched through `apiBlob` and shown as a data URL (no object URL
  * to revoke, so it is safe under React StrictMode).
  */
-export function AuthImage({ contentPath, alt, width, height }: { contentPath: string; alt: string; width?: number; height?: number }) {
+export function AuthImage({
+  contentPath,
+  alt,
+  width,
+  height,
+  className = 'photo-thumb',
+}: {
+  contentPath: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  className?: string;
+}) {
   const image = useQuery({
     queryKey: ['media', contentPath],
     queryFn: async ({ signal }) => toDataUrl(await apiBlob(contentPath, { versioned: false, signal })),
@@ -23,5 +35,5 @@ export function AuthImage({ contentPath, alt, width, height }: { contentPath: st
   });
   if (image.isError) return <p className="muted">Photo unavailable: {getErrorMessage(image.error)}</p>;
   if (!image.data) return <p className="muted" role="status">Loading photo…</p>;
-  return <img className="photo-thumb" src={image.data} alt={alt} width={width} height={height} />;
+  return <img className={className} src={image.data} alt={alt} width={width} height={height} />;
 }

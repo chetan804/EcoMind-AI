@@ -56,6 +56,27 @@ Constraints:
 
 ## Module `auth`
 
+### `account_tokens`
+
+A single-use, expiring token e-mailed to a user (password reset or address verification).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `purpose` | varchar(26) | NN |  |  |
+| `token_hash` | varchar(64) | NN |  | UQ |
+| `email` | varchar(320) | NN |  |  |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `expires_at` | timestamptz | NN |  |  |
+| `consumed_at` | timestamptz | null |  |  |
+| `requested_ip` | varchar(45) | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+
+Constraints:
+
+- `ck_account_tokens_expiry_after_creation`: `expires_at > created_at`
+- Allowed values: `purpose` in (password_reset, email_verification)
+
 ### `auth_sessions`
 
 One issued refresh token. Rotation creates a new row in the same ``family_id``;     presenting an already-rotated token revokes the whole family (reuse detection).
@@ -457,6 +478,34 @@ Constraints:
 
 ## Module `marketplace`
 
+### `marketplace_listing_photos`
+
+A photo of a listing. The bytes live in the file-storage backend (re-encoded, no EXIF).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `listing_id` | uuid | NN |  | FK -> `marketplace_listings.id` ON DELETE CASCADE |
+| `uploaded_by_id` | uuid | NN |  | FK -> `users.id` |
+| `position` | integer | NN |  |  |
+| `caption` | varchar(200) | null |  |  |
+| `storage_backend` | varchar(32) | NN |  |  |
+| `storage_key` | varchar(500) | NN |  | UQ |
+| `content_type` | varchar(100) | NN |  |  |
+| `size_bytes` | bigint | NN |  |  |
+| `sha256` | varchar(64) | NN |  |  |
+| `width_px` | integer | NN |  |  |
+| `height_px` | integer | NN |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_marketplace_listing_photos_position_non_negative`: `position >= 0`
+- `ck_marketplace_listing_photos_sha256_hex_length`: `length(sha256) = 64`
+- `ck_marketplace_listing_photos_size_positive`: `size_bytes > 0`
+- `uq_marketplace_photos_listing_position`: unique (listing_id, position)
+
 ### `marketplace_listings`
 
 Surplus material or items offered for reuse. No price and no payment exist.
@@ -476,6 +525,9 @@ Surplus material or items offered for reuse. No price and no payment exist.
 | `published_at` | timestamptz | null |  |  |
 | `closed_at` | timestamptz | null |  |  |
 | `close_reason` | varchar(500) | null |  |  |
+| `expires_at` | timestamptz | null |  |  |
+| `expiry_notice_sent_at` | timestamptz | null |  |  |
+| `outcome` | varchar(19) | null |  |  |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |
@@ -483,9 +535,11 @@ Surplus material or items offered for reuse. No price and no payment exist.
 Constraints:
 
 - `ck_marketplace_listings_closed_timestamp_consistent`: `(status = 'closed') = (closed_at IS NOT NULL)`
+- `ck_marketplace_listings_expiry_needs_publication`: `expires_at IS NULL OR published_at IS NOT NULL`
+- `ck_marketplace_listings_outcome_only_when_closed`: `outcome IS NULL OR status = 'closed'`
 - `ck_marketplace_listings_published_timestamp_consistent`: `(status IN ('published', 'reserved', 'closed')) OR published_at IS NULL`
 - `ck_marketplace_listings_quantity_positive`: `quantity > 0`
-- Allowed values: `category` in (plastics, metals, paper, glass, e_waste, organics, textiles, wood, furniture, other); `unit` in (kg, units); `condition` in (like_new, good, fair, damaged); `status` in (draft, published, reserved, closed)
+- Allowed values: `category` in (plastics, metals, paper, glass, e_waste, organics, textiles, wood, furniture, other); `unit` in (kg, units); `condition` in (like_new, good, fair, damaged); `status` in (draft, published, reserved, closed); `outcome` in (handed_over, withdrawn, expired)
 
 ### `marketplace_requests`
 
@@ -577,6 +631,30 @@ Constraints:
 
 ## Module `rewards`
 
+### `reward_items`
+
+Something a citizen can spend points on. Entered by staff: the platform ships none.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `name` | varchar(120) | NN |  |  |
+| `description` | text | null |  |  |
+| `points_cost` | integer | NN |  |  |
+| `stock` | integer | null |  |  |
+| `max_per_user` | integer | null |  |  |
+| `active` | boolean | NN | `true` |  |
+| `valid_until` | timestamptz | null |  |  |
+| `created_by_id` | uuid | NN |  | FK -> `users.id` |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_reward_items_cost_positive`: `points_cost > 0`
+- `ck_reward_items_limit_positive`: `max_per_user IS NULL OR max_per_user >= 1`
+- `ck_reward_items_stock_non_negative`: `stock IS NULL OR stock >= 0`
+
 ### `reward_ledger_entries`
 
 | Column | Type | Null | Default | Notes |
@@ -599,7 +677,43 @@ Constraints:
 - `ck_reward_ledger_entries_points_non_zero`: `points <> 0`
 - `ck_reward_ledger_entries_reversal_references_entry`: `(entry_type = 'reversal') = (reverses_entry_id IS NOT NULL)`
 - `uq_reward_ledger_entries_idempotency`: unique index WHERE `source_id IS NOT NULL AND entry_type = 'earned'`
-- Allowed values: `entry_type` in (earned, redeemed, adjustment, reversal); `source_type` in (waste_report, collection_task, recovery_record, community_incident, manual)
+- Allowed values: `entry_type` in (earned, redeemed, adjustment, reversal); `source_type` in (waste_report, collection_task, recovery_record, community_incident, manual, reward_redemption)
+
+### `reward_redemptions`
+
+One spend of points on a reward item.
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` |
+| `item_id` | uuid | NN |  | FK -> `reward_items.id` |
+| `item_name` | varchar(120) | NN |  |  |
+| `points_spent` | integer | NN |  |  |
+| `code` | varchar(16) | NN |  | UQ |
+| `client_request_id` | uuid | NN |  |  |
+| `status` | varchar(17) | NN | `pending` |  |
+| `ledger_entry_id` | uuid | NN |  | FK -> `reward_ledger_entries.id`; UQ |
+| `refund_entry_id` | uuid | null |  | FK -> `reward_ledger_entries.id`; UQ |
+| `fulfilled_by_id` | uuid | null |  | FK -> `users.id` |
+| `fulfilled_at` | timestamptz | null |  |  |
+| `note` | varchar(500) | null |  |  |
+| `cancelled_by_id` | uuid | null |  | FK -> `users.id` |
+| `cancelled_at` | timestamptz | null |  |  |
+| `cancel_reason` | varchar(500) | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_reward_redemptions_cancelled_timestamp_consistent`: `(status = 'cancelled') = (cancelled_at IS NOT NULL)`
+- `ck_reward_redemptions_fulfilled_timestamp_consistent`: `(status = 'fulfilled') = (fulfilled_at IS NOT NULL)`
+- `ck_reward_redemptions_points_positive`: `points_spent > 0`
+- `ck_reward_redemptions_refund_iff_cancelled`: `(status = 'cancelled') = (refund_entry_id IS NOT NULL)`
+- `uq_reward_redemptions_user_client_request`: unique (user_id, client_request_id)
+- `ix_reward_redemptions_ledger_entry_id`: unique index
+- `ix_reward_redemptions_refund_entry_id`: unique index
+- Allowed values: `status` in (pending, fulfilled, cancelled)
 
 ## Module `route_planning`
 
@@ -680,6 +794,84 @@ Constraints:
 Constraints:
 
 - Allowed values: `disposal_method` in (recycle, compost, reuse, landfill, hazardous_drop_off, e_waste_drop_off, special_collection)
+
+## Module `support`
+
+### `assistant_conversations`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` ON DELETE CASCADE |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+### `assistant_messages`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `conversation_id` | uuid | NN |  | FK -> `assistant_conversations.id` ON DELETE CASCADE |
+| `role` | varchar(17) | NN |  |  |
+| `kind` | varchar(21) | NN |  |  |
+| `content` | text | NN |  |  |
+| `sources` | jsonb | NN | `[]` |  |
+| `helpful` | boolean | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- Allowed values: `role` in (user, assistant); `kind` in (question, knowledge, account_data, no_answer, not_permitted)
+
+### `knowledge_articles`
+
+A help article. ``source`` says where its content comes from (nothing is anonymous).
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `slug` | varchar(100) | NN |  | UQ |
+| `title` | varchar(200) | NN |  |  |
+| `body` | text | NN |  |  |
+| `category` | varchar(60) | NN |  |  |
+| `keywords` | text | NN | `` |  |
+| `source` | varchar(200) | NN |  |  |
+| `published` | boolean | NN | `true` |  |
+| `created_by_id` | uuid | null |  | FK -> `users.id` |
+| `updated_by_id` | uuid | null |  | FK -> `users.id` |
+| `search_vector` | tsvector | NN | generated (see model) |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+### `support_ticket_replies`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `ticket_id` | uuid | NN |  | FK -> `support_tickets.id` ON DELETE CASCADE |
+| `author_id` | uuid | NN |  | FK -> `users.id` |
+| `is_staff` | boolean | NN |  |  |
+| `body` | text | NN |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+
+### `support_tickets`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` |
+| `subject` | varchar(200) | NN |  |  |
+| `body` | text | NN |  |  |
+| `status` | varchar(19) | NN | `open` |  |
+| `assignee_id` | uuid | null |  | FK -> `users.id` |
+| `shared_conversation_id` | uuid | null |  | FK -> `assistant_conversations.id` ON DELETE SET NULL |
+| `resolved_at` | timestamptz | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- Allowed values: `status` in (open, in_progress, resolved, closed)
 
 ## Module `tracking`
 
@@ -762,6 +954,7 @@ Constraints:
 | `full_name` | varchar(200) | NN |  |  |
 | `is_active` | boolean | NN | `true` |  |
 | `last_login_at` | timestamptz | null |  |  |
+| `email_verified_at` | timestamptz | null |  |  |
 | `id` | uuid | NN | `gen_random_uuid()` | PK |
 | `created_at` | timestamptz | NN | `now()` |  |
 | `updated_at` | timestamptz | NN | `now()` |  |

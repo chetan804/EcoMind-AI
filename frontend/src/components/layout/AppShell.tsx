@@ -4,6 +4,7 @@ import { Menu as MenuIcon } from 'lucide-react';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { IconButton } from '@/components/ui/IconButton';
 import { BrandMark } from './BrandMark';
+import { VerifyEmailBanner } from './VerifyEmailBanner';
 import { useApplyTheme } from '@/services/theme/theme';
 import { cx } from '@/utils/cx';
 import './layout.css';
@@ -46,6 +47,7 @@ export function AppShell() {
       <Sidebar open={drawerOpen} onClose={closeDrawer} />
       <div className={cx('shell__backdrop', drawerOpen && 'shell__backdrop--open')} onClick={closeDrawer} aria-hidden="true" />
       <main id="main" className="shell__main" tabIndex={-1}>
+        <VerifyEmailBanner />
         <Outlet />
       </main>
     </div>

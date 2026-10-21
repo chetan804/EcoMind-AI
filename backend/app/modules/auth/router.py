@@ -4,20 +4,26 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Request, Response, status
 
 from app.api.deps import AppSettings, DbSession
 from app.core.config import Settings
 from app.core.exceptions import AppError, UnauthenticatedError, error_response
+from app.integrations.email.base import EmailMessage, EmailSender
+from app.integrations.email.factory import deliver
 from app.modules.audit.service import RequestContext
-from app.modules.auth import mfa, service
+from app.modules.auth import mfa, recovery, service
 from app.modules.auth.dependencies import (
     CurrentPrincipal,
     require_csrf_header,
 )
 from app.modules.auth.schemas import (
+    AcceptedOut,
+    AuthConfigOut,
     AuthResponse,
     ChangePasswordRequest,
+    EmailVerificationConfirmRequest,
+    EmailVerificationRequest,
     LoginRequest,
     MfaChallenge,
     MfaCodeRequest,
@@ -26,6 +32,8 @@ from app.modules.auth.schemas import (
     MfaRecoveryCodesOut,
     MfaStatusOut,
     MfaVerifyRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
     RegisterRequest,
     UserOut,
 )
@@ -37,6 +45,22 @@ router = APIRouter()
 REFRESH_COOKIE = "ecomind_refresh"
 # The cookie is only ever sent to the auth endpoints, never with ordinary API calls.
 REFRESH_COOKIE_PATH = "/api/v1/auth"
+
+
+def get_email_sender(request: Request) -> EmailSender:
+    sender: EmailSender = request.app.state.email_sender
+    return sender
+
+
+Mailer = Annotated[EmailSender, Depends(get_email_sender)]
+
+
+def _send_after_response(
+    background: BackgroundTasks, sender: EmailSender, messages: tuple[EmailMessage, ...]
+) -> None:
+    """Deliver after the response so mail-server latency cannot reveal anything to the caller."""
+    for message in messages:
+        background.add_task(deliver, sender, message)
 
 
 def _set_refresh_cookie(response: Response, settings: Settings, token: str) -> None:
@@ -72,6 +96,8 @@ def _body(result: service.AuthResult) -> AuthResponse:
             full_name=user.full_name,
             roles=user.roles,
             permissions=user.permissions,
+            email_verified=user.email_verified,
+            mfa_enrollment_required=user.mfa_enrollment_required,
         ),
     )
 
@@ -85,8 +111,10 @@ def register(
     payload: RegisterRequest,
     request: Request,
     response: Response,
+    background: BackgroundTasks,
     db: DbSession,
     settings: AppSettings,
+    mailer: Mailer,
 ) -> AuthResponse:
     """Create a ``citizen`` account and sign it in. Other roles are assigned by administrators."""
     result = service.register(
@@ -97,6 +125,7 @@ def register(
         full_name=payload.full_name,
         context=RequestContext.from_request(request),
     )
+    _send_after_response(background, mailer, result.emails)
     _set_refresh_cookie(response, settings, result.refresh_token)
     _no_store(response)
     return _body(result)
@@ -205,6 +234,8 @@ def me(principal: CurrentPrincipal) -> UserOut:
         full_name=principal.full_name,
         roles=sorted(principal.roles),
         permissions=sorted(principal.permissions),
+        email_verified=principal.email_verified,
+        mfa_enrollment_required=principal.mfa_enrollment_required,
     )
 
 
@@ -213,9 +244,11 @@ def change_password(
     payload: ChangePasswordRequest,
     request: Request,
     response: Response,
+    background: BackgroundTasks,
     principal: CurrentPrincipal,
     db: DbSession,
     settings: AppSettings,
+    mailer: Mailer,
 ) -> AuthResponse:
     """Change the password, revoke every other session and start a fresh one for this device."""
     result = service.change_password(
@@ -226,9 +259,100 @@ def change_password(
         new_password=payload.new_password,
         context=RequestContext.from_request(request),
     )
+    _send_after_response(background, mailer, result.emails)
     _set_refresh_cookie(response, settings, result.refresh_token)
     _no_store(response)
     return _body(result)
+
+
+@router.get("/config", response_model=AuthConfigOut)
+def auth_config(settings: AppSettings) -> AuthConfigOut:
+    """Public: which account-recovery features this server can actually perform."""
+    return AuthConfigOut(
+        password_reset_available=settings.email_enabled,
+        email_verification_available=settings.email_enabled,
+        email_verification_required=settings.email_verification_required,
+    )
+
+
+@router.post(
+    "/password-reset/request",
+    response_model=AcceptedOut,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def password_reset_request(
+    payload: PasswordResetRequest,
+    request: Request,
+    response: Response,
+    background: BackgroundTasks,
+    db: DbSession,
+    settings: AppSettings,
+    mailer: Mailer,
+) -> AcceptedOut:
+    """E-mail a one-time reset link. The answer is identical for every address."""
+    message = recovery.request_password_reset(
+        db, settings, email=payload.email, context=RequestContext.from_request(request)
+    )
+    _send_after_response(background, mailer, (message,) if message else ())
+    _no_store(response)
+    return AcceptedOut()
+
+
+@router.post("/password-reset/confirm", status_code=status.HTTP_204_NO_CONTENT)
+def password_reset_confirm(
+    payload: PasswordResetConfirmRequest,
+    request: Request,
+    background: BackgroundTasks,
+    db: DbSession,
+    settings: AppSettings,
+    mailer: Mailer,
+) -> Response:
+    """Set a new password with a reset link. Ends every session; sign in again afterwards."""
+    notice = recovery.confirm_password_reset(
+        db,
+        settings,
+        token=payload.token,
+        new_password=payload.new_password,
+        context=RequestContext.from_request(request),
+    )
+    _send_after_response(background, mailer, (notice,))
+    return Response(status_code=status.HTTP_204_NO_CONTENT, headers={"Cache-Control": "no-store"})
+
+
+@router.post(
+    "/email-verification/request",
+    response_model=AcceptedOut,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def email_verification_request(
+    payload: EmailVerificationRequest,
+    request: Request,
+    response: Response,
+    background: BackgroundTasks,
+    db: DbSession,
+    settings: AppSettings,
+    mailer: Mailer,
+) -> AcceptedOut:
+    """E-mail a (new) confirmation link. Public, so someone who cannot sign in yet can ask."""
+    message = recovery.request_email_verification(
+        db, settings, email=payload.email, context=RequestContext.from_request(request)
+    )
+    _send_after_response(background, mailer, (message,) if message else ())
+    _no_store(response)
+    return AcceptedOut()
+
+
+@router.post("/email-verification/confirm", status_code=status.HTTP_204_NO_CONTENT)
+def email_verification_confirm(
+    payload: EmailVerificationConfirmRequest,
+    request: Request,
+    db: DbSession,
+    settings: AppSettings,
+) -> Response:
+    recovery.confirm_email_verification(
+        db, settings, token=payload.token, context=RequestContext.from_request(request)
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT, headers={"Cache-Control": "no-store"})
 
 
 def _account(db: DbSession, principal: CurrentPrincipal) -> User:

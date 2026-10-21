@@ -9,7 +9,7 @@ import { Card, CardHeader } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Input, PasswordInput } from '@/components/ui/Input';
 import { getErrorMessage } from '@/services/error-handler';
-import { adoptAuthResponse, changePassword } from '@/services/session';
+import { adoptAuthResponse, changePassword, useAuth } from '@/services/session';
 import { formatDateTime } from '@/utils/format';
 import type { MfaEnrollment, MfaStatus } from '../api/security-api';
 import { QrCode } from '../components/QrCode';
@@ -20,9 +20,15 @@ const groupSecret = (secret: string) => secret.replace(/(.{4})/g, '$1 ').trim();
 
 export function SecurityPage() {
   const status = useMfaStatus();
+  const { user } = useAuth();
   return (
     <section aria-labelledby="security-title" className="stack stack--tight">
       <PageHeader title="Security" titleId="security-title" subtitle="Two-step verification and your password" />
+      {user?.mfa_enrollment_required && (
+        <Alert tone="warning" title="Set up two-step verification to continue">
+          Your role requires two-step verification. Until you turn it on, this page is the only part of EcoMind AI you can use.
+        </Alert>
+      )}
       <SettingsNav />
       <Card aria-labelledby="mfa-title">
         <CardHeader title="Two-step verification" titleId="mfa-title" />

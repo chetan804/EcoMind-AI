@@ -68,6 +68,9 @@ export const routes: RouteObject[] = [
   { path: '/', lazy: lazyPage(() => import('@/features/landing'), 'LandingPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
   { path: '/sign-in', lazy: lazyPage(() => import('@/features/auth'), 'SignInPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
   { path: '/sign-up', lazy: lazyPage(() => import('@/features/auth'), 'SignUpPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
+  { path: '/forgot-password', lazy: lazyPage(() => import('@/features/auth'), 'ForgotPasswordPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
+  { path: '/reset-password', lazy: lazyPage(() => import('@/features/auth'), 'ResetPasswordPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
+  { path: '/verify-email', lazy: lazyPage(() => import('@/features/auth'), 'VerifyEmailPage'), errorElement: <RouteErrorFallback />, HydrateFallback: PageLoading },
   {
     element: <RequireAuth />,
     errorElement: <RouteErrorFallback />,
@@ -94,6 +97,8 @@ export const routes: RouteObject[] = [
           { path: 'marketplace', lazy: guardedPage(['marketplace:read'], () => import('@/features/marketplace'), 'MarketplacePage') },
           { path: 'sorting-guide', lazy: guardedPage(['sorting_guide:read'], () => import('@/features/sorting-guide'), 'SortingGuidePage') },
           { path: 'rewards', lazy: guardedAnyPage(['rewards:read_own', 'rewards:manage'], () => import('@/features/rewards'), 'RewardsPage') },
+          { path: 'assistant', lazy: guardedPage(['support:ask'], () => import('@/features/support'), 'AssistantPage') },
+          { path: 'support', lazy: guardedAnyPage(['support:ask', 'support:manage', 'knowledge:manage'], () => import('@/features/support'), 'SupportPage') },
           { path: 'passports', lazy: guardedPage(['passports:read'], () => import('@/features/material-passports'), 'PassportsPage') },
           { path: 'recovery', lazy: guardedPage(['circular_economy:read'], () => import('@/features/circular-economy'), 'RecoveryPage') },
           { path: 'classify/review', lazy: guardedPage(['classification:review'], () => import('@/features/waste-classification'), 'ReviewQueuePage') },

@@ -7,7 +7,7 @@ VENV_BIN := $(abspath $(BACKEND_VENV))/bin
 TEST_DATABASE_URL ?= postgresql+psycopg://ecomind:$(shell grep -E '^POSTGRES_PASSWORD=' .env 2>/dev/null | cut -d= -f2)@localhost:5432/postgres
 
 .DEFAULT_GOAL := help
-.PHONY: help env setup install-backend install-frontend install-e2e db-up up down logs migrate \
+.PHONY: help env setup install-backend install-backend-locked install-frontend lock-backend check-locks audit install-e2e db-up up down logs migrate \
         migration backend-dev frontend-dev lint typecheck test test-backend test-backend-unit \
         test-frontend test-ml test-contract test-e2e check compose-config build-frontend data-dictionary er-diagram
 
@@ -22,6 +22,20 @@ setup: env install-backend install-frontend ## First-time setup: env files + dep
 install-backend: ## Create backend/.venv and install backend + ML dev dependencies
 	$(PYTHON) -m venv $(BACKEND_VENV)
 	$(VENV_BIN)/pip install -e "backend[dev]" -r ml/requirements-dev.txt
+
+install-backend-locked: ## Create backend/.venv from the hash-verified lock file (what CI installs)
+	$(PYTHON) -m venv $(BACKEND_VENV)
+	$(VENV_BIN)/pip install --require-hashes -r backend/requirements-dev.lock
+	$(VENV_BIN)/pip install --no-deps -e backend
+
+lock-backend: ## Regenerate the Python lock files (needs uv; review the diff, run the tests)
+	scripts/dependencies/lock_backend.sh
+
+check-locks: ## Fail if the Python lock files are out of date
+	scripts/dependencies/lock_backend.sh --check
+
+audit: ## Dependency audit (pip-audit, npm audit) and bandit, as run by the Security workflow
+	scripts/security/run_audits.sh
 
 install-frontend: ## Install frontend dependencies from the lockfile
 	cd frontend && npm ci

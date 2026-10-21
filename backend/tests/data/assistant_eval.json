@@ -1,0 +1,466 @@
+{
+ "note": "Authored by the maintainers after the knowledge base was written, before the retrieval threshold was measured. It is small and not independent; the figures it yields are regression guards, not a claim about real users.",
+ "in_scope": [
+  {
+   "question": "How do I redeem a reward?",
+   "expected_slug": "redeem-reward"
+  },
+  {
+   "question": "how do I report waste",
+   "expected_slug": "how-to-report-waste"
+  },
+  {
+   "question": "where can I submit a new waste report",
+   "expected_slug": "how-to-report-waste"
+  },
+  {
+   "question": "I want to report rubbish on my street",
+   "expected_slug": "how-to-report-waste"
+  },
+  {
+   "question": "what does under review mean on my report",
+   "expected_slug": "report-statuses"
+  },
+  {
+   "question": "my report was rejected, what does rejected mean",
+   "expected_slug": "report-statuses"
+  },
+  {
+   "question": "can I attach a photo to my report",
+   "expected_slug": "report-photo"
+  },
+  {
+   "question": "is there a size limit for photos I upload",
+   "expected_slug": "report-photo"
+  },
+  {
+   "question": "how does the classify screen decide the material",
+   "expected_slug": "classify-item"
+  },
+  {
+   "question": "why does the classification page say no model is active",
+   "expected_slug": "classify-item"
+  },
+  {
+   "question": "nobody collected my waste this week",
+   "expected_slug": "missed-collection"
+  },
+  {
+   "question": "my bin was missed by the collectors",
+   "expected_slug": "missed-collection"
+  },
+  {
+   "question": "what does a collection task being in progress mean",
+   "expected_slug": "collection-statuses"
+  },
+  {
+   "question": "what is the difference between failed and cancelled collection tasks",
+   "expected_slug": "collection-statuses"
+  },
+  {
+   "question": "how do I report illegal dumping",
+   "expected_slug": "report-incident"
+  },
+  {
+   "question": "there is an overflowing bin near my house, who do I tell",
+   "expected_slug": "report-incident"
+  },
+  {
+   "question": "what should I do about hazardous waste I found",
+   "expected_slug": "report-incident"
+  },
+  {
+   "question": "what does acknowledged mean for an incident",
+   "expected_slug": "incident-statuses"
+  },
+  {
+   "question": "can other people see who reported an incident",
+   "expected_slug": "incident-statuses"
+  },
+  {
+   "question": "how do I earn reward points",
+   "expected_slug": "earn-points"
+  },
+  {
+   "question": "how many points do I get for each kilogram",
+   "expected_slug": "earn-points"
+  },
+  {
+   "question": "how do I redeem my points",
+   "expected_slug": "redeem-reward"
+  },
+  {
+   "question": "what is the claim code for a reward",
+   "expected_slug": "redeem-reward"
+  },
+  {
+   "question": "can I undo a redemption and get my points back",
+   "expected_slug": "cancel-redemption"
+  },
+  {
+   "question": "how do I cancel a pending redemption",
+   "expected_slug": "cancel-redemption"
+  },
+  {
+   "question": "why can't I redeem this reward",
+   "expected_slug": "reward-unavailable"
+  },
+  {
+   "question": "a reward says out of stock, can I still get it",
+   "expected_slug": "reward-unavailable"
+  },
+  {
+   "question": "how does the marketplace work",
+   "expected_slug": "marketplace-how"
+  },
+  {
+   "question": "can I buy things on the marketplace, is there payment",
+   "expected_slug": "marketplace-how"
+  },
+  {
+   "question": "why did my marketplace listing close by itself",
+   "expected_slug": "marketplace-expiry"
+  },
+  {
+   "question": "how long does a listing stay published before it expires",
+   "expected_slug": "marketplace-expiry"
+  },
+  {
+   "question": "how many photos can I put on a listing",
+   "expected_slug": "marketplace-photos"
+  },
+  {
+   "question": "does the marketplace remove location data from my pictures",
+   "expected_slug": "marketplace-photos"
+  },
+  {
+   "question": "I forgot my password",
+   "expected_slug": "forgot-password"
+  },
+  {
+   "question": "how do I reset my password",
+   "expected_slug": "forgot-password"
+  },
+  {
+   "question": "how do I confirm my email address",
+   "expected_slug": "verify-email"
+  },
+  {
+   "question": "sign-in says my address is not confirmed",
+   "expected_slug": "verify-email"
+  },
+  {
+   "question": "it says too many attempts and my account is locked",
+   "expected_slug": "account-locked"
+  },
+  {
+   "question": "how long am I locked out after wrong passwords",
+   "expected_slug": "account-locked"
+  },
+  {
+   "question": "what makes a password acceptable",
+   "expected_slug": "password-rules"
+  },
+  {
+   "question": "how do I turn on two-step verification",
+   "expected_slug": "two-factor"
+  },
+  {
+   "question": "I lost my authenticator app and recovery codes",
+   "expected_slug": "two-factor"
+  },
+  {
+   "question": "what roles exist and who gives them",
+   "expected_slug": "roles"
+  },
+  {
+   "question": "why can't I see the manager screens",
+   "expected_slug": "roles"
+  },
+  {
+   "question": "where do I read my notifications",
+   "expected_slug": "notifications"
+  },
+  {
+   "question": "what does the bell icon show",
+   "expected_slug": "notifications"
+  },
+  {
+   "question": "how do I dispose of a battery or a glass jar",
+   "expected_slug": "sorting-guide"
+  },
+  {
+   "question": "where is the sorting guide",
+   "expected_slug": "sorting-guide"
+  },
+  {
+   "question": "what does live gps mean for a vehicle",
+   "expected_slug": "vehicle-tracking"
+  },
+  {
+   "question": "what does location unavailable mean on the fleet screen",
+   "expected_slug": "vehicle-tracking"
+  },
+  {
+   "question": "why is the map background empty",
+   "expected_slug": "map-blank"
+  },
+  {
+   "question": "the map shows base map not installed",
+   "expected_slug": "map-blank"
+  },
+  {
+   "question": "how does a collector share their position",
+   "expected_slug": "share-position"
+  },
+  {
+   "question": "how often does the position get reported",
+   "expected_slug": "share-position"
+  },
+  {
+   "question": "how are the stops of a route plan ordered",
+   "expected_slug": "route-plans"
+  },
+  {
+   "question": "is there an arrival time on route plans",
+   "expected_slug": "route-plans"
+  },
+  {
+   "question": "what does an anomaly alert mean",
+   "expected_slug": "forecasts-anomalies"
+  },
+  {
+   "question": "how reliable are the fill level forecasts",
+   "expected_slug": "forecasts-anomalies"
+  },
+  {
+   "question": "what is a material passport",
+   "expected_slug": "material-passport"
+  },
+  {
+   "question": "what does the integrity check on a passport prove",
+   "expected_slug": "material-passport"
+  },
+  {
+   "question": "what can this assistant do",
+   "expected_slug": "about-assistant"
+  },
+  {
+   "question": "are your answers made up by an AI",
+   "expected_slug": "about-assistant"
+  },
+  {
+   "question": "how can I talk to a real person",
+   "expected_slug": "contact-support"
+  },
+  {
+   "question": "how do I contact support",
+   "expected_slug": "contact-support"
+  }
+ ],
+ "out_of_scope": [
+  "what is the capital of France",
+  "write me a poem about the sea",
+  "who won the cricket match yesterday",
+  "what is the weather in Hyderabad tomorrow",
+  "how do I cook biryani",
+  "can you recommend a good smartphone",
+  "what is the price of gold today",
+  "translate hello into Spanish",
+  "how do I install Python on Windows",
+  "tell me a joke",
+  "what is the meaning of life",
+  "how tall is Mount Everest",
+  "can I pay for a marketplace item by credit card",
+  "do you deliver rewards to my home address",
+  "how do I change my profile photo",
+  "can I delete my account and all my data",
+  "is there a mobile app for android",
+  "how many trucks does the city own",
+  "what is the recycling rate of the country",
+  "how do I get a refund"
+ ],
+ "held_out": {
+  "note": "Written after the keywords were added to the articles and run once; nothing was changed in response to its results.",
+  "in_scope": [
+   {
+    "question": "someone has dumped a sofa in the lane behind my flat, how do I tell the council",
+    "expected_slug": "report-incident"
+   },
+   {
+    "question": "how do I let you know about rubbish piled up on the pavement",
+    "expected_slug": "how-to-report-waste"
+   },
+   {
+    "question": "how will I know my report has been approved",
+    "expected_slug": "report-statuses"
+   },
+   {
+    "question": "can I upload a picture from my phone gallery with the report",
+    "expected_slug": "report-photo"
+   },
+   {
+    "question": "is the item recogniser always right",
+    "expected_slug": "classify-item"
+   },
+   {
+    "question": "the dustbin lorry skipped our street today",
+    "expected_slug": "missed-collection"
+   },
+   {
+    "question": "what stage is a collection at when the driver has begun",
+    "expected_slug": "collection-statuses"
+   },
+   {
+    "question": "the truck did not come, how do I complain",
+    "expected_slug": "missed-collection"
+   },
+   {
+    "question": "is my name shown to others when I report a problem",
+    "expected_slug": "incident-statuses"
+   },
+   {
+    "question": "what do I do with smoke from someone burning plastic",
+    "expected_slug": "report-incident"
+   },
+   {
+    "question": "how are points calculated",
+    "expected_slug": "earn-points"
+   },
+   {
+    "question": "where do I find the voucher code after I exchange points",
+    "expected_slug": "redeem-reward"
+   },
+   {
+    "question": "I changed my mind about the gift I redeemed, can I get the points returned",
+    "expected_slug": "cancel-redemption"
+   },
+   {
+    "question": "the reward button is greyed out",
+    "expected_slug": "reward-unavailable"
+   },
+   {
+    "question": "who can put surplus material up for exchange",
+    "expected_slug": "marketplace-how"
+   },
+   {
+    "question": "when do offers get removed automatically",
+    "expected_slug": "marketplace-expiry"
+   },
+   {
+    "question": "are the pictures I add to an offer stripped of gps tags",
+    "expected_slug": "marketplace-photos"
+   },
+   {
+    "question": "I can't remember my password",
+    "expected_slug": "forgot-password"
+   },
+   {
+    "question": "the confirmation email link did not work",
+    "expected_slug": "verify-email"
+   },
+   {
+    "question": "account blocked after typing the wrong password several times",
+    "expected_slug": "account-locked"
+   },
+   {
+    "question": "do you have rules about how strong my passphrase must be",
+    "expected_slug": "password-rules"
+   },
+   {
+    "question": "how do I set up an authenticator app",
+    "expected_slug": "two-factor"
+   },
+   {
+    "question": "who decides which screens I can open",
+    "expected_slug": "roles"
+   },
+   {
+    "question": "I have unread alerts, where are they",
+    "expected_slug": "notifications"
+   },
+   {
+    "question": "which bin does a plastic bottle go in",
+    "expected_slug": "sorting-guide"
+   },
+   {
+    "question": "what does a stale vehicle position mean",
+    "expected_slug": "vehicle-tracking"
+   },
+   {
+    "question": "the map is just grey with no streets",
+    "expected_slug": "map-blank"
+   },
+   {
+    "question": "does the app follow drivers when the page is closed",
+    "expected_slug": "share-position"
+   },
+   {
+    "question": "do route plans use real roads",
+    "expected_slug": "route-plans"
+   },
+   {
+    "question": "what is a suspected anomaly",
+    "expected_slug": "forecasts-anomalies"
+   },
+   {
+    "question": "who has handled a batch of recovered plastic",
+    "expected_slug": "material-passport"
+   },
+   {
+    "question": "is this a chatbot that makes things up",
+    "expected_slug": "about-assistant"
+   },
+   {
+    "question": "I need to speak to a human",
+    "expected_slug": "contact-support"
+   },
+   {
+    "question": "can I send my conversation with the assistant to staff",
+    "expected_slug": "contact-support"
+   },
+   {
+    "question": "how do I make a request to staff about my problem",
+    "expected_slug": "contact-support"
+   },
+   {
+    "question": "what happens to my points when a collection is done",
+    "expected_slug": "earn-points"
+   },
+   {
+    "question": "what does resolved mean for an incident I raised",
+    "expected_slug": "incident-statuses"
+   },
+   {
+    "question": "how do I check the progress of something I reported",
+    "expected_slug": "report-statuses"
+   },
+   {
+    "question": "why can't my citizen account see fleet management",
+    "expected_slug": "roles"
+   },
+   {
+    "question": "how do I know a vehicle is simulated",
+    "expected_slug": "vehicle-tracking"
+   }
+  ],
+  "out_of_scope": [
+   "how do I vote in the local election",
+   "what is the best programming language",
+   "how much is a bus ticket",
+   "can you diagnose my headache",
+   "who is the prime minister",
+   "how do I lose weight",
+   "how do I file my income tax",
+   "what time does the library open",
+   "can I change the colour theme of my phone",
+   "how do I book a hotel",
+   "what is the population of Telangana",
+   "how do I fix a leaking tap",
+   "where can I buy a laptop",
+   "can I upload a video of the dumping",
+   "how do I change the language of the app",
+   "what is your name"
+  ]
+ }
+}

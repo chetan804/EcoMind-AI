@@ -66,9 +66,15 @@ def test_permissions(env: Env) -> None:
     # operators neither report nor view incidents
     assert env.client.get(BASE, headers=env.h["facility_operator"]).status_code == 403
     assert env.report("facility_operator").status_code == 403
-    # collectors may report (field staff see problems) but have no read_own/triage
-    assert env.report("collector").status_code == 201
-    assert env.client.get(BASE, headers=env.h["collector"]).status_code == 403
+    # collectors may report (field staff see problems) and then see what they reported, but never
+    # other people's reports: they hold read_own, not triage (audit finding, migration 0016)
+    mine = env.report("collector")
+    assert mine.status_code == 201
+    listed = env.client.get(BASE, headers=env.h["collector"])
+    assert listed.status_code == 200
+    assert [i["id"] for i in listed.json()["items"]] == [mine.json()["id"]]
+    citizens = env.report("citizen").json()["id"]
+    assert env.client.get(f"{BASE}/{citizens}", headers=env.h["collector"]).status_code == 404
     for path in ("/summary",):
         assert env.client.get(BASE + path, headers=env.h["citizen"]).status_code == 403
         assert env.client.get(BASE + path, headers=env.h["manager"]).status_code == 200
