@@ -77,12 +77,16 @@ variable (`tests/e2e/specs/mail.ts`):
 | Variable | Source | Used by |
 |---|---|---|
 | `E2E_MAILPIT_URL` (e.g. `http://localhost:8025`) | The Mailpit inbox API (`/api/v1/search`, `/api/v1/message/{ID}`) | CI: the e2e job starts the stack with `--profile demo-mail` |
-| `E2E_MAIL_LOG_COMMAND` (e.g. `docker compose logs --no-color backend`) | The backend's console log | Local runs with plain `make up` |
+| `E2E_MAIL_LOG_FILE` (a path, e.g. `/tmp/api.log`) | The backend's console log, read directly from that file (regular file, at most 64 MiB; nothing is executed). Refused when `CI` is set | Local runs with plain `make up`, after redirecting the backend output or saving `docker compose logs --no-color backend > /tmp/api.log` |
 
 With Mailpit the suite also asserts what the log cannot show: the message really arrived over SMTP from a
 client that authenticated (`Username` is non-empty), the sender is the configured `EMAIL_FROM`, the token is in
 the `#token=` fragment and not the query string, the "password was changed" notice arrives and contains no link,
-and an unknown address receives nothing at all. The spec is skipped (and says why) if neither variable is set.
+and an unknown address receives nothing at all. The spec is skipped (and says why) if neither variable is set. The helper never starts a process or builds a command from
+configuration (an earlier version ran a shell command from a variable; that was removed as unsafe, and
+`tests/contract/test_e2e_no_shell_execution.py` keeps it removed). `tests/e2e/specs/mail.unit.spec.ts` (20 tests, no browser or
+stack needed) covers missing or malformed configuration, wrong recipients, malformed messages, missing links, timeouts and
+Mailpit failures.
 
 Verification status of this path: the client logic and the spec were run locally against a small stand-in that
 speaks SMTP with mandatory AUTH and serves the Mailpit REST shapes from its published OpenAPI document (the real
