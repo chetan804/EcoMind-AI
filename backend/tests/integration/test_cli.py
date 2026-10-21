@@ -152,3 +152,132 @@ def test_reference_import_without_the_public_data_clone_explains_itself(
     assert cli.main(["import-reference-series", "--key", "austin"]) == 1
     error = capsys.readouterr().err
     assert "git clone" in error and "msw-src" in error and "Traceback" not in error
+
+
+# -- seed-demo-accounts -------------------------------------------------------------------------
+DEMO_PASSWORD = "Demo-Passphrase-for-tests-2026"
+
+
+def test_seed_demo_accounts_creates_working_verified_accounts_once(
+    cli_env: Engine,
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    make_settings: SettingsFactory,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(cli, "get_settings", lambda: make_settings())
+    monkeypatch.setenv("DEMO_PASSWORD", DEMO_PASSWORD)
+    assert cli.main(["seed-demo-accounts"]) == 0
+    assert "6 created" in capsys.readouterr().out
+
+    expected = {
+        "admin": "administrator",
+        "manager": "manager",
+        "collector": "collector",
+        "operator": "facility_operator",
+        "citizen": "citizen",
+        "verifier": "facility_operator",
+    }
+    for mailbox, role in expected.items():
+        body = login(client, f"{mailbox}@example.org", DEMO_PASSWORD)
+        assert body["user"]["roles"] == [role]
+    with cli_env.connect() as connection:
+        unverified = connection.execute(
+            text("SELECT count(*) FROM users WHERE email_verified_at IS NULL")
+        ).scalar_one()
+        audited = connection.execute(
+            text("SELECT count(*) FROM audit_logs WHERE action = 'users.demo_account_seeded'")
+        ).scalar_one()
+    assert unverified == 0
+    assert audited == 6
+
+    # Idempotent: a second run changes nothing, not even the password.
+    monkeypatch.setenv("DEMO_PASSWORD", "A-different-passphrase-2026-x")
+    assert cli.main(["seed-demo-accounts"]) == 0
+    assert "0 created, 0 password(s) reset, 6 already present" in capsys.readouterr().out
+    assert login(client, "admin@example.org", DEMO_PASSWORD)["access_token"]
+    refused = client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@example.org", "password": "A-different-passphrase-2026-x"},
+    )
+    assert refused.status_code == 401
+
+
+def test_seed_demo_accounts_reset_passwords_changes_the_password_and_signs_out(
+    cli_env: Engine,
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    make_settings: SettingsFactory,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(cli, "get_settings", lambda: make_settings())
+    monkeypatch.setenv("DEMO_PASSWORD", DEMO_PASSWORD)
+    assert cli.main(["seed-demo-accounts"]) == 0
+    login(client, "manager@example.org", DEMO_PASSWORD)
+    live_sessions = text(
+        "SELECT count(*) FROM auth_sessions s JOIN users u ON u.id = s.user_id "
+        "WHERE s.revoked_at IS NULL AND u.email = 'manager@example.org'"
+    )
+    with cli_env.connect() as connection:
+        assert connection.execute(live_sessions).scalar_one() == 1
+
+    monkeypatch.setenv("DEMO_PASSWORD", "A-different-passphrase-2026-x")
+    assert cli.main(["seed-demo-accounts", "--reset-passwords"]) == 0
+    assert "0 created, 6 password(s) reset" in capsys.readouterr().out
+    with cli_env.connect() as connection:
+        assert connection.execute(live_sessions).scalar_one() == 0
+    old = client.post(
+        "/api/v1/auth/login",
+        json={"email": "manager@example.org", "password": DEMO_PASSWORD},
+    )
+    assert old.status_code == 401
+    assert login(client, "manager@example.org", "A-different-passphrase-2026-x")["access_token"]
+
+
+def test_seed_demo_accounts_refused_in_production(
+    cli_env: Engine,
+    monkeypatch: pytest.MonkeyPatch,
+    make_settings: SettingsFactory,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        cli,
+        "get_settings",
+        lambda: make_settings(
+            environment="production",
+            secret_key="a-production-grade-random-secret-value-98765",
+            refresh_cookie_secure=True,
+            cors_allowed_origins="https://app.example.org",
+        ),
+    )
+    monkeypatch.setenv("DEMO_PASSWORD", DEMO_PASSWORD)
+    assert cli.main(["seed-demo-accounts"]) == 1
+    assert "refused" in capsys.readouterr().err
+    with cli_env.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM users")).scalar_one() == 0
+
+
+def test_seed_demo_accounts_rejects_a_weak_password_and_creates_nothing(
+    cli_env: Engine,
+    monkeypatch: pytest.MonkeyPatch,
+    make_settings: SettingsFactory,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(cli, "get_settings", lambda: make_settings())
+    monkeypatch.setenv("DEMO_PASSWORD", "short")
+    assert cli.main(["seed-demo-accounts"]) == 1
+    assert "password policy" in capsys.readouterr().err
+    with cli_env.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM users")).scalar_one() == 0
+
+
+def test_seed_demo_accounts_domain_is_configurable(
+    cli_env: Engine,
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    make_settings: SettingsFactory,
+) -> None:
+    monkeypatch.setattr(cli, "get_settings", lambda: make_settings())
+    monkeypatch.setenv("DEMO_PASSWORD", DEMO_PASSWORD)
+    assert cli.main(["seed-demo-accounts", "--domain", "Demo.Example.org"]) == 0
+    assert login(client, "citizen@demo.example.org", DEMO_PASSWORD)["user"]["roles"] == ["citizen"]

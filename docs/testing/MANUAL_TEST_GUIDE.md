@@ -76,6 +76,10 @@ Use the **same password** for all: `Test-Passphrase-2026!x`.
 | Test Citizen | `citizen.test@example.org` | Citizen (default, nothing to change) |
 | Second Citizen | `citizen2.test@example.org` | Citizen (default) |
 
+**Shortcut for a throw-away test or demo system (not production):** instead of the sign-ups below, run
+`docker compose exec -e DEMO_PASSWORD='<a password you choose, 12+ characters>' backend python -m app.cli seed-demo-accounts`.
+It creates `admin@`, `manager@`, `collector@`, `operator@`, `citizen@` and `verifier@example.org` with their roles, already e-mail verified. Running it again changes nothing; to change the shared password later, run it again with the new `DEMO_PASSWORD` and `--reset-passwords` (the old password stops working and those users are signed out). `--domain <name>` changes the mail domain. It refuses to run when `ENVIRONMENT=production`. Then use those addresses wherever this guide says `*.test@example.org`, and skip to "Give roles" only for any extra role you need. This command was tested by automated tests (5) but not inside Docker.
+
 **Sign-up steps for each:** go to `/sign-up` → fill Full name, Email address, Password (12 characters minimum), Confirm password → `Create account`. You land on the dashboard with "Good morning, <name>".
 
 > Limit: 10 sign-ups per hour per computer. Six is fine.

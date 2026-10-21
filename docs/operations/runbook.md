@@ -85,8 +85,9 @@ Full guide: [`account-recovery.md`](account-recovery.md). Nothing is sent until 
 - **Production:** `EMAIL_BACKEND=smtp` with `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURITY`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM` and `APP_BASE_URL` (the https origin the links point to). Startup refuses an incomplete configuration; the `console` backend is refused in production.
 - **Check:** `GET /api/v1/auth/config` reports `password_reset_available` and `email_verification_available`. When `false`, the pages say so instead of promising a mail.
 - **Daily job:** `python -m app.cli purge-account-tokens` deletes used and expired tokens (audited), e.g. `15 3 * * * cd /app && python -m app.cli purge-account-tokens`.
-- **Support:** `python -m app.cli mark-email-verified --email <address>` confirms an address by hand when a user cannot receive mail (audited). A forgotten password is reset by the user through the e-mail flow; there is deliberately no way for staff to read or set a password.
-- Real SMTP delivery has been tested only against a local fake server. Before enabling it, send a test message through your provider and confirm SPF/DKIM for the `EMAIL_FROM` domain.
+- **Support:** `python -m app.cli mark-email-verified --email <address>` confirms an address by hand when a user cannot receive mail (audited). A forgotten password is reset by the user through the e-mail flow; there is deliberately no way for staff to read or set a real user's password.
+- **Demo accounts (never production):** `DEMO_PASSWORD=… python -m app.cli seed-demo-accounts [--domain d] [--reset-passwords]` creates the six labelled demo sign-ins (idempotent, audited as `users.demo_account_seeded`, refused when `ENVIRONMENT=production`). `--reset-passwords` is the only place an operator sets a password, and only for these accounts.
+- Real SMTP delivery has been tested only against local servers (an in-test protocol server and an independent `aiosmtpd` server with STARTTLS and AUTH), never a real provider. Before enabling it, send a test message through your provider and confirm SPF/DKIM for the `EMAIL_FROM` domain.
 
 ## Help assistant and support desk
 Design: [`../decisions/ADR-0003-retrieval-help-assistant.md`](../decisions/ADR-0003-retrieval-help-assistant.md); API: [`../api/support-api.md`](../api/support-api.md).
