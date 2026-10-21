@@ -18,7 +18,7 @@ const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const ROUTES = [
   '/dashboard', '/classify', '/classify/review', '/forecasts', '/anomalies', '/routes', '/marketplace', '/incidents',
   '/sorting-guide', '/passports', '/recovery', '/rewards', '/reports', '/locations', '/facilities', '/fleet',
-  '/collection', '/analytics', '/notifications', '/settings/system-status',
+  '/collection', '/analytics', '/notifications', '/assistant', '/support', '/settings/system-status',
 ];
 
 async function violations(page: Page, route: string): Promise<string[]> {

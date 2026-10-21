@@ -7,9 +7,11 @@ import {
   Factory,
   FileText,
   Gift,
+  LifeBuoy,
   LayoutDashboard,
   MapPinned,
   LineChart,
+  MessagesSquare,
   QrCode,
   Recycle,
   Route,
@@ -59,6 +61,8 @@ export const primaryNav: NavItem[] = [
   { id: 'recovery', label: 'Recovery', to: '/recovery', icon: Recycle, status: 'available', anyOf: ['circular_economy:read'] },
   { id: 'traceability', label: 'Traceability', to: '/passports', icon: QrCode, status: 'available', anyOf: ['passports:read'] },
   { id: 'rewards', label: 'Rewards', to: '/rewards', icon: Gift, status: 'available', anyOf: ['rewards:read_own', 'rewards:manage'] },
+  { id: 'assistant', label: 'Help assistant', to: '/assistant', icon: MessagesSquare, status: 'available', anyOf: ['support:ask'] },
+  { id: 'support', label: 'Support', to: '/support', icon: LifeBuoy, status: 'available', anyOf: ['support:ask', 'support:manage', 'knowledge:manage'] },
 ];
 
 export const secondaryNav: NavItem[] = [

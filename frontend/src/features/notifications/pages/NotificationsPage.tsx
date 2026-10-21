@@ -94,7 +94,7 @@ export function NotificationsPage() {
                         </p>
                       </div>
                       {!n.read_at && (
-                        <Button variant="ghost" onClick={() => markRead.mutate(n.id)} aria-label={`Mark "${n.title}" as read`}>
+                        <Button variant="ghost" onClick={() => markRead.mutate(n.id)} aria-label={`Mark as read: ${n.title}`}>
                           Mark as read
                         </Button>
                       )}

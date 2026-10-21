@@ -3,7 +3,7 @@
     "slug": "how-to-report-waste",
     "category": "Reporting waste",
     "title": "How do I report waste?",
-    "body": "Open Waste intake records and choose Report waste. Give a short title, say where it is, add a photo if you can, and send it. Each report goes through review: submitted, under review, then verified or rejected, and finally closed. You can follow its status on the same screen.",
+    "body": "Open Reports (the Waste intake records screen) and choose Report waste. Give a short title, say where it is, add a photo if you can, and send it. Each report goes through review: submitted, under review, then verified or rejected, and finally closed. You can follow its status on the same screen.",
     "source": "platform-help",
     "published": true,
     "keywords": "rubbish trash garbage litter dumped submit send new complain"
@@ -21,7 +21,7 @@
     "slug": "report-photo",
     "category": "Reporting waste",
     "title": "Can I add a photo to a waste report?",
-    "body": "Yes. Choose a photo when you report waste. Use a clear photo of the waste itself and avoid people, faces and number plates. Large files are refused with a message that says the size limit.",
+    "body": "Yes. Choose a photo when you report waste. Use a clear photo of the waste itself and avoid people, faces and number plates. Photos can be JPEG, PNG or WebP, and location metadata is removed. A file over the size limit is refused with a message that names the limit.",
     "source": "platform-help",
     "published": true,
     "keywords": "picture image upload attach file size limit megabytes camera"
@@ -30,10 +30,10 @@
     "slug": "classify-item",
     "category": "Reporting waste",
     "title": "How does the waste classification screen work?",
-    "body": "The Classify an item screen suggests a material type for a photo. It is a suggestion, not a decision: when the model is unsure, the photo goes to a person for review. The screen says so plainly when no model has been activated by the administrators, and then it offers no classification.",
+    "body": "The Classification screen (AI waste classification) suggests a material type for a photo. It is a suggestion, not a decision: when the model is unsure, the photo goes to a person for review. The screen says so plainly when no model has been activated by the administrators, and then it offers no classification.",
     "source": "platform-help",
     "published": true,
-    "keywords": "identify recognise recognize detect scan material type photo suggestion model machine learning AI camera"
+    "keywords": "classify classifier identify recognise recognize detect scan material type photo suggestion model machine learning AI camera"
   },
   {
     "slug": "missed-collection",
@@ -84,7 +84,7 @@
     "slug": "redeem-reward",
     "category": "Rewards",
     "title": "How do I redeem my points for a reward?",
-    "body": "Open Rewards, look through the catalogue and press Redeem on an item you can afford. You receive a claim code made of two groups of five characters. Show the code to the staff member who hands the reward over. The platform itself does not ship or pay anything.",
+    "body": "Open Rewards, choose the Redeem tab, look through the catalogue and press Redeem on an item you can afford. You receive a claim code made of two groups of five characters. Show the code to the staff member who hands the reward over. The platform itself does not ship or pay anything.",
     "source": "platform-help",
     "published": true,
     "keywords": "spend use exchange claim code voucher catalogue gift prize"
@@ -201,7 +201,7 @@
     "slug": "sorting-guide",
     "category": "Sorting guide",
     "title": "Where do I find out how to sort or dispose of a material?",
-    "body": "Open the Sorting guide. It lists materials with disposal instructions that your operators entered, each with its source or a note that no source is cited. If a material is not listed, the assistant will say so instead of guessing.",
+    "body": "Open Guide, the Material sorting guide. It lists materials with disposal instructions that your operators entered, each with its source or a note that no source is cited. If a material is not listed, the assistant will say so instead of guessing.",
     "source": "platform-help",
     "published": true,
     "keywords": "sort separate recycle recycling dispose disposal throw battery batteries glass plastic paper metal bin which"
@@ -237,7 +237,7 @@
     "slug": "route-plans",
     "category": "Operations",
     "title": "How are route plans ordered?",
-    "body": "A route plan orders the stops by straight-line distance. It stores no arrival time. When your operator has enabled a road routing service, the road route can be fetched for a plan on demand; it is not stored and the order is not recomputed for roads.",
+    "body": "A route plan is a proposed order of stops that keeps the straight-line distance for one vehicle short. It stays a draft until it is published and it does not change the collection tasks. It does not predict arrival times. When your operator has enabled a road routing service, the road route can be fetched for a plan on demand; it is not stored and the order is not recomputed for roads.",
     "source": "platform-help",
     "published": true,
     "keywords": "route stops order plan sequence distance arrival time eta road navigation"
@@ -273,7 +273,7 @@
     "slug": "contact-support",
     "category": "Help",
     "title": "How do I contact the support team?",
-    "body": "Ask the assistant first. If it cannot help, press Send to support, or open Support and write a request. You can choose to share the assistant conversation with the team, otherwise they do not see it. You are notified when staff reply, and you can close a request yourself.",
+    "body": "Ask the assistant first. If it cannot help, press Send this to the support team under its answer, or open Support and choose New request. You can choose to share the assistant conversation with the team, otherwise they do not see it. You are notified when staff reply, and you can close a request yourself.",
     "source": "platform-help",
     "published": true,
     "keywords": "support team human person agent staff help desk ticket request talk contact email phone"

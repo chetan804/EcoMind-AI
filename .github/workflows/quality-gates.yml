@@ -105,6 +105,8 @@ jobs:
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Smoke test
         run: python tests/smoke/smoke.py --api http://localhost:8000 --web http://localhost:5173 --wait 60
+      - name: Load the starter help articles for the support spec
+        run: docker compose exec -T backend python -m app.cli seed-support-knowledge
       - name: Create a throw-away administrator for the core-workflow spec
         run: |
           password="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"

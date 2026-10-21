@@ -2,6 +2,10 @@
  "note": "Authored by the maintainers after the knowledge base was written, before the retrieval threshold was measured. It is small and not independent; the figures it yields are regression guards, not a claim about real users.",
  "in_scope": [
   {
+   "question": "How do I redeem a reward?",
+   "expected_slug": "redeem-reward"
+  },
+  {
    "question": "how do I report waste",
    "expected_slug": "how-to-report-waste"
   },

@@ -1,0 +1,23 @@
+.chat { display: grid; gap: var(--space-4); max-width: 880px; }
+.chat__log { display: grid; gap: var(--space-3); min-height: 240px; max-height: 60vh; overflow-y: auto; padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg, 12px); align-content: start; }
+.chat__empty { display: grid; gap: var(--space-3); justify-items: start; color: var(--color-text-secondary); }
+.chat__starters { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.chat__msg { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: 10px; max-width: 92%; justify-self: start; }
+.chat__msg--user { justify-self: end; background: var(--color-surface); border-color: var(--color-border-strong); }
+.chat__who { margin: 0; font-size: var(--font-size-sm, 0.875rem); color: var(--color-text-secondary); font-weight: var(--font-weight-semibold); }
+/* Replies are plain text; keep their line breaks. */
+.chat__text, .ticket__body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat__sources { font-size: var(--font-size-sm, 0.875rem); color: var(--color-text-secondary); }
+.chat__sources-title { margin: 0 0 var(--space-1); }
+.chat__sources ul { margin: 0; padding-left: var(--space-5, 1.25rem); }
+.chat__rate { display: inline-flex; gap: var(--space-1); }
+.chat--transcript { margin: 0; padding: 0; list-style: none; gap: var(--space-2); }
+.chat__form { display: grid; gap: var(--space-3); }
+.ticket__meta { margin: 0; color: var(--color-text-secondary); }
+.ticket__heading { margin: 0; font-size: var(--font-size-md, 1rem); }
+.ticket__replies { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.ticket__reply { display: grid; gap: var(--space-1); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: 8px; }
+.ticket__reply--staff { background: var(--color-surface-raised); }
+.ticket__reply-head { margin: 0; }
+.ticket__chat summary { cursor: pointer; font-weight: var(--font-weight-semibold); }
+.article-body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -51,10 +51,10 @@ describe('notifications page', () => {
     const first = (await screen.findByText('Your pickup was collected')).closest('li');
     expect(first).not.toBeNull();
     expect(within(first as HTMLElement).getByText('New')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Mark "Your pickup was collected" as read' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Mark as read: Your pickup was collected' }));
     await vi.waitFor(() => expect(screen.queryByText('New')).not.toBeInTheDocument());
     expect(api.calls.filter((c) => c.key.startsWith('POST'))).toHaveLength(1);
-    expect(screen.queryByRole('button', { name: /Mark ".*" as read/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Mark as read:/ })).not.toBeInTheDocument();
   });
 
   it('sends filters to the server and shows a filtered empty state', async () => {
