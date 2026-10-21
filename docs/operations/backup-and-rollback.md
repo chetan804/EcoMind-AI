@@ -43,7 +43,14 @@ pg_restore --no-owner --exit-on-error -d ecomind_restore ecomind-<stamp>.dump
 ```
 
 Drill result: dump 241,782 bytes in 0.08 s, restore in 0.29 s with `--exit-on-error`; all 35 tables had
-identical row counts and `alembic_version` was `0009` in both databases. Then, before using the restored
+identical row counts and `alembic_version` was `0009` in both databases.
+
+Re-drilled on 2026-10-21 against the local development database at Alembic head `0017` (PostgreSQL 16.2, 47
+tables, 809 rows): dump 251,682 bytes in 0.16 s, restore in 0.68 s with `--exit-on-error`, row counts of all 47
+tables, `alembic_version` and the 5 append-only triggers identical in both databases; `DELETE FROM audit_logs`
+on the restored copy was refused by the trigger; `alembic downgrade 0016`, `upgrade head` and `alembic check`
+all succeeded on the restored copy. Still a development-sandbox drill with a small seeded database, not a
+production restore test. Then, before using the restored
 database, point the backend at it and check `GET /ready`.
 
 ## Rollback of a release

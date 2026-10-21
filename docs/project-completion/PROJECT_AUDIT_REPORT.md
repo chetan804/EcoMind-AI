@@ -7,6 +7,8 @@
 | Audited by | an automated coding agent, working only inside a sandbox copy of the repository |
 | Method | read the code and documents, ran every automated test and security scan, rebuilt the database from nothing, started the real API and web app, and drove the screens with a headless browser for all five roles |
 
+> **Snapshot note (2026-10-21, later the same day).** This report describes the code as audited, at migration 0016. Later changes on the `arena/174cfaa2-ecomind-ai` branch (migration 0017 enforcing append-only audit and status history in the database, the waste-report bbox filter, a safer end-to-end mail helper) are recorded in [REQUIREMENTS_CLOSURE_REPORT.md](REQUIREMENTS_CLOSURE_REPORT.md), not here. Counts below are those of the audit.
+
 **How to read this report.** Every claim is marked **Verified** (I ran it and saw the result in this audit), **Proven by CI** (GitHub Actions ran it on an earlier commit; see section 9), or **Not verified** (nobody has shown it works). Nothing is rounded up. If something is missing, it says so.
 
 ---
