@@ -17,12 +17,18 @@ export interface MenuItem {
 /** Dropdown menu button (WAI-ARIA menu button pattern): arrows, Home/End, Escape, outside click. */
 export function Menu({
   label,
+  triggerText,
   trigger,
   items,
   align = 'start',
 }: {
-  /** Accessible name of the trigger button. */
+  /** Name of the menu. Also the trigger's accessible name unless `triggerText` is given. */
   label: string;
+  /**
+   * Text the trigger shows. The accessible name then starts with it (WCAG 2.5.3 Label in Name,
+   * so voice-control users can say what they see) and continues with `label`.
+   */
+  triggerText?: string;
   /** Visible trigger content (an avatar, text, ...). */
   trigger: ReactNode;
   items: MenuItem[];
@@ -98,7 +104,7 @@ export function Menu({
         ref={triggerRef}
         type="button"
         className="menu__trigger"
-        aria-label={label}
+        aria-label={triggerText ? `${triggerText} ${label}` : label}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? id : undefined}

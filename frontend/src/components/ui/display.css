@@ -1,9 +1,10 @@
 .progress { display: grid; gap: var(--space-2); }
 .progress__track { height: 12px; border-radius: var(--radius-pill); background: var(--color-surface-raised); overflow: hidden; }
-.progress__fill { height: 100%; border-radius: inherit; background: var(--color-teal); transition: width var(--duration-base) var(--ease-standard); }
+.progress__fill { height: 100%; border-radius: inherit; background: var(--color-accent-text); transition: width var(--duration-base) var(--ease-standard); }
 .progress__fill--warning { background: var(--color-warning); }
 .progress__fill--danger { background: var(--color-danger); }
 
+.avatar[data-initials]::before { content: attr(data-initials); }
 .avatar {
   display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
   background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); color: var(--color-text-secondary);

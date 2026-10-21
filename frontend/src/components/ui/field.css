@@ -8,7 +8,7 @@
   width: 100%;
   min-height: var(--control-height);
   padding: 0 var(--space-4);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-control-border);
   border-radius: var(--radius-md);
   background: var(--color-field);
   color: var(--color-text);
@@ -16,7 +16,7 @@
 }
 .control--lg { min-height: var(--control-height-lg); }
 .control::placeholder { color: var(--color-text-muted); }
-.control:hover { border-color: var(--color-teal); }
+.control:hover { border-color: var(--color-accent-text); }
 .control:focus-visible { outline-offset: 0; border-color: var(--color-focus); }
 .control[aria-invalid='true'] { border-color: var(--color-danger); }
 .control:disabled { opacity: 0.55; cursor: not-allowed; }
@@ -37,7 +37,7 @@ textarea.control { padding: var(--space-3) var(--space-4); min-height: 96px; res
 .choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .choice__box {
   width: 20px; height: 20px; flex: none; display: grid; place-items: center;
-  border: 1.5px solid var(--color-border-strong); background: var(--color-field);
+  border: 1.5px solid var(--color-control-border); background: var(--color-field);
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 .choice--checkbox .choice__box { border-radius: 6px; }
@@ -54,7 +54,7 @@ textarea.control { padding: var(--space-3) var(--space-4); min-height: 96px; res
 
 .switch__track {
   width: 40px; height: 24px; flex: none; border-radius: var(--radius-pill); padding: 2px;
-  background: var(--color-border-strong); transition: background-color var(--duration-fast) var(--ease-standard);
+  background: var(--color-control-border); transition: background-color var(--duration-fast) var(--ease-standard);
 }
 .switch__thumb { display: block; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: translate var(--duration-fast) var(--ease-standard); }
 .choice input:checked + .switch__track { background: var(--color-nav-active); }

@@ -19,7 +19,7 @@
 .map-pin--success { --pin: #34d399; }
 .map-pin--info { --pin: #38a8f5; }
 .map-pin--warning { --pin: #f5b83d; }
-.map-pin--danger { --pin: #f24d54; color: #fff; }
+.map-pin--danger { --pin: #c8252c; color: #fff; }
 .map-pin--neutral { --pin: #a8b6bd; }
 .map-pin--simulated { --pin: #b794f6; border-style: dashed; }
 .map-pin--selected { outline: 3px solid #fff; transform: scale(1.15); }

@@ -57,7 +57,7 @@
 }
 
 .btn--danger {
-  background: var(--color-danger);
+  background: var(--color-danger-solid);
   color: #fff;
 }
 

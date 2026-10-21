@@ -19,7 +19,7 @@
 .auth-form > .btn, .auth-social .btn { min-height: 66px; font-size: var(--text-lg); font-weight: var(--font-weight-semibold); }
 .auth-form .field__hint, .auth-form .field__error { font-size: var(--text-base); }
 .auth-form__aside { display: flex; justify-content: flex-end; margin: calc(-1 * var(--space-3)) 0; }
-.auth-form__aside .btn { min-height: var(--touch-target); padding: 0 var(--space-2); color: var(--color-teal); font-weight: var(--font-weight-semibold); }
+.auth-form__aside .btn { min-height: var(--touch-target); padding: 0 var(--space-2); color: var(--color-accent-text); font-weight: var(--font-weight-semibold); }
 .auth-divider { display: flex; align-items: center; gap: var(--space-4); margin: var(--space-6) 0 var(--space-4); color: var(--color-text-muted); font-size: var(--text-md); }
 .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--color-divider); }
 .auth-social { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }

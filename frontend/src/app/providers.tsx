@@ -1,5 +1,6 @@
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 import { getSessionState, subscribeToSession } from '@/services/session/session-store';
 import { createQueryClient } from './query-client';
 
@@ -25,7 +26,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ClearCacheOnSignOut />
-      {children}
+      <ToastProvider>{children}</ToastProvider>
     </QueryClientProvider>
   );
 }

@@ -87,6 +87,7 @@
   --color-success: #34d399;
   --color-warning: #f5b83d;
   --color-danger: #f24d54; /* sampled: #f24d54 */
+  --color-danger-solid: #c8252c; /* filled danger surfaces carrying white text (5.6:1; --color-danger gives 3.5:1) */
   --color-info: #38a8f5;
 }
 
@@ -105,8 +106,11 @@
 
   --color-border: #17313b;
   --color-border-strong: #26485a;
+  /* Boundary of form controls: 3:1 or more against every surface (WCAG 1.4.11), unlike the decorative borders. */
+  --color-control-border: #6f8e9e;
   --color-divider: rgba(255, 255, 255, 0.07);
 
+  --color-accent-text: #2fe3b0; /* links and accent text */
   --color-text: #f2f7f8;
   --color-text-secondary: #b4c3ca;
   --color-text-muted: #86a0ab; /* contrast 4.9-6.4:1 on all dark surfaces (computed) */
@@ -132,8 +136,8 @@
 
 /*
  * ---- Light theme: content areas of the Forecasting, Anomaly, Route Optimization references ----
- * Chosen from the references' content areas (05-22 are light); contrast was not audited for every
- * screen. Users pick it from the account menu (see services/theme).
+ * Chosen from the references' content areas (05-22 are light). Contrast of every token pair is
+ * checked by scripts/quality/check_contrast.py (run in CI). Users pick it from the account menu (see services/theme).
  */
 [data-theme='light'] {
   color-scheme: light;
@@ -148,6 +152,8 @@
 
   --color-border: #e0e8ee;
   --color-border-strong: #c7d3dc;
+  --color-control-border: #6b7f8c;
+  --color-accent-text: #0b6b46;
   --color-divider: rgba(6, 25, 38, 0.08);
 
   --color-text: #0b1f2e;
@@ -182,6 +188,8 @@
   --color-text-muted: #86a0ab;
   --color-border: #17313b;
   --color-border-strong: #26485a;
+  --color-control-border: #6f8e9e;
+  --color-accent-text: #2fe3b0;
   --color-divider: rgba(255, 255, 255, 0.07);
   --color-nav-active: #047a56;
   --color-nav-hover: rgba(255, 255, 255, 0.06);

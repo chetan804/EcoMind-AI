@@ -215,6 +215,7 @@ describe('rewards catalogue (staff)', () => {
     await userEvent.click(within(hand).getByRole('button', { name: 'Mark as handed over' }));
     await waitFor(() => expect(api.calls.some((c) => c.key.endsWith('/fulfil'))).toBe(true));
     expect(api.calls.find((c) => c.key.endsWith('/fulfil'))?.body).toEqual({ note: 'At the depot' });
+    expect(await screen.findByText('Marked as handed over')).toBeInTheDocument(); // toast
   });
 
   it('filters the queue by status and claim code', async () => {

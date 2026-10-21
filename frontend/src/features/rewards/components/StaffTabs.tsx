@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Gift } from 'lucide-react';
 import { Alert } from '@/components/feedback/Alert';
+import { useToast } from '@/components/feedback/toast-context';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { QueryBoundary } from '@/components/feedback/QueryBoundary';
 import { useFields } from '@/components/forms/useFields';
@@ -37,6 +38,7 @@ export function ItemsTab() {
   const [editing, setEditing] = useState<RewardItem | 'new' | null>(null);
   const query = useItems(pageNo);
   const update = useUpdateItem();
+  const toast = useToast();
   return (
     <div className="stack stack--tight">
       <p className="muted">The platform ships no rewards. Add what your organisation actually offers; citizens can redeem only active, unexpired items. Items are never deleted: switch one off instead.</p>
@@ -74,7 +76,7 @@ export function ItemsTab() {
                       <td>
                         <div className="listing__actions">
                           <Button variant="secondary" onClick={() => setEditing(i)} aria-label={`Edit ${i.name}`}>Edit</Button>
-                          <Button variant="secondary" loading={update.isPending && update.variables?.id === i.id} onClick={() => update.mutate({ id: i.id, body: { active: !i.active } })} aria-label={`${i.active ? 'Switch off' : 'Switch on'} ${i.name}`}>
+                          <Button variant="secondary" loading={update.isPending && update.variables?.id === i.id} onClick={() => update.mutate({ id: i.id, body: { active: !i.active } }, { onSuccess: () => toast({ tone: 'success', title: i.active ? 'Reward switched off' : 'Reward switched on', description: i.name }) })} aria-label={`${i.active ? 'Switch off' : 'Switch on'} ${i.name}`}>
                             {i.active ? 'Switch off' : 'Switch on'}
                           </Button>
                         </div>
@@ -97,6 +99,7 @@ function ItemDialog({ item, onClose }: { item: RewardItem | null; onClose: () =>
   const create = useCreateItem();
   const update = useUpdateItem();
   const mutation = item ? update : create;
+  const toast = useToast();
   const { values, bind } = useFields({
     name: item?.name ?? '',
     description: item?.description ?? '',
@@ -119,7 +122,11 @@ function ItemDialog({ item, onClose }: { item: RewardItem | null; onClose: () =>
     max_per_user: wholeOrNull(values.max_per_user),
     valid_until: values.valid_until ? new Date(values.valid_until).toISOString() : null,
   };
-  const submit = () => (item ? update.mutate({ id: item.id, body }, { onSuccess: onClose }) : create.mutate({ ...body, active: true }, { onSuccess: onClose }));
+  const done = (title: string) => () => {
+    toast({ tone: 'success', title, description: body.name });
+    onClose();
+  };
+  const submit = () => (item ? update.mutate({ id: item.id, body }, { onSuccess: done('Reward saved') }) : create.mutate({ ...body, active: true }, { onSuccess: done('Reward added') }));
   return (
     <Dialog
       open
@@ -153,6 +160,7 @@ export function QueueTab() {
   const query = useRedemptionQueue(filters);
   const fulfil = useFulfil();
   const cancel = useCancelRedemption();
+  const toast = useToast();
   const set = (patch: Partial<typeof filters>) => setFilters((f) => ({ ...f, ...patch, page: 1 }));
   return (
     <div className="stack stack--tight">
@@ -224,7 +232,7 @@ export function QueueTab() {
           submitLabel="Mark as handed over"
           pending={fulfil.isPending}
           error={fulfil.error}
-          onSubmit={(note) => fulfil.mutate({ id: fulfilling.id, note: note || undefined }, { onSuccess: () => setFulfilling(null) })}
+          onSubmit={(note) => fulfil.mutate({ id: fulfilling.id, note: note || undefined }, { onSuccess: () => { setFulfilling(null); toast({ tone: 'success', title: 'Marked as handed over', description: fulfilling.code }); } })}
           onClose={() => { setFulfilling(null); fulfil.reset(); }}
         />
       )}
@@ -236,7 +244,7 @@ export function QueueTab() {
           destructive
           pending={cancel.isPending}
           error={cancel.error}
-          onSubmit={(reason) => cancel.mutate({ id: cancelling.id, reason }, { onSuccess: () => setCancelling(null) })}
+          onSubmit={(reason) => cancel.mutate({ id: cancelling.id, reason }, { onSuccess: () => { setCancelling(null); toast({ tone: 'success', title: 'Redemption cancelled', description: `${formatNumber(cancelling.points_spent)} points returned` }); } })}
           onClose={() => { setCancelling(null); cancel.reset(); }}
         />
       )}

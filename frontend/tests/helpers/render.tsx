@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { RouterProvider } from 'react-router/dom';
 import { createTestRouter } from '@/app/router';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 import type { SessionUser } from '@/services/session';
 import { testUser } from './session';
 
@@ -17,7 +18,9 @@ export function renderAt(path: string): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <RouterProvider router={createTestRouter([path])} />
+      <ToastProvider>
+        <RouterProvider router={createTestRouter([path])} />
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }
