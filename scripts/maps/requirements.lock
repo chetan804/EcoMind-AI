@@ -1,0 +1,7 @@
+# Pinned, hash-verified dependency of scripts/maps/mbtiles_to_pmtiles.py (BSD-3-Clause, no
+# dependencies of its own). Regenerate: echo pmtiles==X > r.in; pip-compile --generate-hashes r.in
+# Install: pip install --require-hashes -r scripts/maps/requirements.lock
+pmtiles==3.8.1 \
+    --hash=sha256:0f594a61b37fca039f06162428781f76a4233f5beea94444702f0dc41f20f007 \
+    --hash=sha256:718561bb21f8c7dd5464fdcc3b9ad0e7b1c917be60ddfdf9a5ab56b8c67f7bde
+    # via -r r.in

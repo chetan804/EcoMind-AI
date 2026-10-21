@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Link, NavLink } from 'react-router';
-import { X } from 'lucide-react';
+import { Link, NavLink, useNavigate } from 'react-router';
+import { LogOut, X } from 'lucide-react';
 import { cx } from '@/utils/cx';
 import { Brand } from '@/components/layout/BrandMark';
 import { IconButton } from '@/components/ui/IconButton';
@@ -29,7 +29,8 @@ function NavEntry({ item }: { item: NavItem }) {
  * (`open`/`onClose`); while closed it is `visibility: hidden`, so it is not focusable.
  */
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { can } = useAuth();
+  const { can, status, signOut } = useAuth();
+  const navigate = useNavigate();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -61,6 +62,16 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         {secondaryNav.map((item) => (
           <NavEntry key={item.id} item={item} />
         ))}
+        {status === 'authenticated' && (
+          <button
+            type="button"
+            className="nav-link"
+            onClick={() => void signOut().then(() => navigate('/sign-in', { replace: true }))}
+          >
+            <LogOut size={20} aria-hidden="true" />
+            Sign out
+          </button>
+        )}
       </nav>
     </aside>
   );

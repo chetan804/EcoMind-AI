@@ -58,6 +58,11 @@ export function OfflineMapPanel({ label, markers, paths = [], legend = [], heigh
           No map tile file is installed on this server, so locations and routes are drawn on a plain background without streets. An administrator can add a regional tile file (docs/maps/OFFLINE_MAPS.md).
         </Alert>
       )}
+      {maps.status === 'ready' && maps.basemap === 'unsupported' && !empty && (
+        <Alert tone="warning" title="Base map file not recognised">
+          The installed tile file does not use a supported layout (Protomaps or OpenMapTiles), so locations and routes are drawn on a plain background. See docs/maps/OFFLINE_MAPS.md.
+        </Alert>
+      )}
       <MapLegend label={label} legend={legend} />
       <MapDetail selected={selected} extra={detailExtra} />
       {footer}

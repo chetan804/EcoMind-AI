@@ -7,7 +7,7 @@ VENV_BIN := $(abspath $(BACKEND_VENV))/bin
 TEST_DATABASE_URL ?= postgresql+psycopg://ecomind:$(shell grep -E '^POSTGRES_PASSWORD=' .env 2>/dev/null | cut -d= -f2)@localhost:5432/postgres
 
 .DEFAULT_GOAL := help
-.PHONY: help env setup install-backend install-backend-locked install-frontend lock-backend check-locks audit install-e2e db-up up down logs migrate \
+.PHONY: help env demo-mail-env demo-mail-up demo-mail-down setup install-backend install-backend-locked install-frontend lock-backend check-locks audit install-e2e db-up up down logs migrate \
         migration backend-dev frontend-dev lint typecheck test test-backend test-backend-unit \
         test-frontend test-ml test-contract test-e2e check compose-config build-frontend data-dictionary er-diagram
 
@@ -48,6 +48,15 @@ db-up: ## Start only PostgreSQL (docker compose)
 
 up: ## Start the full stack: db -> migrations -> backend -> frontend
 	docker compose up -d --build --wait
+
+demo-mail-env: ## Create .env.demo-mail (demo SMTP credentials for the Mailpit catcher; --rotate via the script)
+	$(PYTHON) scripts/setup/init_demo_mail.py
+
+demo-mail-up: demo-mail-env ## Start the stack with the Mailpit demo inbox (http://localhost:8025)
+	docker compose --env-file .env --env-file .env.demo-mail --profile demo-mail up -d --build --wait
+
+demo-mail-down: ## Stop the stack including the Mailpit demo inbox
+	docker compose --env-file .env --env-file .env.demo-mail --profile demo-mail down
 
 down: ## Stop the stack (keeps the database volume)
 	docker compose down

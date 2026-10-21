@@ -12,13 +12,15 @@ import type * as PMTilesModule from 'pmtiles';
 import { config } from '@/app/config';
 import type { MapsFailureReason } from '../types';
 import { basemapStyle, plainStyle } from './offline-style';
+import { openMapTilesStyle } from './openmaptiles-style';
+import { detectTileSchema, openMapTilesAttribution } from './tile-schema';
 
 export const BASEMAP_CHECK_TIMEOUT_MS = 8_000;
 
 export type OfflineMapsState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; lib: typeof MapLibre; style: MapLibre.StyleSpecification; basemap: 'installed' | 'missing' }
+  | { status: 'ready'; lib: typeof MapLibre; style: MapLibre.StyleSpecification; basemap: 'installed' | 'missing' | 'unsupported' }
   | { status: 'failed'; reason: Extract<MapsFailureReason, 'no_webgl' | 'load_error'> };
 
 let state: OfflineMapsState = { status: 'idle' };
@@ -42,17 +44,37 @@ export function webglAvailable(): boolean {
   }
 }
 
-async function tilesInstalled(PMTiles: typeof PMTilesModule.PMTiles, url: string): Promise<boolean> {
+type Inspection = { installed: false } | { installed: true; metadata: unknown };
+
+/** Reads the tile file header (it exists) and metadata (which layout it uses). */
+async function inspectTiles(PMTiles: typeof PMTilesModule.PMTiles, url: string): Promise<Inspection> {
   const source = new PMTiles(new URL(url, window.location.origin).href);
   const timeout = new Promise<never>((_, reject) => {
     window.setTimeout(() => reject(new Error('timeout')), BASEMAP_CHECK_TIMEOUT_MS);
   });
   try {
     await Promise.race([source.getHeader(), timeout]);
-    return true;
   } catch {
-    return false;
+    return { installed: false };
   }
+  let metadata: unknown;
+  try {
+    metadata = await Promise.race([source.getMetadata(), timeout]);
+  } catch {
+    metadata = undefined; // unreadable metadata: treated as the documented default layout
+  }
+  return { installed: true, metadata };
+}
+
+function styleFor(inspection: Inspection): { style: MapLibre.StyleSpecification; basemap: 'installed' | 'missing' | 'unsupported' } {
+  if (!inspection.installed) return { style: plainStyle(), basemap: 'missing' };
+  const schema = detectTileSchema(inspection.metadata);
+  if (schema === 'unknown') return { style: plainStyle(), basemap: 'unsupported' };
+  if (schema === 'openmaptiles') {
+    const attribution = openMapTilesAttribution(inspection.metadata);
+    return { style: openMapTilesStyle(config.mapTilesUrl, config.mapAssetsPath, attribution), basemap: 'installed' };
+  }
+  return { style: basemapStyle(config.mapTilesUrl, config.mapAssetsPath), basemap: 'installed' };
 }
 
 async function load(): Promise<void> {
@@ -74,13 +96,8 @@ async function load(): Promise<void> {
       lib.addProtocol('pmtiles', new pmtiles.Protocol().tile);
       protocolAdded = true;
     }
-    const installed = await tilesInstalled(pmtiles.PMTiles, config.mapTilesUrl);
-    set({
-      status: 'ready',
-      lib,
-      basemap: installed ? 'installed' : 'missing',
-      style: installed ? basemapStyle(config.mapTilesUrl, config.mapAssetsPath) : plainStyle(),
-    });
+    const { style, basemap } = styleFor(await inspectTiles(pmtiles.PMTiles, config.mapTilesUrl));
+    set({ status: 'ready', lib, basemap, style });
   } catch {
     set({ status: 'failed', reason: 'load_error' });
   }

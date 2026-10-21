@@ -85,5 +85,11 @@ export default defineConfig({
     include: ['tests/**/*.test.{ts,tsx}'],
     css: false,
     testTimeout: 15000,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.d.ts', 'src/main.tsx'],
+      reporter: ['text-summary', 'json-summary'],
+    },
   },
 });

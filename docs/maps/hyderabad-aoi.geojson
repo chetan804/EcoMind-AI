@@ -1,0 +1,16 @@
+{
+  "type": "FeatureCollection",
+  "name": "Hyderabad area of interest (approximate)",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "note": "Approximate rectangle around Hyderabad for choosing a regional tile dataset. It is NOT an official administrative boundary. Rebuilt from the bounding box 78.2,17.2,78.65,17.6 supplied by the project owner."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[78.2, 17.2], [78.65, 17.2], [78.65, 17.6], [78.2, 17.6], [78.2, 17.2]]]
+      }
+    }
+  ]
+}
