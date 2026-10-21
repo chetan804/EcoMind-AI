@@ -13,16 +13,18 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Where the project stands (branch `arena/cb4875bc-ecomind-ai`, started from `main` at `4b805ec`)
+## 1. Where the project stands (branch `arena/34eb0c5c-ecomind-ai`, draft PR #12, started from `main` at `8ebe716`)
 
-`main` is at `4b805ec` (PR #10 merged: Google Maps integration and vehicle tracking, master prompt section 27). This branch
-makes the **offline OpenStreetMap map the default (no key)**, adds an **optional OSRM routing adapter** and records the **TACO licence audit** (Phase I below). The earlier branch (`arena/483a088d-ecomind-ai`, PR #10)
-added **Google Maps integration and vehicle tracking**. Alembic head is `0011`
-(`vehicle_location_events`); 42 permissions (new: `fleet:track`, `fleet:simulate`); about 125 API operations.
+`main` is at `8ebe716` (PR #11 merged: offline map, optional OSRM, TACO audit). This branch carries the five production-hardening
+steps (Phase J below): supply chain and CI, account recovery, marketplace completion, reward redemption, accessibility audit, plus
+three defects found on the way. Alembic head is `0014` (0012 account tokens, 0013 marketplace, 0014 reward catalogue and redemptions);
+43 permissions (new: `rewards:redeem`). **Nothing is deployed and the branch is not merged.**
+
+The sections below this one that describe "this branch" in earlier phases (B to I) are history of work that is already on `main`.
 
 **Baseline at the start of this branch (before any change, same sandbox):** backend 524 passed / 1 skipped, vitest 220 passed, `tsc` clean.
 
-Latest local results on this branch (run in this sandbox; remote CI is reported separately in the verification log):
+Local results at the end of Phase I (the state of `main` at `8ebe716`; Phase J results are listed under that phase):
 
 | Suite | Result |
 |---|---|
@@ -279,3 +281,24 @@ Production-grade, licence-clean choices (decision: `docs/decisions/ADR-0002-opti
 | Dataset policy | RealWaste (NC) and TrashBox (no licence) are not used for any released model; the only model remains the TrashNet candidate (non-default) | `datasets/README.md`, manifests |
 
 Remote CI for this branch: not yet checked at the time of writing (see the verification log of the pull request).
+
+### Phase J: production hardening, steps 1 to 5 (branch `arena/34eb0c5c-ecomind-ai`, PR #12)
+
+| Step | What exists | Evidence (local, this sandbox) |
+|---|---|---|
+| 1 Supply chain and CI | Actions pinned by commit SHA, runners pinned to `ubuntu-24.04`, hash-locked `backend/requirements.lock`, `backend/requirements-dev.lock`, `ml/requirements-dev.lock` (`scripts/dependencies/lock_backend.sh [--check]`), `scripts/security/run_audits.sh`, workflows `security.yml` and `codeql.yml`, `dependabot.yml`, `docs/operations/dependency-management.md` | `lock_backend.sh --check`, `run_audits.sh` clean; CI green on `455deb4` |
+| 2 Account recovery | Password reset and e-mail verification (`/auth/password-reset/*`, `/auth/email-verification/*`, `GET /auth/config`), console/SMTP e-mail backends, migration 0012, CLI `purge-account-tokens` / `mark-email-verified`, three public pages, `docs/operations/account-recovery.md` | backend tests, vitest, e2e `account-recovery.spec.ts`; **no real SMTP delivery tried** |
+| 3 Marketplace | Listing expiry (`MARKETPLACE_LISTING_DAYS`), renew, closing outcome, up to four re-encoded photos, CLI `expire-marketplace-listings`, migration 0013, `docs/api/marketplace-api.md` | 26 backend tests plus 5 mutation checks; 14 frontend tests plus 4 mutation checks; e2e with real PNGs |
+| 4 Rewards | Staff-entered catalogue, idempotent redemption against a claim code, hand-over, cancel with refund, migration 0014, `docs/api/rewards-api.md`, UI | `test_rewards_catalogue.py` 13 tests plus mutation checks; e2e `rewards-redemption.spec.ts` |
+| 5 Accessibility | `scripts/quality/check_contrast.py` (CI step), token fixes (`--color-control-border`, `--color-danger-solid`, `--color-accent-text`, icon text tokens), `ToastProvider` mounted, axe e2e on 20 routes in both themes | one real axe finding (WCAG 2.5.3 on the user-menu trigger) fixed; coverage limits are in `LIMITATIONS.md` |
+
+Defects found by checking, not by being told:
+
+| Defect | Cause and fix |
+|---|---|
+| Tracking `latest_per_vehicle` used `sqlalchemy.dialects.postgresql.distinct_on`, which exists only in SQLAlchemy 2.1+, while `pyproject.toml` allows `>=2.0,<3` | Rewritten with `row_number()` ordered by `recorded_at desc, received_at desc, id desc` (the `id` tie-break is new; a test fails without it). 43 tracking tests pass on SQLAlchemy 2.1.5 and 2.0.50, and the rest of the backend suite (664 passed, 1 skipped) passes on 2.0.50, so the declared floor is honest |
+| `ml/waste_classification/inference/embedder.py` imported `ai_edge_litert` at module level, so importing anything from the package failed without it | Import is lazy and raises `InferenceRuntimeMissingError` naming the fix; new test. 58 ML tests pass in a venv built from `ml/requirements-dev.lock` |
+| CI end-to-end job failed on `a97911d` and `b9704d0` | The job's 14 failures were `429 rate_limited` on registration: the suite registers 9 accounts from one address and a Playwright retry registers more, against a hard-coded limit of 10 per address per hour. The limit is now `REGISTRATION_LIMIT_PER_IP_PER_HOUR` (default 10, validated); only the disposable CI stack sets 200. A second, independent race then showed: `tracking.spec.ts` signed in as the shared e2e account without making sure it existed, so it failed when it ran first on a fresh database; it now calls `ensureAccount`. A GitHub annotations reporter was added to the CI Playwright run because the log API in this sandbox cannot be read |
+
+Local results for the branch: backend 706 passed / 1 skipped before the tracking change (the tracking file now has 43 tests); vitest 345; contract 37;
+ML 58; e2e 29 passed / 1 skipped on the run before the registration-limit change. **See the PR for the CI result of the final head; it is not recorded here to avoid a stale claim.**
