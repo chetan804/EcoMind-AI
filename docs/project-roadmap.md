@@ -2,7 +2,21 @@
 
 Modules are implemented in dependency order (`docs/architecture/component-boundaries.md`). Each milestone ends with working, tested, documented behaviour; a feature is "done" only per the acceptance rule in `docs/requirements/functional-requirements.md`.
 
-## M0 — Foundation (this repository state) ✔
+## Status of the milestones (reconciled 2026-10-21)
+| Milestone | Status |
+|---|---|
+| M0 Foundation | Done |
+| M1 Identity and access | Done (including TOTP two-step sign-in, forced enrolment for administrators and managers in production, account recovery) |
+| M2 Reference data and reports | Done |
+| M3 Collection operations | Done |
+| M4 Classification | **Partly done**: pipeline, API, review queue and UI exist; the only model is a non-default candidate (TrashNet accuracy 0.867, RealWaste 0.454), no object labels, none active. Acceptance "approved model on representative data" is **not met** |
+| M5 Routing, circular economy, passports, rewards | Done (road routing optional, not live-verified) |
+| M6 Analytics, forecasting, anomalies, incidents | Done (statistical models; no labelled anomalies) |
+| M7 Hardening and release | **Partly done**: security review, dependency audits, load test (sandbox only), keyboard automation done; deployment, real e-mail, real map data, backups on real infrastructure, human accessibility review and load on target hardware are **not done** (`RELEASE_CHECKLIST.md`) |
+
+The text below is the original plan, kept for traceability.
+
+## M0 — Foundation ✔
 **Delivered:** canonical structure; locked stack; documentation set; configuration and environment templates; backend app factory, config validation, error envelope, request ids, security primitives, `/health` and `/ready`; initial schema (29 tables) with Alembic migration tested on PostgreSQL; frontend shell with real system-status page; ML preprocessing utility; Dockerfiles and Compose; Makefile; GitHub Actions; test infrastructure at every layer.
 **Not delivered (by design):** any business feature, trained model, dataset, seed data.
 
