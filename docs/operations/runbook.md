@@ -58,7 +58,7 @@ For a supervised demonstration instead, use [`supervised-demo.md`](supervised-de
 4. Run `alembic upgrade head` once as a release step (`docker run --env-file … ecomind-backend alembic upgrade head`).
 5. Start backend (`/health` liveness, `/ready` readiness probes), then the frontend.
 6. Verify: `python tests/smoke/smoke.py --api https://<api> --web https://<web>`.
-Rollback: see [`backup-and-rollback.md`](backup-and-rollback.md). Redeploying the previous image is only safe when the migrations since that image were additive (new tables or nullable columns, as 0009 and 0010 are); this is **not guaranteed** in general, so check each migration. `alembic downgrade` drops the data of the migrations it reverses, so take a backup first.
+Rollback: see [`backup-and-rollback.md`](backup-and-rollback.md). Redeploying the previous image is only safe when the migrations since that image were additive (new tables or nullable columns, for example 0009 and 0010); this is **not guaranteed** in general, so check each migration. `alembic downgrade` drops the data of the migrations it reverses, so take a backup first.
 
 ## Maps and vehicle tracking
 Full guide: [`../maps/GOOGLE_MAPS_INTEGRATION.md`](../maps/GOOGLE_MAPS_INTEGRATION.md). The product runs without any Google key (maps become labelled lists, route plans show straight lines).

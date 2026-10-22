@@ -1,3 +1,8 @@
+> **WITHDRAWN 2026-10-22.** This model was trained on TrashNet, which is excluded from every dataset because written
+> permission for its photographs was not obtained. It was never activated or released. **Every figure below depends on
+> TrashNet and must not be cited as evidence about EcoMind.** Kept as history only. The current research candidate is
+> `waste-classification 2.0.0` (RealWaste; not approved; see `waste-classification-2.0.0.md`).
+
 # Model card: waste material classifier 1.0.0
 
 **Status: candidate.** Trained and evaluated on one public studio-style dataset. Not validated on field data and not

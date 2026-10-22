@@ -19,5 +19,5 @@ Stores, explains and triages operational anomaly alerts produced by `ml/time_ser
 Every alert must carry a human-readable explanation (database CHECK).
 
 ## Tests
-The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. When endpoints are added, add API tests in `backend/tests/api/` and authorization tests in `backend/tests/security/`.
+The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. API tests: `test_anomalies.py` in `backend/tests/api/`; authorization of every route is checked by `backend/tests/security/test_route_inventory.py`.
 Run: `make test-backend`.

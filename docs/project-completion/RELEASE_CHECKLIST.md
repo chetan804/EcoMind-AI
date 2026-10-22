@@ -29,13 +29,13 @@ Tick each item with evidence (a command output, a CI run URL, a screenshot path)
 - [ ] `MFA_REQUIRED_ROLES` reviewed (default: administrators and managers in production). Existing privileged accounts are held to Settings, Security until they enrol, so tell them before the release and keep one administrator able to run `reset-mfa`. **owner**
 
 ## 5. ML
-- [ ] No model is active unless its model card, licence audit and held-out metrics are on file. The 1.0.0 candidate is non-default and its artifact is not shipped in Git.
+- [ ] No model is active unless its model card, licence audit and held-out metrics are on file. The 2.0.0 research candidate is non-default, **not approved**, and its artifact is not shipped in Git; 1.0.0 (TrashNet) is withdrawn.
 - [ ] Review rule (low confidence goes to a person) confirmed in the deployed settings.
 
 ## 6. Verification on the deployed stack
 - [ ] `tests/smoke/smoke.py --api <url> --web <url>` passes.
 - [ ] Sign-in, report waste, classification review, collection, rewards redemption, marketplace request, support request and assistant answer exercised once by a person on the real host.
-- [ ] Keyboard-only and screen-reader pass on sign-in, reports, assistant and support (automated axe is not a substitute). The automated keyboard suite (`keyboard.spec.ts`) is not a substitute either.
+- [ ] Keyboard-only and screen-reader pass on sign-in, reports, assistant and support (automated axe is not a substitute). The automated keyboard suite (`keyboard.spec.ts`) is not a substitute either. Use the blank form in [ACCESSIBILITY_MANUAL_CHECKLIST.md](../testing/ACCESSIBILITY_MANUAL_CHECKLIST.md) and record who ran it.
 - [ ] Load test on the target hardware with production-like data (`scripts/perf/load_test.py`, see `docs/operations/load-testing.md`); record the target and the result. Sandbox numbers are not capacity claims.
 - [ ] Live vehicle tracking claimed only after a real device has reported end to end.
 - [ ] Health, readiness and log shipping checked; an alert path exists for failures.

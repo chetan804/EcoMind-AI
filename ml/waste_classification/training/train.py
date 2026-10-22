@@ -34,12 +34,9 @@ from sklearn.svm import SVC
 
 from ml.common.evaluation import metrics as mt
 from ml.common.preprocessing.images import load_rgb_image
-from ml.waste_classification.data.trashnet import (
-    assign_folds,
-    build_groups,
-    files_digest,
-    list_samples,
-)
+from ml.waste_classification.data import provenance
+from ml.waste_classification.data.dataset import load_verified
+from ml.waste_classification.data.imagefolder import assign_folds, build_groups, sha256_bytes
 from ml.waste_classification.evaluation.robustness import PERTURBATIONS
 from ml.waste_classification.inference.classifier import INPUT_SCALE, WasteClassifier
 from ml.waste_classification.inference.embedder import sha256_file
@@ -123,10 +120,40 @@ def main() -> int:
     config = load_config(CONFIG_PATH)
     seed = config["seed"]
     classes: list[str] = config["dataset"]["classes"]
-    root = REPO / "datasets" / "external" / "trashnet" / "dataset-resized"
-    samples = list_samples(root, classes)
+    n_classes = len(classes)
+
+    # ---- 0. provenance gate: fail closed before any image is read for modelling ----------------
+    log("0. provenance gate (manifest, prohibited sources, content digest)")
+    data = load_verified(config)
+    dataset_manifest, label_map, samples = data.manifest, data.label_map, data.samples
+    out_of_scope, file_hash, digest_all = data.out_of_scope, data.file_hash, data.digest
+    every_file = data.every_file
     y: Ints = np.array([s.label_index for s in samples])
-    report: dict[str, Any] = {"classes": classes, "seed": seed}
+    report: dict[str, Any] = {
+        "classes": classes,
+        "seed": seed,
+        "dataset": {
+            "name": dataset_manifest["name"],
+            "version": dataset_manifest["version"],
+            "manifest": config["dataset"]["manifest"],
+            "files_digest": digest_all,
+            "n_files": len(every_file),
+            "n_training_scope": len(samples),
+            "n_out_of_scope": len(out_of_scope),
+            "licence_status": dataset_manifest["licence"]["status"],
+            "licence_declared": [
+                {"source": d["source"], "spdx": d["spdx"]}
+                for d in dataset_manifest["licence"]["declared"]
+            ],
+            "release_allowed": provenance.release_allowed(dataset_manifest),
+            "prohibited_sources_checked": dataset_manifest["exclusion_checks"][
+                "prohibited_sources"
+            ],
+            "byte_identical_to_prohibited": 0,
+            "exact_duplicate_files": provenance.exact_duplicate_count(file_hash.values()),
+            "label_map": {k: v for k, v in label_map.items()},
+        },
+    }
 
     # ---- 1. groups + split -------------------------------------------------------------------
     log("1. grouping near-duplicates and fixing the split")
@@ -143,6 +170,7 @@ def main() -> int:
     for a, b in ((train_idx, val_idx), (train_idx, test_idx), (val_idx, test_idx)):
         if set(groups[a]) & set(groups[b]):
             raise RuntimeError("a duplicate group straddles two splits")
+    provenance.require_no_leakage([file_hash[smp.key] for smp in samples], folds)
     report["split"] = {
         "n_images": len(samples),
         "n_groups": int(np.max(groups)) + 1,
@@ -162,6 +190,29 @@ def main() -> int:
             {"keys": [s.key for s in samples], "fold": folds.tolist(), "group": groups.tolist()}
         )
     )
+    # Tracked, human-readable provenance table: one row per file with its hash, label, role and group.
+    roles = {
+        config["split"]["test_fold"]: "test",
+        config["split"]["validation_fold"]: "validation",
+    }
+    table = ["file\tsha256\tsource_label\tclass\trole\tgroup"]
+    for i, smp in enumerate(samples):
+        table.append(
+            f"{smp.key}\t{file_hash[smp.key]}\t{smp.folder}\t{smp.label}\t"
+            f"{roles.get(int(folds[i]), 'train')}\t{int(groups[i])}"
+        )
+    table += [
+        f"{folder}/{path.name}\t{file_hash[f'{folder}/{path.name}']}\t{folder}\t\t"
+        "out_of_scope_eval\t"
+        for folder, path in out_of_scope
+    ]
+    table_path = REPO / config["dataset"]["per_file_table"]
+    table_path.write_text("\n".join(table) + "\n")
+    report["split"]["per_file_table"] = {
+        "path": config["dataset"]["per_file_table"],
+        "sha256": sha256_bytes(table_path.read_bytes()),
+        "rows": len(table) - 1,
+    }
 
     # ---- 2a. baselines (train CV + validation; test is evaluated once, later) -----------------
     log("2a. baselines")
@@ -176,7 +227,7 @@ def main() -> int:
             m = LogisticRegression(C=c_value, class_weight="balanced", max_iter=3000).fit(
                 (hand[fit_i] - mu) / sd, y[fit_i]
             )
-            scores.append(mt.macro_f1(y[held_i], m.predict((hand[held_i] - mu) / sd), 6))
+            scores.append(mt.macro_f1(y[held_i], m.predict((hand[held_i] - mu) / sd), n_classes))
         hand_cv[c_value] = float(np.mean(scores))
     hand_c = max(hand_cv, key=lambda c: hand_cv[c])
     mu_h, sd_h = hand[train_idx].mean(0), hand[train_idx].std(0) + 1e-6
@@ -186,7 +237,7 @@ def main() -> int:
     report["baselines"] = {
         "majority_class": {
             "class": classes[majority],
-            "val_macro_f1": mt.macro_f1(y[val_idx], np.full(len(val_idx), majority), 6),
+            "val_macro_f1": mt.macro_f1(y[val_idx], np.full(len(val_idx), majority), n_classes),
         },
         "handcrafted_logreg": {
             "features": "4x4x4 HSV histogram + 8-bin gradient orientation + 3 intensity statistics",
@@ -194,7 +245,7 @@ def main() -> int:
             "chosen_C": hand_c,
             "cv_macro_f1": hand_cv[hand_c],
             "val_macro_f1": mt.macro_f1(
-                y[val_idx], hand_model.predict((hand[val_idx] - mu_h) / sd_h), 6
+                y[val_idx], hand_model.predict((hand[val_idx] - mu_h) / sd_h), n_classes
             ),
         },
     }
@@ -277,21 +328,25 @@ def main() -> int:
         svc = SVC(C=10, gamma="scale", class_weight="balanced").fit(
             x[fit_i, 0] * INPUT_SCALE, y[fit_i]
         )
-        svc_scores.append(mt.macro_f1(y[held_i], svc.predict(x[held_i, 0] * INPUT_SCALE), 6))
+        svc_scores.append(
+            mt.macro_f1(y[held_i], svc.predict(x[held_i, 0] * INPUT_SCALE), n_classes)
+        )
     rng = np.random.default_rng(seed)
     curve = []
     for frac in (0.1, 0.2, 0.4, 0.6, 0.8, 1.0):
         held_f1, own_f1 = [], []
         for fit_i, held_i in cv_folds:
             ug = np.unique(groups[fit_i])
-            keep = rng.choice(ug, size=max(int(len(ug) * frac), 6), replace=False)
+            keep = rng.choice(ug, size=max(int(len(ug) * frac), n_classes), replace=False)
             sub = fit_i[np.isin(groups[fit_i], keep)]
             model = pl.fit_head(x[sub], y[sub], c_final)
             held_f1.append(
-                mt.macro_f1(y[held_i], pl.head_scores(model, x[held_i][:, :1])[:, 0].argmax(1), 6)
+                mt.macro_f1(
+                    y[held_i], pl.head_scores(model, x[held_i][:, :1])[:, 0].argmax(1), n_classes
+                )
             )
             own_f1.append(
-                mt.macro_f1(y[sub], pl.head_scores(model, x[sub][:, :1])[:, 0].argmax(1), 6)
+                mt.macro_f1(y[sub], pl.head_scores(model, x[sub][:, :1])[:, 0].argmax(1), n_classes)
             )
         curve.append(
             {
@@ -336,7 +391,7 @@ def main() -> int:
         },
         "learning_curve": curve,
         "leakage_study": {
-            "naive_random_split_macro_f1": mt.macro_f1(y[n_test], naive_pred, 6),
+            "naive_random_split_macro_f1": mt.macro_f1(y[n_test], naive_pred, n_classes),
             "naive_random_split_accuracy": mt.accuracy(y[n_test], naive_pred),
             "share_of_test_images_with_a_near_twin_in_train_naive": twin_share(n_train, n_test),
             "share_of_test_images_with_a_near_twin_in_train_grouped": twin_share(
@@ -382,7 +437,7 @@ def main() -> int:
     train_pred = logits[train_idx].argmax(1)
     report["train_in_sample"] = {
         "accuracy": mt.accuracy(y[train_idx], train_pred),
-        "macro_f1": mt.macro_f1(y[train_idx], train_pred, 6),
+        "macro_f1": mt.macro_f1(y[train_idx], train_pred, n_classes),
     }
 
     # ---- 5. TEST: evaluated exactly once -------------------------------------------------------
@@ -406,14 +461,16 @@ def main() -> int:
             y[test_idx], proba_test, [0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98]
         ),
         "baselines": {
-            "majority_macro_f1": mt.macro_f1(y[test_idx], np.full(len(test_idx), majority), 6),
+            "majority_macro_f1": mt.macro_f1(
+                y[test_idx], np.full(len(test_idx), majority), n_classes
+            ),
             "majority_accuracy": mt.accuracy(y[test_idx], np.full(len(test_idx), majority)),
-            "handcrafted_macro_f1": mt.macro_f1(y[test_idx], hand_test_pred, 6),
+            "handcrafted_macro_f1": mt.macro_f1(y[test_idx], hand_test_pred, n_classes),
             "handcrafted_accuracy": mt.accuracy(y[test_idx], hand_test_pred),
         },
         "margin_over_handcrafted_macro_f1": test_eval["macro_f1"]
-        - mt.macro_f1(y[test_idx], hand_test_pred, 6),
-        "required_margin": 0.10,
+        - mt.macro_f1(y[test_idx], hand_test_pred, n_classes),
+        "required_margin": config["acceptance"]["offline"]["min_margin_over_handcrafted_macro_f1"],
     }
 
     # ---- artifact ------------------------------------------------------------------------------
@@ -453,8 +510,17 @@ def main() -> int:
             c: c for c in classes
         },  # model class -> material_categories.code
         "trained_at_utc": trained_at,
+        "release": {  # provisional; rewritten below once the acceptance criteria are evaluated
+            "status": "research_candidate",
+            "approved_for_activation": False,
+            "decision": "evaluation in progress",
+        },
         "evaluation": {
-            "dataset": "TrashNet 1.0 (studio-style photographs; not a field accuracy)",
+            "dataset": (
+                f"{dataset_manifest['name']} {dataset_manifest['version']} "
+                "(one Australian facility; not a field accuracy for India)"
+            ),
+            "licence_status": dataset_manifest["licence"]["status"],
             "split": "group-aware test split, evaluated once",
             "n_test": test_eval["n"],
             "accuracy": test_eval["accuracy"],
@@ -492,7 +558,7 @@ def main() -> int:
         yt = y[test_idx]
         return {
             "accuracy": mt.accuracy(yt, pi),
-            "macro_f1": mt.macro_f1(yt, pi, 6),
+            "macro_f1": mt.macro_f1(yt, pi, n_classes),
             "mean_confidence": float(np.mean([p.confidence for p in preds])),
             "needs_review_rate": float(1 - accepted.mean()),
             "accepted_accuracy": float((pi[accepted] == yt[accepted]).mean())
@@ -574,6 +640,61 @@ def main() -> int:
         "interpreter_threads": 2,
     }
 
+    # Out-of-scope images (no EcoMind class): evaluated through the real inference code; they never
+    # fit or threshold anything. A safe model sends them to a person.
+    by_folder: dict[str, list[Any]] = {}
+    for folder, path in out_of_scope:
+        by_folder.setdefault(folder, []).append(clf.predict_bytes(path.read_bytes()))
+    every_pred = [p for preds in by_folder.values() for p in preds]
+    report["out_of_scope"] = {
+        "note": (
+            "source folders with no EcoMind class (catch-all, organic, textile). 'predicted_as' is what the "
+            "model would say without the review rule; they are never counted as errors."
+        ),
+        "n": len(every_pred),
+        "overall_sent_to_review": float(np.mean([p.needs_review for p in every_pred])),
+        "by_folder": {
+            folder: {
+                "n": len(preds),
+                "sent_to_review": float(np.mean([p.needs_review for p in preds])),
+                "predicted_as": {
+                    c: sum(p.label == c for p in preds)
+                    for c in classes
+                    if any(p.label == c for p in preds)
+                },
+            }
+            for folder, preds in sorted(by_folder.items())
+        },
+        "review_reasons": {
+            reason: sum(reason in p.review_reasons for p in every_pred)
+            for reason in ("low_confidence", "unfamiliar_image")
+        },
+    }
+
+    # ---- acceptance: configured criteria vs measured results (never activates anything) --------
+    field_file = REPO / "docs" / "ml" / "reports" / f"field-evaluation-{version}.json"
+    field_report = json.loads(field_file.read_text()) if field_file.is_file() else None
+    if field_report is not None and field_report.get("model_files") != manifest["files"]:
+        log("   field report ignored: it was measured on different model weights")
+        field_report = None
+    report["acceptance"] = pl.evaluate_acceptance(
+        test=test_eval,
+        review=report["test"]["review"],
+        margin_over_handcrafted=report["test"]["margin_over_handcrafted_macro_f1"],
+        out_of_scope_review_rate=report["out_of_scope"]["overall_sent_to_review"],
+        criteria=config["acceptance"],
+        field_report=field_report,
+    )
+    manifest["release"] = {
+        "status": "research_candidate",
+        "approved_for_activation": report["acceptance"]["approved_for_activation"],
+        "decision": report["acceptance"]["decision"],
+        "dataset_licence_status": dataset_manifest["licence"]["status"],
+        "release_allowed": report["dataset"]["release_allowed"],
+    }
+    (out_dir / "model.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    log(f"   acceptance: {report['acceptance']['decision']}")
+
     # ---- provenance + files --------------------------------------------------------------------
     report["provenance"] = {
         "version": version,
@@ -581,7 +702,7 @@ def main() -> int:
         "code_tree_clean": git_state()[1],
         "trained_at_utc": trained_at,
         "config_sha256": hashlib.sha256(CONFIG_PATH.read_bytes()).hexdigest(),
-        "dataset_files_digest": files_digest(samples),
+        "dataset_files_digest": digest_all,
         "python": platform.python_version(),
         "numpy": np.__version__,
         "scikit_learn": sklearn.__version__,
@@ -610,6 +731,11 @@ def main() -> int:
                 "config_sha256": report["provenance"]["config_sha256"],
                 "dataset_manifest": config["dataset"]["manifest"],
                 "dataset_files_digest": report["provenance"]["dataset_files_digest"],
+                "dataset_licence_status": dataset_manifest["licence"]["status"],
+                "release_allowed": report["dataset"]["release_allowed"],
+                "use": "research only: the training data licence is unresolved and no field evaluation exists",
+                "approved_for_activation": report["acceptance"]["approved_for_activation"],
+                "acceptance_decision": report["acceptance"]["decision"],
                 "backbones": manifest["backbones"],
                 "artifact_files": manifest["files"],
                 "artifact_model_json_sha256": report["provenance"]["artifact_model_json_sha256"],

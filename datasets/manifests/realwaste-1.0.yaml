@@ -1,3 +1,6 @@
+# SUPERSEDED 2026-10-22 by realwaste-2.0.yaml, which adds the licence-conflict record, the provenance and
+# prohibited-source checks, the label rules and the split definition the training gate now requires. This
+# 1.0 file stays as the record of the earlier evaluation-only use and no longer passes the gate.
 # Dataset manifest: RealWaste. EVALUATION AND EXPERIMENT ONLY (non-commercial licence).
 # The image files are NOT in this repository (datasets/external/ is git-ignored). To obtain exactly this
 # content:

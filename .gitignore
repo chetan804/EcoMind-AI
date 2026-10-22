@@ -40,12 +40,15 @@ datasets/raw/*
 datasets/interim/*
 datasets/processed/*
 datasets/external/*
+datasets/field/*
 !datasets/*/.gitkeep
 datasets/manifests/*
 !datasets/manifests/.gitkeep
 !datasets/manifests/*.yaml
 !datasets/manifests/*.yml
 !datasets/manifests/*.md
+!datasets/manifests/*.txt
+!datasets/manifests/*.tsv
 
 # --- ML: generated artifacts and local data never enter Git ---
 ml/artifacts/*

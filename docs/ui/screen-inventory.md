@@ -39,7 +39,7 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 
 ## Design references
 
-`docs/ui/reference/` holds the 22 design reference images (immutable; integrity is checked against `manifest.json` by `scripts/quality/check_structure.py`). The mapping below uses the **file titles only**; screens 05 to 22 have not been reviewed in detail and each mapping must be confirmed when its screen is built.
+`docs/ui/reference/` holds the 22 design reference images (immutable; integrity is checked against `manifest.json` by `scripts/quality/check_structure.py`). The mapping below was made from the file titles and then confirmed screen by screen when each was built; the confirmed mapping with the browser evidence is `docs/project-completion/SCREEN_TRACEABILITY.md`. Where a title is ambiguous (19) the note says so. A person with design authority has not signed off the renders.
 
 | Reference | Screen | Inventory row / module | Status |
 |---|---|---|---|

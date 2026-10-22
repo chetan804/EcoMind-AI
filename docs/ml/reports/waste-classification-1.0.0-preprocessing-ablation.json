@@ -1,4 +1,8 @@
 {
+  "withdrawn": {
+    "status": "WITHDRAWN 2026-10-22",
+    "reason": "depends on TrashNet and/or TrashBox, which are excluded from every dataset (no permission for the photographs). History only; do not cite."
+  },
   "backbone": "M",
   "C": 0.03,
   "split": "train only, grouped 5-fold CV, no augmentation",

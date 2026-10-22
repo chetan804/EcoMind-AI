@@ -1,12 +1,19 @@
 # Waste material classification: every tunable value of the training pipeline.
 # Changing this file changes the experiment; the registry manifest records its SHA-256.
 name: waste-material-classifier
-version: 1.0.0
+version: 2.0.0
 seed: 42
 
+# TrashNet and TrashBox are excluded (no permission for the photographs). The training data is RealWaste;
+# its licence status is *conflicting* (UCI: CC BY 4.0; authors' GitHub: CC BY-NC-SA 4.0), so a model
+# trained on it is research-only until the owner resolves that in writing. The source-folder -> class
+# map lives in the manifest (one place); folders mapped to null are out-of-scope evaluation input only.
 dataset:
-  manifest: datasets/manifests/trashnet-1.0.yaml
-  classes: [cardboard, glass, metal, paper, plastic, trash]
+  manifest: datasets/manifests/realwaste-2.0.yaml
+  root: datasets/external/realwaste-src/RealWaste
+  classes: [cardboard, glass, metal, paper, plastic]
+  denylist: datasets/manifests/prohibited-sha256.txt
+  per_file_table: datasets/manifests/realwaste-2.0.files.tsv
 
 # Near-duplicates (several photos of one object) must not straddle splits. Images are grouped
 # per class by average-linkage clustering of backbone embeddings at this cosine similarity.
@@ -46,3 +53,20 @@ review:               # decided on the validation split
   novelty_quantile: 0.02        # flag the 2% least familiar in-distribution validation images
 
 bootstrap: {resamples: 2000, confidence: 0.95, unit: group}
+
+# Offline acceptance criteria, fixed BEFORE the first run on this dataset. Meeting all of them only
+# makes a model eligible for a field evaluation; it never activates anything. A model is approved for
+# activation only when the offline criteria AND the Hyderabad field evaluation both pass.
+acceptance:
+  offline:
+    min_test_macro_f1: 0.80
+    min_class_recall: 0.60                     # every class, on the test split
+    max_ece: 0.08
+    min_margin_over_handcrafted_macro_f1: 0.10
+    min_auto_accepted_accuracy_ci_low: 0.90    # lower 95% bound at the review rule's target precision
+    min_out_of_scope_review_rate: 0.90         # share of out-of-scope images sent to a person
+  field:
+    required: true
+    min_images: 300
+    min_macro_f1: 0.75
+    min_accuracy_of_auto_accepted: 0.90

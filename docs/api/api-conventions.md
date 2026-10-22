@@ -30,26 +30,14 @@
 - **CORS:** only origins in `CORS_ALLOWED_ORIGINS`; credentials allowed; exposed header `X-Request-ID`.
 - **Idempotency:** creates that may be retried by clients (uploads, awards) define a natural uniqueness rule in the database (for example one `earned` ledger entry per user+source).
 
-## Initial API contract (planned; implement incrementally)
-Nothing below exists yet except `/health` and `/ready`; each module README lists its prefix. Endpoints are added with tests and this table is updated in the same pull request.
+## API surface
+The API is implemented: 168 operations under `/api/v1` plus `/health` and `/ready`. The authoritative lists are generated from the code and checked in CI, so they cannot drift:
 
-| Area | Planned endpoints (under `/api/v1`) | Module |
-|---|---|---|
-| Authentication | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` | auth |
-| User administration | `GET/POST /users`, `GET/PATCH /users/{id}`, `GET /roles`, `PUT /users/{id}/roles` | users |
-| Waste reports | `GET/POST /waste-reports`, `GET/PATCH/DELETE /waste-reports/{id}` (filters: status, reporter, date, area) | waste_reports |
-| Upload & classification | `POST /media` (multipart), `POST /classification/predictions`, `PATCH /classification/predictions/{id}/review`, `GET /classification/model-versions` | waste_reports, classification |
-| Collection | `GET/POST /collection/tasks`, `GET /collection/tasks/{id}`, `POST /collection/tasks/{id}/assignments`, `POST /collection/tasks/{id}/status`, `POST /collection/tasks/{id}/events` | collection |
-| Routes | `POST /routes/optimize`, `GET/POST /routes`, `GET /routes/{id}` | route_planning |
-| Facilities & fleet | `GET/POST /facilities`, `GET/PATCH /facilities/{id}`, `GET/POST /fleet/vehicles`, `GET/PATCH /fleet/vehicles/{id}` | facilities, fleet |
-| Circular economy | `GET/POST /circular-economy/recovery-records`, `POST /circular-economy/recovery-records/{id}/verification` | circular_economy |
-| Analytics | `GET /analytics/summary`, `GET /analytics/trends` | analytics |
-| Forecasts & anomalies | `GET /forecasts`, `GET /anomaly-alerts`, `PATCH /anomaly-alerts/{id}` | forecasting, anomaly_detection |
-| Community incidents | `GET/POST /community-incidents`, `GET/PATCH /community-incidents/{id}` | community_incidents |
-| Sorting guide | `GET /material-categories`, `GET /sorting-guidance?material_category=…` | sorting_guide |
-| Passports & rewards | `GET/POST /material-passports`, `POST /material-passports/{id}/custody-events`, `GET /rewards/balance`, `GET /rewards/ledger` | material_passports, rewards |
-| Notifications | `GET /notifications`, `POST /notifications/{id}/read` | notifications |
-| Audit & admin | `GET /audit/logs`, `GET /admin/…` | audit, administration |
+* every route with its HTTP method, required permission and roles: [route-permission-matrix.md](../security/route-permission-matrix.md);
+* the OpenAPI document served at `/api/v1/docs` and `/api/v1/openapi.json` (disabled when `ENVIRONMENT=production`), with 234 schemas;
+* per-area guides in `docs/api/` (for example `route-planning-api.md`, `tracking-api.md`, `marketplace-api.md`) and each module's `README.md`.
+
+Endpoints are added with tests, a permission, an audit record where state changes, and an update of the generated documents in the same pull request (`scripts/security/generate_route_matrix.py --check`).
 
 ## Contract tests
 `tests/contract/test_api_contract.py` enforces: all application routes under `/api/v1`, documented operational endpoints, published error schema, unique operation IDs, and agreement between the backend readiness schema and the frontend's Zod schema.

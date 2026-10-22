@@ -7,6 +7,8 @@
 | Audited by | an automated coding agent, working only inside a sandbox copy of the repository |
 | Method | read the code and documents, ran every automated test and security scan, rebuilt the database from nothing, started the real API and web app, and drove the screens with a headless browser for all five roles |
 
+> **Snapshot note (2026-10-21, later the same day).** This report describes the code as audited, at migration 0016. Later changes on the `arena/174cfaa2-ecomind-ai` branch (migration 0017 enforcing append-only audit and status history in the database, the waste-report bbox filter, a safer end-to-end mail helper) are recorded in [REQUIREMENTS_CLOSURE_REPORT.md](REQUIREMENTS_CLOSURE_REPORT.md), not here. Counts below are those of the audit.
+
 **How to read this report.** Every claim is marked **Verified** (I ran it and saw the result in this audit), **Proven by CI** (GitHub Actions ran it on an earlier commit; see section 9), or **Not verified** (nobody has shown it works). Nothing is rounded up. If something is missing, it says so.
 
 ---
@@ -20,7 +22,7 @@ EcoMind AI is a **complete, working web application for a pilot or an academic d
 | Area | State | Evidence |
 |---|---|---|
 | Backend API | Complete for the stated scope | 168 operations, 22 modules; **Verified** by 763 passing tests |
-| Database | Complete and reversible | 46 tables, migrations 0001–0016; **Verified**: upgrade, no schema drift, full downgrade and upgrade again |
+| Database | Complete and reversible | 46 tables, migrations 0001–0016 at audit time (head is now 0017); **Verified**: upgrade, no schema drift, full downgrade and upgrade again |
 | Role-based access | Complete, tested by probing | 5 roles, 48 permissions; **Verified** against the live API (section 5) |
 | Frontend | Complete for the stated scope | 22 module screens, all reachable from the sidebar by the right role; **Verified** by crawl and 365 unit/component tests |
 | Security | Strong for a pre-launch app | dependency audits and static analysis clean; **Verified** (section 6) |
@@ -100,12 +102,11 @@ One open security note: GitGuardian flagged a test password in the git history (
 ## 7. Artificial intelligence: the honest position
 
 **Photo classifier — not usable yet.**
-- The product knows six classes: plastic, paper, cardboard, glass, metal, other waste. It cannot recognise organic waste, e-waste or hazardous items.
-- A candidate model (`1.0.0`) was trained only on TrashNet (MIT licence). On its held-out test set it scored **accuracy 0.867** (95% interval 0.813–0.912), **macro-F1 0.841**, calibration error 0.031, p95 speed 29.6 ms. Those numbers describe TrashNet photos, which are tidy studio-style images.
-- On a different public dataset (RealWaste) the same model scored **accuracy 0.454**. That is a large drop and shows it will not generalise to real-world photos without more data.
-- The review rule sends about **64%** of images to a person. This is intentional.
+- The classifier knows five classes: cardboard, glass, metal, paper, plastic. It cannot recognise organic waste, e-waste or hazardous items, and "other waste" is not a prediction.
+- **Update 2026-10-22:** the model `1.0.0` trained on TrashNet was withdrawn (no written permission for those photographs; its figures are history only). The replacement candidate `2.0.0` is trained only on RealWaste: held-out accuracy **0.895** (95% interval 0.855–0.931), macro-F1 0.896, calibration error 0.036 (one Australian facility; not a Hyderabad accuracy).
+- It **fails** the pre-declared acceptance test: 79.7% of out-of-scope images go to a person (required 90%), no field evaluation exists, and the RealWaste licence is contested. It is research-only and inactive.
 - The model file is **not in the repository** and **no model is active**. So the screen says "No classification model is active". Activating needs an administrator to register and approve a file.
-- The licence position stopped further data: RealWaste is non-commercial (CC BY-NC-SA); TrashBox has no licence; the TACO dataset yielded **0 of 1,500** images with a licence we can use. Under the project's production-grade rule none of these may go into a released model.
+- The licence position stopped further data: RealWaste is contested (CC BY 4.0 on UCI, CC BY-NC-SA 4.0 on the authors' GitHub); TrashNet and TrashBox are prohibited; the TACO dataset yielded **0 of 1,500** images with a licence we can use. Under the project's production-grade rule none of these may go into a released model.
 
 **Forecasting.** Backtested on real public municipal waste series. Compared with a naive "same as last week" baseline, the error ratio was **0.804 (Austin)** and **0.731 (Ballarat)** in the recorded evaluation (lower is better). In this audit a live Austin run with an 8-week horizon gave **0.66** over 12 test origins. The platform's own series has 0 points until real collections exist. The screen shows the backtest next to every forecast.
 

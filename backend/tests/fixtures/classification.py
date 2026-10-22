@@ -75,7 +75,12 @@ class FakeProvider:
 
 
 def write_artifact(
-    artifacts_dir: Path, version: str, *, name: str = MODEL_NAME, min_confidence: float = 0.8
+    artifacts_dir: Path,
+    version: str,
+    *,
+    name: str = MODEL_NAME,
+    min_confidence: float = 0.8,
+    release: dict[str, object] | None = None,
 ) -> Path:
     """A loadable artifact with correct hashes under ``<dir>/waste_classification/<version>``."""
     directory = artifacts_dir / "waste_classification" / version
@@ -101,7 +106,11 @@ def write_artifact(
         "files": files,
         "material_category_codes": {c: c for c in CLASSES},
         "trained_at_utc": "2026-10-20T09:30:00Z",
-        "evaluation": {"accuracy": 0.867, "macro_f1": 0.841, "n_test": 421},
+        "evaluation": {"accuracy": 0.9, "macro_f1": 0.9, "n_test": 100},  # synthetic test values
+        # Test artifacts are approved by default; pass `release=` to model an unapproved candidate.
+        "release": release
+        if release is not None
+        else {"status": "approved", "approved_for_activation": True, "decision": "test fixture"},
     }
     (directory / "model.json").write_text(json.dumps(manifest, indent=2))
     return directory
@@ -121,7 +130,7 @@ def add_model_version(
             status=status,
             framework="tflite backbone + numpy linear head",
             artifact_manifest_sha256=sha256,
-            evaluation_metrics={"accuracy": 0.867},
+            evaluation_metrics={"accuracy": 0.9},
         )
         session.add(row)
         session.commit()

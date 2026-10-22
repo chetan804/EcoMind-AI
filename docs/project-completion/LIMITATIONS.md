@@ -1,21 +1,24 @@
 # Known limitations
 
-Everything below is a real, current limitation as of 2026-10-21 (branch `arena/cb4875bc-ecomind-ai`).
+Everything below is a real, current limitation as of 2026-10-22 (code at `main` `625241e`, migration head `0017`).
 Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree with this list.
 
 ## Machine learning
-- **Classifier accuracy outside its training domain is low:** 0.867 on the TrashNet test split, 0.454 on
-  real facility photos (RealWaste). No model is activated by default. See `docs/ml/`.
+- **No approved classifier; no field evidence.** The current candidate (2.0.0, RealWaste only) scores 0.895 accuracy on a
+  held-out split of one Australian facility's photographs, **failed** one pre-declared criterion (out-of-scope routing 79.7%
+  vs 90%), and has no Hyderabad evaluation (protocol written, nothing collected). Its training-data licence is
+  contested. The earlier TrashNet model was withdrawn. No model is active and activation is refused. See `docs/ml/`.
 - Frozen backbone with a linear head; no fine-tuning (no GPU or deep-learning framework available here).
-- Six material classes only. Organic, textile, e-waste, battery and medical waste are unsupported and go to
+- Five material classes only (cardboard, glass, metal, paper, plastic). "Miscellaneous trash", organic, textile, e-waste, battery and medical waste are unsupported and go to
   review. Object or product identification is a different task and is not attempted.
-- RealWaste (CC BY-NC-SA 4.0) and TrashBox (no licence) are not used for any released model (RealWaste only
-  evaluates it, and any model trained on it may exist only as a labelled, inactive research artefact).
+- TrashNet and TrashBox are prohibited in every dataset. RealWaste's licence is conflicting (UCI CC BY 4.0, authors' GitHub
+  CC BY-NC-SA 4.0), so the model trained on it is a labelled, inactive, research-only artefact until the authors confirm in writing.
+  The preprocessing ablation was not re-run for 2.0.0.
   **TACO was audited and no image qualifies:** its annotation file records no licence for 715 images, a bare
   "CC" for 319 and ODbL for 466, so none is provably CC BY / BY-SA / CC0 (`docs/ml/dataset-research/TACO_LICENCE_AUDIT.md`).
   Images can be admitted only after the owner runs the source-licence check and import scripts; the label
-  conversion from TACO's 60 object categories to the six material classes is not defined yet. The classifier
-  therefore still rests on TrashNet alone.
+  conversion from TACO's 60 object categories to the material classes is not defined yet. The classifier
+  therefore rests on RealWaste alone.
 - Forecasting: the platform series starts empty; the two public series are reference data. Holt-Winters
   beat the baseline on two of four usable series. Anomaly detection has no labels, so no precision/recall.
 
@@ -57,7 +60,7 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 
 ## Engineering and quality
 - Docker was unavailable in the build sandbox: Compose, images and the nginx file are validated only by CI.
-- **Accessibility is partly automated.** Token contrast is checked by `scripts/quality/check_contrast.py` (in CI) and axe-core runs on 20 routes in both themes. Automated tools catch only a minority of WCAG issues (commonly estimated at around a third, which is a general industry estimate and not a measurement of this product). An automated keyboard-only browser suite exists (`tests/e2e/specs/keyboard.spec.ts`, 7 tests: skip link, visible focus indicators and no focus trap, account menu, page-search dialog, phone navigation drawer, keyboard navigation and sign-out; passed locally) but a person's keyboard review and any screen-reader review (NVDA, VoiceOver, TalkBack) have **not been done**. The e2e database holds little data, so contrast of populated tables, charts, status chips and overlay gradients is unscanned; the landing and public pages and the Google Maps view are outside the axe run; the offline map canvas is excluded.
+- **Accessibility is partly automated.** Token contrast is checked by `scripts/quality/check_contrast.py` (in CI) and axe-core runs on 22 routes in both themes. Automated tools catch only a minority of WCAG issues (commonly estimated at around a third, which is a general industry estimate and not a measurement of this product). An automated keyboard-only browser suite exists (`tests/e2e/specs/keyboard.spec.ts`, 7 tests: skip link, visible focus indicators and no focus trap, account menu, page-search dialog, phone navigation drawer, keyboard navigation and sign-out; passed locally) but a person's keyboard review and any screen-reader review (NVDA, VoiceOver, TalkBack) have **not been done** (a blank test form is in [ACCESSIBILITY_MANUAL_CHECKLIST.md](../testing/ACCESSIBILITY_MANUAL_CHECKLIST.md)). The e2e database holds little data, so contrast of populated tables, charts, status chips and overlay gradients is unscanned; the landing and public pages and the Google Maps view are outside the axe run; the offline map canvas is excluded.
 - Visual similarity to the reference images is low (SSIM about 0.26 to 0.58 across screens); the references
   are small blurry composites, and **no fidelity claim is made**.
 - Users search and audit filters query on each keystroke. Some IntegrityError race paths are untested.
@@ -65,3 +68,8 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - Workflows pin `ubuntu-24.04` and every action by commit SHA; the two runner pins need a manual bump when a runner image is retired.
 - GitGuardian reports one false positive (a test credential in `test_administration.py`); it remains in history.
 - **Load and capacity are not established.** `scripts/perf/load_test.py` ran in the build sandbox (2 vCPU, one API worker, database and web server on the same machine, tiny demo data): about 125–130 requests per second saturation, 0 errors at 10 and 50 users, p95 123 ms and 639 ms. Those numbers describe that machine only; no target was set and there is no test on target hardware or with realistic data volumes. See `docs/operations/load-testing.md`.
+
+## Publication and release
+- The repository's `LICENSE` is "All rights reserved; no license is granted". The code is not open source until the owner chooses a licence; a paper must state this honestly.
+- No user study, pilot or field data exist; the ethics and data-licence statement (`docs/academic/ethics-and-data-statement.md`) is a draft and the gaps to a research paper are in `docs/academic/PAPER_READINESS.md`.
+- The related-work survey (`docs/academic/literature-survey.md`) is selective, not a protocol-based search.

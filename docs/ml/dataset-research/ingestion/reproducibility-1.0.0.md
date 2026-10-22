@@ -1,3 +1,6 @@
+> **WITHDRAWN 2026-10-22.** This records the reproduction of model 1.0.0, which was trained on TrashNet (now
+> prohibited). It is kept as history only and is not evidence about the current pipeline.
+
 # Model 1.0.0 reproduction check
 
 **Date:** 2026-10-20. **Command:** `PYTHONPATH=. python -m ml.waste_classification.training.train`

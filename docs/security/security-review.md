@@ -1,6 +1,6 @@
 # Security review
 
-Review date: 2026-10-20, on branch `arena/39c812ff-ecomind-ai` (PR #9). This is a self-review by the
+Review date: 2026-10-20, on branch `arena/39c812ff-ecomind-ai` (PR #9). *Snapshot: figures below (for example 123 operations) are those of that review; the current route inventory (168 operations) is in [`docs/security/route-permission-matrix.md`](route-permission-matrix.md) and the later checks are in `docs/project-completion/REQUIREMENTS_CLOSURE_REPORT.md`.* This is a self-review by the
 developers using automated tools plus reading the code. It is **not** an independent penetration test and
 nothing here certifies the system as secure. Controls are described in
 [security-baseline.md](security-baseline.md); this file records what was checked, what was found and what

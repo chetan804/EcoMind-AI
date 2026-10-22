@@ -6,8 +6,8 @@ EcoMind AI is an AI-powered waste-intelligence, waste-management-operations and 
 ## In scope (product)
 Authentication and access control; user/role administration; waste reports with images; image-based object recognition and waste-material classification with sorting guidance; collection tasks, assignments and events; route planning; facilities and fleet; circular-economy records with verified recovery; dashboard analytics; waste-generation forecasting; operational anomaly detection; community incidents; material passports and chain of custody; rewards and impact ledger; notifications; audit and administration.
 
-## In scope (this foundation milestone)
-Repository structure, locked stack, documentation, configuration, database schema and initial migration, backend/frontend shells, test and CI infrastructure, local containers. **No business feature is implemented.**
+## Status of the scope
+The foundation milestone (repository structure, locked stack, configuration, schema, shells, CI, local containers) is complete and every product area above has been built: see `docs/requirements/functional-requirements.md` (per-requirement status and test evidence) and `docs/project-completion/IMPLEMENTATION_STATUS.md`. Two items of the product scope are **not** delivered as described: image-based *object* recognition (the classifier predicts material category only, and no model is active or release-approved) and live vehicle positions from a real GPS source (only the ingestion path, a labelled simulator and stored positions exist). The release target is a supervised demonstration or academic submission, not public production.
 
 ## Out of scope (until a requirement is accepted)
 Physical IoT hardware and live sensor telemetry (the `integrations/sensors` boundary exists but nothing is exposed); mobile native apps; payment or monetary rewards; multi-tenant/organization hierarchy; real-time messaging; third-party marketplace integrations; any claim of trained or production-ready ML models.

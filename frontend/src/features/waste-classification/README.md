@@ -2,13 +2,13 @@
 
 AI waste classification screen at `/classify`: choose an image, classify it with the model the server has activated, see the result, and (for reviewers) confirm, correct or reject it.
 
-**Status:** working against the real API (`docs/api/classification-api.md`). Verified by vitest (11 page tests), 4 UI mutation checks and a Playwright journey against the real backend with the trained model (`tests/e2e/specs/classification.spec.ts`).
+**Status:** working against the real API (`docs/api/classification-api.md`). Verified by vitest (11 page tests), 4 UI mutation checks and a Playwright journey against the real backend with the trained model (`tests/e2e/specs/classification.spec.ts`), which is **skipped** when no model is active (CI and a fresh install have none, so that journey is not exercised there).
 
 ## Flow
 1. On load, `GET /classification/model` says whether a model is active. If none is, the page says so, still previews a chosen image, and offers no Classify button. Nothing is uploaded.
 2. Choosing a JPEG, PNG or WebP up to 5 MB validates and previews it locally (`schemas/image-file.ts`).
 3. **Classify image** uploads the file (raw body via `apiRequest`, to `/waste-reports/media`) and then calls `POST /classification/predictions`. The button is unavailable, with a reason, for roles without `classification:predict` and `waste_reports:create`.
-4. The result shows the category, **calibrated** confidence, all six probabilities, a "Needs review" badge with reasons, the model name/version, the model's recorded held-out accuracy ("studio photos, not a field accuracy") and the review state.
+4. The result shows the category, **calibrated** confidence, all class probabilities, a "Needs review" badge with reasons, the model name/version, the model's recorded held-out accuracy ("held-out photos from the model's own training dataset, not a field accuracy") and the review state.
 5. Roles with `classification:review` get a review form (confirm / correct with a different category / reject). The server allows one review per prediction and never rewrites the model output.
 
 ## Review queue (`/classify/review`)

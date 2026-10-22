@@ -17,13 +17,15 @@ outside their benchmark.
 | O4 | Plan a deterministic visiting order for a vehicle | Done (straight-line ordering, no travel-time estimate) |
 | O5 | Forecast collected volume and flag suspected anomalies, with baselines and provenance | Done on one platform series (empty until real data accrues) and public reference series |
 | O6 | Trace recovered material through facilities | Done (recovery records, hash-chained passports) |
-| O7 | Reward verified participation and report impact with sourced formulas only | Done (points rule documented; no redemption; no environmental coefficients invented) |
-| O8 | Provide role-based access, MFA, audit and administration | Done (40 permissions, five roles, TOTP, audit log) |
-| O9 | Provide an interface for every designed screen | 20 of 22 reference screens built (the marketplace is a listings-and-requests board without payment or photos); two smart-bin/telemetry references are excluded by product decision |
-| O10 | Evaluate honestly | Done: held-out and cross-dataset evaluation, calibration, per-class failure analysis, mutation checks of the tests |
+| O7 | Reward verified participation and report impact with sourced formulas only | Done (points rule documented; staff-run reward catalogue and redemption queue; no environmental coefficients invented) |
+| O8 | Provide role-based access, MFA, audit and administration | Done (48 permissions, five roles, TOTP forced for administrators and managers in production, append-only audit log) |
+| O9 | Provide an interface for every designed screen | 20 of 22 reference screens built (the marketplace is a listings-and-requests board with up to four re-encoded photos per listing and no payment); two smart-bin/telemetry references are excluded by product decision |
+| O10 | Evaluate honestly | Done for the classifier: held-out and cross-dataset evaluation, calibration, per-class failure analysis; mutation checks of the tests. Not done: any user study or field pilot |
+| O11 | Show vehicle and facility positions on maps without an API key, and label every position's source and age | Done with an offline map (verified with synthetic tiles only), a labelled simulator, and an optional road-routing adapter (mocks only); real Hyderabad tiles and real GPS devices are not verified |
+| O12 | Answer users' questions without a generative model | Done (retrieval-only help assistant and support desk) |
 
 ## Scope boundaries
-- Out of scope by decision: IoT sensor integration, payments, delivery and photos in the marketplace, map boundaries
-  for zones (no verified map data), payments, and any native mobile app.
+- Out of scope by decision: IoT sensor integration, payments, delivery in the marketplace, map boundaries
+  for zones (no verified map data), a native mobile app, and a generative chatbot.
 - The platform does not claim a real-world accuracy, real emission savings or live data. Illustrative or
   public reference data is labelled as such wherever it appears.

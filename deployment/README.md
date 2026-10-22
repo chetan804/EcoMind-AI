@@ -8,6 +8,8 @@ Container build definitions for deploying the frontend and backend **independent
 | `docker/frontend.Dockerfile` | `dev` target (Vite dev server, used by `compose.yaml`) and `production` target (static build served by nginx on port 8080). |
 | `docker/nginx.conf` | nginx config for the production frontend image (SPA fallback, cache and security headers). |
 | `map-data/` | Git-ignored folder for the offline map tile file `region.pmtiles` (README only in Git); mounted read-only into the frontend containers. See `docs/maps/OFFLINE_MAPS.md`. |
+| `map-build/` | Git-ignored scratch folder for the Hyderabad map pipeline (`scripts/maps/build_region_data.py`: downloaded extract, MBTiles). Created on demand; nothing is stored in Git. See `docs/maps/HYDERABAD_DATA_RUNBOOK.md`. |
+| `osrm-data/` | Git-ignored folder for the prepared OSRM routing files, mounted read-only by the optional `osrm` Compose profile (off by default). |
 | `scripts/` | Reserved for deployment helper scripts; none yet. |
 
 For a supervised demonstration on one machine see `docs/operations/supervised-demo.md`. See `docs/architecture/deployment-architecture.md` for the target topology and `docs/operations/runbook.md` for the startup sequence. The local `compose.yaml` at the repository root is for development only. **No production environment is configured or claimed by this repository.**

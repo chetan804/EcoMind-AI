@@ -342,7 +342,7 @@ describe('classification', () => {
     name: 'waste-material-classifier',
     version: '1.0.0',
     status: 'active',
-    evaluation_metrics: { accuracy: 0.867, n_test: 421, dataset: 'TrashNet 1.0' },
+    evaluation_metrics: { accuracy: 0.9, n_test: 400, dataset: 'test fixture' },
   };
   const category = (code: string, name: string) => ({ id: `cat-${code}`, code, name });
   const prediction = (over: Record<string, unknown> = {}) => ({
@@ -451,8 +451,8 @@ describe('classification', () => {
     expect(screen.getByRole('progressbar', { name: 'Calibrated confidence' })).toHaveAttribute('aria-valuenow', '91');
     expect(screen.getByRole('progressbar', { name: 'glass probability' })).toHaveAttribute('aria-valuenow', '4');
     expect(screen.getByText(/waste-material-classifier 1\.0\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/87% accuracy on 421 held-out studio photos/)).toBeInTheDocument();
-    expect(screen.getByText(/right only about 45% of the time/)).toBeInTheDocument();
+    expect(screen.getByText(/90% accuracy on 400 held-out photos from the model's own training dataset/)).toBeInTheDocument();
+    expect(screen.getByText(/has not been evaluated on local field photographs/)).toBeInTheDocument();
     expect(screen.queryByRole('form', { name: 'Review this result' })).not.toBeInTheDocument();
   });
 
@@ -543,11 +543,11 @@ describe('classification', () => {
     expect(screen.queryByRole('form', { name: 'Review this result' })).not.toBeInTheDocument();
   });
 
-  it('states the model scope: six material categories, not organic or e-waste', async () => {
+  it('states the model scope: five material categories, not miscellaneous, organic, textile or e-waste', async () => {
     useBackend();
     renderAt('/classify');
     expect(await screen.findByRole('heading', { name: 'Material categories' })).toBeInTheDocument();
-    expect(screen.getByText(/does not recognise organic waste, e-waste or hazardous/)).toBeInTheDocument();
+    expect(screen.getByText(/predicts these five material categories only\. It does not recognise miscellaneous waste, organic or\s+textile waste, e-waste or hazardous/)).toBeInTheDocument();
     expect(screen.queryByText(/Planned waste classes/)).not.toBeInTheDocument();
   });
 });

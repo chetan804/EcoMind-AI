@@ -1,13 +1,21 @@
 name: waste-material-classifier
 version: 1.0.0
-status: candidate
+status: withdrawn
+withdrawn:
+  date: '2026-10-22'
+  reason: >
+    Trained on TrashNet, which is excluded from every dataset because written permission for its photographs
+    was not obtained (and TrashBox, which republishes it, carries no licence). Never activated or released.
+    Its metrics below are kept as history only and must not be cited as evidence about EcoMind.
+  replaced_by: 2.0.0 (research candidate, RealWaste, not approved)
+  backend: model_registry activation refuses it (no release record in model.json)
 task: material_category
 framework: tflite (frozen backbone) + numpy linear head
 trained_at_utc: '2026-10-20T10:07:18Z'
 git_commit: 12c93a5475d688407a14f5e8d5a0b1b4caaf965e
 code_tree_clean: true
 config_sha256: 5898e145369a0b23868ee2c64be423e7f67fffc5338187dec7a32cd62ce9a4d2
-dataset_manifest: datasets/manifests/trashnet-1.0.yaml
+dataset_manifest: datasets/manifests/trashnet-1.0.yaml   # QUARANTINED: refused by the provenance gate
 dataset_files_digest: 73cfe75b6a3e1bf1d19632514006aad5c26944480f9364402003be9e567b5221
 backbones:
 - name: M

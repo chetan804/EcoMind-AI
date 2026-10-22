@@ -84,8 +84,8 @@ export function PredictionResult({ prediction, model }: { prediction: Prediction
           <div>
             <dt>Evaluation</dt>
             <dd>
-              {percent(metrics.accuracy)} accuracy on {metrics.n_test ?? 'held-out'} held-out studio photos. Not a field
-              accuracy.
+              {percent(metrics.accuracy)} accuracy on {metrics.n_test ?? 'held-out'} held-out photos from the model&apos;s own
+              training dataset. Not a field accuracy.
             </dd>
           </div>
         )}
@@ -104,8 +104,8 @@ export function PredictionResult({ prediction, model }: { prediction: Prediction
         </div>
       </dl>
       <p className="result__caveat">
-        This is a suggestion from a model trained on studio photographs. On a public set of real facility photos it
-        was right only about 45% of the time, so a person should check it{reviewed ? '' : ' before anything is acted on'}.
+        This is a suggestion from a research model that has not been evaluated on local field photographs, so its accuracy
+        on your waste is unknown. A person should check it{reviewed ? '' : ' before anything is acted on'}.
       </p>
     </div>
   );

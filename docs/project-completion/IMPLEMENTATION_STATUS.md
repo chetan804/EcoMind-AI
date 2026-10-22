@@ -13,44 +13,49 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Where the project stands (PR #12 was merged into `main` on 2026-10-21 as `2834cf0`; it was developed on branch `arena/34eb0c5c-ecomind-ai`, started from `main` at `8ebe716`)
+## 1. Where the project stands (updated 2026-10-22)
 
-`main` is at `8ebe716` (PR #11 merged: offline map, optional OSRM, TACO audit). This branch carries the five production-hardening
-steps (Phase J below): supply chain and CI, account recovery, marketplace completion, reward redemption, accessibility audit, plus
-three defects found on the way. Alembic head is `0015` (0012 account tokens, 0013 marketplace, 0014 reward catalogue and redemptions, 0015 help assistant and support desk);
-48 permissions (new: `rewards:redeem`, `support:ask`, `support:manage`, `knowledge:manage`). Phase K adds the help assistant (retrieval only) and support desk. **Nothing is deployed and the branch is not merged.**
+`main` is at `625241e` (PR #23 merged by the owner on 2026-10-21; PRs #9 to #12 and #17 to #20 are earlier merges). Alembic head
+is **0017**; 22 backend modules, 168 API operations, 46 application tables, 48 permissions, 5 roles. Nothing is deployed.
 
-The sections below this one that describe "this branch" in earlier phases (B to I) are history of work that is already on `main`.
+Release target recorded by the owner: **supervised demonstration and academic submission**. The project is *not* approved for
+public production: no classifier is approved or active, real e-mail, real map tiles and real GPS sources have not been
+exercised, there has been no human accessibility review and no deployment. The verdict, the PASS / FAIL / BLOCKED /
+NOT VERIFIED rows and the owner-only actions are in [REQUIREMENTS_CLOSURE_REPORT.md](REQUIREMENTS_CLOSURE_REPORT.md);
+the paper-specific gaps are in `docs/academic/PAPER_READINESS.md`.
 
-**Baseline at the start of this branch (before any change, same sandbox):** backend 524 passed / 1 skipped, vitest 220 passed, `tsc` clean.
-
-Local results at the end of Phase I (the state of `main` at `8ebe716`; Phase J results are listed under that phase):
+Latest local results (2026-10-21 and 2026-10-22; details and commands in the closure report and `docs/academic/results.md`):
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 623 passed, 1 skipped (the classification parity test needs the git-ignored model artifact); one more test (transport scheme guard) was added after that run and passes in the re-run of the affected files (58 passed) |
-| Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
-| Frontend vitest | 301 tests passed |
-| Playwright e2e (local, real stack, Chromium without extra GL flags) | 22 passed, 1 skipped (the no-model classification test). The first run after the provider change failed the tracking spec (it assumed the Google fallback text); fixed, then the full suite passed. |
-| Contract tests (`pytest tests/contract`) | 37 passed (map script 5, TACO scripts 27, others 5) |
-| Frontend `tsc -b`, ESLint, production build | clean; no `AIza` key material in the bundle |
-| Generated docs (data dictionary, ER diagram, route matrix) `--check` | up to date at `5542389` |
-| `scripts/quality/check_structure.py` | passes |
+| Backend pytest (real PostgreSQL 16.2) | 788 passed, 0 skipped (2026-10-22, with the git-ignored 2.0.0 artifact, so the parity test ran; a clean checkout skips it) |
+| Frontend vitest | 386 passed (39 files) |
+| ML tests | 118 passed (2026-10-22) |
+| Contract tests | 147 passed |
+| Playwright e2e | 61 passed, 2 skipped (2026-10-21; **not re-run** after the TrashNet removal, which changed 2 lines of `classification.spec.ts`) |
+| ruff, ruff format, mypy, `tsc -b`, ESLint, production build | clean |
+| Generated docs `--check`, `check_structure.py`, `check_env_templates.py` | up to date |
+| `pip-audit`, `npm audit`, `bandit` | no findings |
+| GitHub CI on `625241e` | all workflows green |
 
-**Not verified (needs credentials or network the sandbox lacks):** rendering with a real Google Maps key, the live Routes API, the CSP with Google
-loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only synthetic tiles were rendered), a live OSRM server, the nginx `/map-assets/` location, the TACO source-licence scripts against Flickr. See `docs/maps/GOOGLE_MAPS_INTEGRATION.md` ("Pending live verification").
+The sections below describe the work phase by phase. Numbers inside a phase (for example "623 passed" or "head 0015") are
+what was true at the end of that phase and are kept as history, not as the current state.
+
+**Not verified (needs credentials, hardware or network the sandbox lacks):** rendering with a real Google Maps key, the live
+Routes API, any real GPS source, the offline map on real Hyderabad tiles (only synthetic tiles were rendered), a live OSRM server,
+real SMTP delivery, a real authenticator app, a human screen-reader pass, load on target hardware, a deployment.
 
 ## 2. Capability matrix
 
-### Backend modules (all 21 have routes, tests and an API document under `docs/api/`)
+### Backend modules (all 22 have routes, tests and an API document under `docs/api/`)
 
 | Module | Status | Notes |
 |---|---|---|
-| auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
+| auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA was optional for every role when this row was written; it is now required for administrators and managers in production (Phase L, `DECISION_LOG.md` #13). |
 | users / roles / permissions | **Verified** | 48 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
-| classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
+| classification | **Verified, no model active here** | Real inference service and review flow. The only model is the research candidate 2.0.0 (RealWaste only; **not approved**; activation is refused with 409 `model_not_approved`; see the TrashNet-removal section below); 1.0.0 is withdrawn. The artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
 | collection | **Verified** | Lifecycle with transitions, weights, events, reschedule. |
 | facilities, fleet | **Verified** | |
 | tracking (vehicle positions) | **Verified with mocks; no live GPS source** | Migration 0011, append-only `vehicle_location_events`, ingestion with validation/authorisation/rate limit, out-of-order and duplicate handling, derived LIVE/DELAYED/STALE/HISTORICAL/SIMULATED status, labelled simulator, retention CLI; 42 API tests plus road-route tests; `docs/api/tracking-api.md`. Real source shipped: browser sharing by the assigned collector (e2e-verified with emulated geolocation). Not a connected GPS fleet. |
@@ -81,10 +86,10 @@ audited screen by screen. The prediction review queue (`/classify/review`) exist
 
 | Area | Status |
 |---|---|
-| Image preprocessing, classification training/eval/inference | Verified (ML tests); model 1.0.0 is a candidate, not released |
+| Image preprocessing, classification training/eval/inference | Verified (ML tests); model 2.0.0 is a research candidate, not approved, not released (1.0.0 withdrawn) |
 | Forecasting benchmark (Austin, Ballarat and others) | Verified; `docs/ml/dataset-research/experiments/time-series-results.json` |
-| Dataset research (catalogue, manifest, selection report, ingestion, rejected list) | **Rebuilt and verified** 2026-10-20: `docs/ml/dataset-research/`. RealWaste ingested (4,752 images, checksummed, group-aware); cross-dataset evaluation and a bounded multi-dataset experiment (experiment-only: RealWaste is non-commercial) |
-| Model 1.0.0 on real facility photos (RealWaste, never seen) | **0.454 accuracy (95% CI 0.437–0.472), ECE 0.263**; the review rule sends 64% to a person and 96% of unsupported-class images. Stated in the model card |
+| Dataset research (catalogue, manifest, selection report, ingestion, rejected list) | **Rebuilt and verified** 2026-10-20: `docs/ml/dataset-research/`. RealWaste ingested (4,752 images, checksummed, group-aware). **Revised 2026-10-22:** the cross-dataset, multi-dataset and TrashBox experiments are withdrawn (they used TrashNet) |
+| Model 2.0.0 (RealWaste only), held-out group-aware test, n = 516 | accuracy 0.895 (95% CI 0.855–0.931), macro-F1 0.896, ECE 0.036; **out-of-scope routing 79.7% (criterion 90%: FAIL); no field evaluation: NOT APPROVED**. The former 0.454 figure belonged to the withdrawn TrashNet model |
 
 ## 3. Blockers, losses and environment limits
 
@@ -175,6 +180,12 @@ Known limitations of this increment (also in `docs/security/security-baseline.md
 **GitGuardian, read carefully:** it posted **no check at all** for the four Phase C commits (neither pass nor fail; the reason is not known), while its **failure on the earlier commits `46bb072` and `2477278` still stands** (the two false positives described above, not yet dismissed in its dashboard). `CLEAN` therefore only means the head commit has no failing check; it is not a scanner approval of the new code. The Phase C tests deliberately contain no password-like literals.
 
 ### Phase D: AI/ML waste classification (this branch)
+
+> **REVISED 2026-10-22: the model and every number in this phase were withdrawn.** Model 1.0.0 was trained on TrashNet,
+> for which the project has no written permission. The classification *software* described here (service, API, review
+> flow, UI, migration, tests) stays; the model, its metrics (0.867 / 0.841 / 0.031), the real-model e2e screenshot and the
+> reproducibility claims are history only. The replacement is below.
+
 
 **Scope boundary.** Done: material-category classifier (training, evaluation, serving, API, UI). **Not done:** forecasting and anomaly-detection baselines; object-level labels (the data has none, so `object_label` is always null); any field-data evaluation.
 
@@ -352,7 +363,7 @@ Not verified: no end-to-end (browser) test of the enforced flow, because the CI 
 | MFA browser flow | `specs/mfa.spec.ts` with an RFC 6238 generator: enrol, sign in with a code, recovery code, forced enrolment | 4/4 against a production-mode stack (`ENVIRONMENT=production`, `MFA_REQUIRED_ROLES` blank) | A real authenticator on a phone |
 | Load test | `scripts/perf/load_test.py` (read-only, local targets only) and `docs/operations/load-testing.md` | 10 users: 130 req/s, 0% errors, p95 123 ms; 50 users: 122 req/s, 0% errors, p95 639 ms (2 vCPU, one worker, everything on one machine, tiny data); 4 contract tests | Any capacity claim; target hardware; realistic data |
 | Offline map from a MapTiler MBTiles file | `scripts/maps/mbtiles_to_pmtiles.py`, OpenMapTiles layout recognised next to Protomaps, style and loader patches, `docs/maps/hyderabad-aoi.geojson` | 8 converter tests, 18 frontend map tests, real-browser render against a **synthetic** tile file | A real MapTiler file (the owner has not downloaded it) |
-| Mailpit e2e | `tests/e2e/specs/mail.ts` reads links from the Mailpit inbox API (`E2E_MAILPIT_URL`) or, for local runs, a log file read directly (`E2E_MAIL_LOG_FILE`; the earlier shell-command option was removed as unsafe on 2026-10-21); the CI e2e job runs the stack with `--profile demo-mail`; the mailpit service has a `/mailpit readyz` healthcheck | account-recovery spec 4/4 locally in both modes, but Mailpit was replaced by a schema-faithful stand-in (SMTP AUTH + REST shapes from the OpenAPI document) | **The real Mailpit container: first run is CI** |
+| Mailpit e2e | `tests/e2e/specs/mail.ts` reads links from the Mailpit inbox API (`E2E_MAILPIT_URL`) or, for local runs, a log file read directly (`E2E_MAIL_LOG_FILE`; the earlier shell-command option was removed as unsafe on 2026-10-21); the CI e2e job runs the stack with `--profile demo-mail`; the mailpit service has a `/mailpit readyz` healthcheck | re-verified 2026-10-21 on the fixed helper: account-recovery spec 4/4 plus helper unit spec 20/20 in log-file mode; full e2e suite 61 passed / 2 skipped through a schema-faithful Mailpit stand-in (SMTP AUTH + REST shapes; not real Mailpit) | **The real Mailpit container: first run is CI** |
 | Demo mail | `make demo-mail-up` (Mailpit), `scripts/setup/init_demo_mail.py`, `scripts/demo/verify_smtp_local.py` | 4 SMTP backend tests; the verify script against an independent `aiosmtpd` server (STARTTLS + AUTH succeed; wrong password and untrusted certificate refused) | The Mailpit container (no Docker here); any real provider |
 | Demo accounts | `python -m app.cli seed-demo-accounts [--domain] [--reset-passwords]`, password from `DEMO_PASSWORD`; idempotent, audited, refused in production | 5 backend tests (creates six verified working accounts; second run changes nothing; reset changes password and signs out; refused in production; weak password creates nothing; custom domain) | Inside Docker |
 | TrashBox research experiment | `ml/waste_classification/research/trashbox_experiment.py`, manifest, `experiments/trashbox-experiment.json`, report section 4b | 3 ML tests; the experiment was run once. Result: helps on TrashBox-like photos, not on RealWaste (0.46–0.48). No model written | Licence (verbal permission only); anything about a released model |
@@ -371,3 +382,26 @@ Local totals on this branch: ML 61 passed; backend `tests/integration/test_cli.p
 ## Audit (2026-10-21)
 
 A full audit was run and written up in `PROJECT_AUDIT_REPORT.md`; `docs/PROJECT_GUIDE.md` explains the whole project for a beginner and `docs/testing/MANUAL_TEST_GUIDE.md` is the A-to-Z manual test. Results: backend 763 passed / 1 skipped (coverage 97% of statements), frontend 365 passed, browser end-to-end 31 passed / 1 skipped, dependency and static-analysis scans clean. Defects fixed: collectors could not list their own incident reports (migration 0016); the landing page and several READMEs were out of date; the demo seed script needed `httpx2`. Open items are listed in the report (section 11) and `LIMITATIONS.md`. Word copies of the three documents are in `docs/exports/` (Markdown is the source).
+
+## Requirements closure (2026-10-21)
+
+Full evidence, PASS/FAIL/BLOCKED/NOT VERIFIED rows and the verdict are in
+[REQUIREMENTS_CLOSURE_REPORT.md](REQUIREMENTS_CLOSURE_REPORT.md). Summary: supervised demo / academic use ready;
+public production not ready (no approved classifier, no real e-mail or map data run, no human accessibility
+review, no deployment). Local totals (as of 2026-10-22): backend 788 passed / 0 skipped, contract 147, ML 118, vitest 386, e2e 61 (2026-10-21)
+passed / 2 skipped plus the forced-enrolment spec 4/4 on a production-mode stack; CI on `625241e` green.
+
+### TrashNet removal and the RealWaste research candidate (2026-10-22)
+
+| Item | Result |
+|---|---|
+| Audit | TrashNet referenced in 49 files (code, manifests, configs, registry, reports, model card, UI text, tests, academic docs); all removed, qualified or marked withdrawn (`docs/ml/TRASHNET_REMOVAL.md`) |
+| Exclusion | `datasets/manifests/prohibited-sha256.txt` (2,524 TrashNet file hashes); the provenance gate refuses TrashNet/TrashBox by name and any file whose hash matches; 0 matches in RealWaste |
+| Dataset | RealWaste commit `156e8e91`, 4,752 files, content digest reproduced; 3,092 in five mapped classes, 1,660 unmapped (miscellaneous, food, vegetation, textile) used only to test review routing; licence **conflicting** (UCI CC BY 4.0 vs GitHub CC BY-NC-SA 4.0), `release_allowed: false` |
+| Split | 1,390 near-duplicate groups; train/validation/test 2,060/516/516; seed 42; leakage checks in code |
+| Model 2.0.0 (trained once 2026-10-22) | test accuracy 0.895 (0.855–0.931), macro-F1 0.896, ECE 0.036; per-class F1 0.865–0.930; 82.9% auto-accepted at 93.5% accuracy |
+| Acceptance | 5 of 6 offline criteria pass; **out-of-scope routing 0.797 < 0.90 FAILS**; no field evaluation. **NOT APPROVED**, inactive, `approved_for_activation: false` |
+| Activation guard | the backend refuses `activate_model` unless `model.json` has `release.approved_for_activation: true` (409 `model_not_approved`) |
+| Field evaluation | protocol `docs/ml/field-evaluation-protocol.md`; validator and scorer `ml/waste_classification/evaluation/field.py` (12 tests); **no field data collected** |
+| Reproducibility | three training runs on one machine: identical test metrics and identical weight hashes; the last from a clean code tree (`code_tree_clean: true`, commit `430e027`) |
+| Not done | preprocessing ablation not re-run for 2.0.0; not reproduced on a second machine; RealWaste licence unresolved |

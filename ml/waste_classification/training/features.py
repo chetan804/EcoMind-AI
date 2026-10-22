@@ -17,7 +17,8 @@ from numpy.typing import NDArray
 from PIL import Image
 
 from ml.common.preprocessing.images import load_rgb_image
-from ml.waste_classification.data.trashnet import Sample, list_samples
+from ml.waste_classification.data.dataset import load_verified
+from ml.waste_classification.data.imagefolder import Sample
 from ml.waste_classification.inference.embedder import TFLiteEmbedder, sha256_file
 from ml.waste_classification.inference.variants import VARIANTS
 
@@ -90,8 +91,7 @@ def handcrafted_features(samples: list[Sample]) -> NDArray[np.float32]:
 
 def main() -> int:
     config = load_config()
-    root = REPO / "datasets" / "external" / "trashnet" / "dataset-resized"
-    samples = list_samples(root, config["dataset"]["classes"])
+    samples = load_verified(config, hash_files=False).samples
     for name in ("S", "M", "L"):
         data = backbone_embeddings(config, name, samples, config["augmentations"])
         print(f"{name}: {data.shape}")

@@ -2,9 +2,10 @@
 # verification: verified = read at the source or computed from downloaded files; secondhand = snippet/other README only;
 #               unverified = source unreachable from the sandbox.
 generated: "2026-10-20"
+updated: "2026-10-22"   # TrashNet/TrashBox prohibited; RealWaste 2.0 is the research training set
 taxonomy:
-  supported: [cardboard, glass, metal, paper, plastic, trash]
-  unsupported_review_expected: [organic, textile, e_waste, medical, battery, unknown]
+  supported: [cardboard, glass, metal, paper, plastic]          # no "trash" class: catch-all labels are not a material
+  unsupported_review_expected: [miscellaneous, organic, textile, e_waste, medical, battery, unknown]
 datasets:
   - id: trashnet-1.0
     task: image_classification_material
@@ -15,32 +16,32 @@ datasets:
     exact_duplicates: 3
     near_duplicate_images_pct: 60.98
     manifest: datasets/manifests/trashnet-1.0.yaml
-    use: train_release_candidate
-    status: ingested
-  - id: realwaste-1.0
+    use: PROHIBITED_withdrawn   # written permission for the photographs not obtained; hashes kept in datasets/manifests/prohibited-sha256.txt
+    status: quarantined
+  - id: realwaste-2.0
     task: image_classification_material
     url: https://github.com/sam-single/realwaste
     version: {commit: 156e8e9154eeb163df30fcfd767f55b19633bb06}
-    licence: {spdx: CC-BY-NC-SA-4.0, verification: verified_readme_statement}
+    licence: {spdx: CONFLICTING, declared: [CC-BY-4.0 (UCI page), CC-BY-NC-SA-4.0 (authors GitHub README)], verification: verified_both_statements_conflict_unresolved}
     images: 4752
     exact_duplicates: 0
     near_duplicate_images_pct: 78.7
     files_digest: 59fabef99c26bb25afb86b718981e6fc6e04b6bcba6bd39de5834ee668f432ef
-    manifest: datasets/manifests/realwaste-1.0.yaml
-    use: evaluation_and_experiment_only
+    manifest: datasets/manifests/realwaste-2.0.yaml   # supersedes realwaste-1.0.yaml
+    use: research_training_5_classes_not_releasable
     redistribute: false
     release_model_allowed: false
-    status: ingested
+    status: ingested_digest_verified
     label_mapping:
       Cardboard: cardboard
       Glass: glass
       Metal: metal
       Paper: paper
       Plastic: plastic
-      Miscellaneous Trash: trash          # approximate
-      Food Organics: organic              # experiment taxonomy only
-      Vegetation: organic                 # experiment taxonomy only
-      Textile Trash: textile              # experiment taxonomy only
+      Miscellaneous Trash: null           # catch-all, not a material: out-of-scope evaluation input only
+      Food Organics: null                 # no EcoMind class: out-of-scope evaluation input only
+      Vegetation: null                    # no EcoMind class: out-of-scope evaluation input only
+      Textile Trash: null                 # no EcoMind class: out-of-scope evaluation input only
   - id: msw-ucloudml
     task: weekly_waste_forecasting_and_anomaly_experiments
     url: https://github.com/UCloudMl/solid-waste-prediction
@@ -104,7 +105,7 @@ models:
     registry: ml/model_registry/waste_classification/1.0.0.yaml
     trained_on: [trashnet-1.0]
     cross_dataset: {realwaste-1.0: {accuracy_5_classes: 0.4538, ci95: [0.4366, 0.4715], macro_f1: 0.5142, ece: 0.2627, share_sent_to_review_unsupported_classes: 0.9554}}
-    status: candidate_not_default
+    status: withdrawn
 experiments:
   - id: multi-dataset-realwaste
     file: docs/ml/dataset-research/experiments/multi-dataset-realwaste.json

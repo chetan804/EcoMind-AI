@@ -1,6 +1,6 @@
 """The backend serving runtime must give the same answers as the ML package's own classifier.
 
-Runs only when the trained artifact and the TrashNet images are present locally (both are
+Runs only when the trained artifact and the RealWaste images are present locally (both are
 git-ignored, so CI reports this test as SKIPPED, not passed). Reproduce locally with
 ``python -m ml.waste_classification.data.fetch`` and ``python -m ml.waste_classification.training.train``.
 """
@@ -18,12 +18,13 @@ from app.modules.classification.runtime import ClassifierRuntime
 
 REPO = Path(__file__).resolve().parents[3]
 ARTIFACTS = REPO / "ml" / "artifacts"
-ARTIFACT_DIR = ARTIFACTS / "waste_classification" / "1.0.0"
-IMAGES = REPO / "datasets" / "external" / "trashnet" / "dataset-resized"
+ARTIFACT_DIR = ARTIFACTS / "waste_classification" / "2.0.0"
+IMAGES = REPO / "datasets" / "external" / "realwaste-src" / "RealWaste"
+FOLDERS = ("Cardboard", "Glass", "Metal", "Paper", "Plastic")  # the five trained classes
 
 pytestmark = pytest.mark.skipif(
     not (ARTIFACT_DIR / "model.json").exists() or not IMAGES.exists(),
-    reason="trained artifact / TrashNet images not present (git-ignored); see module docstring",
+    reason="trained artifact / RealWaste images not present (git-ignored); see module docstring",
 )
 
 
@@ -37,7 +38,7 @@ def test_backend_runtime_matches_the_ml_classifier_on_real_images() -> None:
     backbones = ARTIFACTS / "_backbones"
     ml_clf = classifier_module.WasteClassifier.load(ARTIFACT_DIR, backbones)
     backend = ClassifierRuntime.load(ARTIFACT_DIR, backbones)
-    files = [p for c in sorted(IMAGES.iterdir()) if c.is_dir() for p in sorted(c.glob("*.jpg"))[:3]]
+    files = [p for c in FOLDERS for p in sorted((IMAGES / c).glob("*.jpg"))[:3]]
     assert len(files) >= 12
     for path in files:
         expected = ml_clf.predict_bytes(path.read_bytes())

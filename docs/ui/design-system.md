@@ -1,6 +1,6 @@
 # UI design system
 
-**Status:** Stage 1 of the UI milestone is implemented: tokens, a shared component library, the application shell, and four screens (Landing, Sign in / Sign up, Operational Command Center, AI Waste Classification). Eighteen further screens are **not started** (Stage 2). See `screen-inventory.md`.
+**Status:** implemented. Tokens, a shared component library, the application shell and every product screen of the 22 references except the one excluded by product decision (Smart Bins and Sensor Telemetry) are built and tested; the reference-to-screen mapping and the visual evidence are in `docs/project-completion/SCREEN_TRACEABILITY.md` and `screen-inventory.md`. The renders have not been signed off by a designer, and no pixel-perfect claim is made.
 
 The UI is plain CSS (custom properties plus one stylesheet per component) on React. No UI framework or headless library was added: the interactive primitives use native elements (`<dialog>`, `<button>`, `<input>`) so the browser supplies focus handling, and each has role/keyboard tests.
 

@@ -36,9 +36,9 @@ class ActiveModelOut(BaseModel):
     scope: Literal["material_category"] = "material_category"
     note: str = (
         "Predicts the material category only. No object label is produced. "
-        "Scores come from studio-style photographs. On one real-world dataset (RealWaste, "
-        "facility photos) the first model reached about 45% accuracy, so treat every prediction "
-        "as a suggestion for a person to check."
+        "Any recorded score comes from the model's own training dataset, not from local field "
+        "photographs, so its accuracy on your waste is unknown. Treat every prediction as a "
+        "suggestion for a person to check."
     )
 
 

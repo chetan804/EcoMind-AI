@@ -1,3 +1,8 @@
+> **Updated 2026-10-22.** TrashNet and TrashBox are no longer ingested: they are prohibited and `data/fetch.py`
+> does not download them. The TrashNet figures below describe the withdrawn 1.0.0 ingestion and are kept as
+> history. The current ingestion is RealWaste 2.0 (`datasets/manifests/realwaste-2.0.yaml`, verified digest
+> `59fabef9…432ef`, 4,752 files, 0 undecodable, 0 exact duplicates, 0 files byte-identical to a TrashNet image).
+
 # Ingestion and validation report
 
 **Run date:** 2026-10-20. **Host:** 2 CPU cores, ~3.9 GB RAM, ~18 GB free disk. **Code:** `ml/waste_classification/data/fetch.py`
@@ -50,22 +55,15 @@ Weekly aggregation, completeness rule, interpolation counts and exclusions per s
 `experiments/time-series-results.json` (chronological 70/30 split, seasonal-naive/naive/moving-average/SES/damped-Holt/Holt-Winters
 baselines, seed 42).
 
-## Reproduce
+## Reproduce (current pipeline, RealWaste 2.0)
 ```bash
 python -m venv /tmp/venv-ml && /tmp/venv-ml/bin/pip install -r ml/requirements-dev.txt
-PYTHONPATH=. python -m ml.waste_classification.data.fetch            # TrashNet + backbones, hashes verified
-git init datasets/external/realwaste-src && cd datasets/external/realwaste-src \
-  && git remote add origin https://github.com/sam-single/realwaste.git \
-  && git fetch --depth 1 origin 156e8e9154eeb163df30fcfd767f55b19633bb06 && git checkout FETCH_HEAD && cd -
-PYTHONPATH=. python -m ml.waste_classification.training.train        # rebuilds the released candidate (~21 min on 2 cores)
-PYTHONPATH=. python -m ml.waste_classification.research.cross_dataset realwaste \
-  --root datasets/external/realwaste-src/RealWaste \
-  --reference-hashes <json list of TrashNet file sha256> \
-  --out docs/ml/dataset-research/experiments/cross-dataset-realwaste.json
-PYTHONPATH=. python -m ml.waste_classification.research.multi_dataset_experiment \
-  --out docs/ml/dataset-research/experiments/multi-dataset-realwaste.json
+# validates the manifest (fails closed), clones RealWaste at the pinned commit, verifies the content
+# digest, and fetches the Coral backbones at their pinned commit
+PYTHONPATH=. python -m ml.waste_classification.data.fetch
+PYTHONPATH=. python -m ml.waste_classification.training.train      # provenance gate, split, model, report
+PYTHONPATH=. python -m ml.waste_classification.evaluation.report   # figures, evaluation report, model card
 ```
-Both research scripts refuse to overwrite an existing result file. The experiment was run twice with identical output.
-`train.py` rewrites the tracked report and registry entry with new timestamps and latencies; the learned head
-(`head.npz`) and every accuracy figure reproduce bit-for-bit (second independent reproduction, 2026-10-20, trained at 16:56 UTC:
-head SHA-256 `0972f2c8…2c64`, test accuracy 0.8670, macro-F1 0.8409, ECE 0.0310), see also `reproducibility-1.0.0.md`.
+The 1.0.0 reproduction commands (TrashNet, cross-dataset and multi-dataset scripts) were removed: those experiments
+used prohibited data and the scripts now refuse to run (`ml/waste_classification/research/`). Their recorded results
+under `experiments/` are marked withdrawn.
