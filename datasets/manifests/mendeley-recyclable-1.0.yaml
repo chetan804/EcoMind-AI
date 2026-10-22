@@ -1,0 +1,84 @@
+# Dataset manifest: Mendeley "Recyclable Waste Image Dataset" (ISEP, Porto). CANDIDATE, NOT YET USABLE.
+#
+# STATUS 2026-10-22: PENDING DOWNLOAD. Only the publisher's metadata has been read (Mendeley public API
+# and landing page). The image files have NOT been obtained (the build sandbox cannot reach
+# data.mendeley.com), so nothing below has been checked against pixels, and `images.files_digest` is
+# deliberately absent: the provenance gate (ml/waste_classification/data/provenance.py) therefore REFUSES
+# this manifest, and no training or evaluation can start from it. Fill it in only after
+#   python -m ml.waste_classification.data.inspect_candidate ...   reports validation_passed = true
+# (see docs/ml/dataset-research/mendeley-recyclable-experiment-plan.md).
+#
+# This file is separate from realwaste-2.0.yaml. The RealWaste-only experiment (model 2.0.0) and its
+# reported results are not touched by it.
+name: mendeley-recyclable
+version: "1.0"
+accessed: "2026-10-22"          # date the publisher metadata was read; NOT a download date
+status: pending_download
+description: >
+  A 1,000-image subset of a master's-dissertation dataset (ISEP, Porto): photographs taken by the
+  author in municipal waste management facilities, urban public spaces and domestic environments, in
+  five classes (paper, cardboard, plastic, metal, glass). The author's full dataset had 8,068 images
+  that also contained third-party public datasets; per the publisher's description only the
+  author-collected images are in this public release.
+source:
+  url: https://data.mendeley.com/datasets/h5pxbsdz4m/1
+  doi: 10.17632/h5pxbsdz4m.1
+  version: "Mendeley Data version 1, published 2026-06-04"
+  contributor: João Alves
+  api_url: https://data.mendeley.com/public-api/datasets/h5pxbsdz4m
+  download_url: https://data.mendeley.com/public-api/zip/h5pxbsdz4m/download/1
+  published_total_bytes: 1707542607     # the API's `size`; the page says "1.59 GB"
+  published_file_naming: "<site>_<Class> (<n>).jpg, for example CWMF_Cardboard  (1).jpg, UHW_Plastic (95).jpg"
+  downloaded: false
+citation:
+  text: >
+    Alves, J. (2026). Recyclable Waste Image Dataset (Version 1) [Data set]. Mendeley Data.
+    https://doi.org/10.17632/h5pxbsdz4m.1
+licence:
+  status: verified          # a clear publisher statement, but see `open_questions`
+  release_allowed: false    # stays false until the open questions below are answered in writing
+  declared:
+    - spdx: CC-BY-4.0
+      source: Mendeley Data public API `data_licence` and the dataset landing page, read 2026-10-22
+      evidence: >
+        data_licence.short_name "CC BY 4.0", url http://creativecommons.org/licenses/by/4.0. The
+        publisher's licence text adds: "further permission may be required for any content within the
+        dataset identified as belonging to a third party."
+  open_questions:
+    - >
+      Does the public subset contain ANY third-party image? The description says only author-
+      collected images were kept, but that was not verified from the files (the licence text
+      itself warns about third-party content). Ask the contributor to confirm in writing.
+    - >
+      The photographs were taken in facilities and public spaces, so they may show people,
+      vehicles or private property, and the files may carry GPS metadata. The inspection reports
+      GPS EXIF. A privacy review is needed before any redistribution of images or of a model
+      card with examples.
+    - >
+      Attribution (CC BY 4.0) is required in the model card and in any publication.
+images:
+  expected_count: 1000      # stated by the publisher; the inspection must reproduce it
+  # files_digest: <SHA-256 over the sorted "<folder>/<file> <sha256-of-file>" lines. Fill in from the
+  #                downloaded files after inspect_candidate reports validation_passed = true.>
+labels:
+  # Source labels as they appear in the file names. The folder layout of the zip is not yet known, so
+  # the loader for this dataset must read the class from the file name and cross-check the folder.
+  classes:
+    - {name: Cardboard, maps_to: cardboard}
+    - {name: Glass, maps_to: glass}
+    - {name: Metal, maps_to: metal}
+    - {name: Paper, maps_to: paper}
+    - {name: Plastic, maps_to: plastic}
+  notes: >
+    Nothing here is a catch-all or an out-of-scope label. This dataset therefore adds NO out-of-scope
+    images: the 90% out-of-scope review criterion can only be measured on the RealWaste folders that
+    have no EcoMind class (food, vegetation, textile, miscellaneous).
+split:
+  method: >
+    group-aware stratified split; groups are near-duplicate clusters, and the images of one site prefix
+    are also evaluated together as a leave-site-out check (fixed in the experiment configuration)
+  seed: 42
+overlap_checks:
+  prohibited_hashes: not run (files not available)
+  realwaste_exact_hashes: not run (files not available)
+  realwaste_near_duplicates: not run (files not available)
