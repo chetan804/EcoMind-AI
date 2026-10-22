@@ -52,7 +52,7 @@ python -m ml.waste_classification.training.train                   # ~30 min on 
 python -m ml.waste_classification.experiments.preprocessing_ablation   # optional; not re-run for 2.0.0
 python -m ml.waste_classification.evaluation.report                # figures, report, model card
 ```
-The run is seeded (42) and meant to be deterministic; an independent re-run has not been compared.
+The run is seeded (42): three runs on one machine gave identical test metrics and identical `head.npz` / `novelty_reference.npy` hashes. It has not been reproduced on another machine.
 Output goes to `ml/artifacts/waste_classification/<version>/` (git-ignored: `head.npz`,
 `novelty_reference.npy`, `model.json`).
 

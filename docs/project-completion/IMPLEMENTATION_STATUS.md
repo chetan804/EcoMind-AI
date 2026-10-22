@@ -403,4 +403,5 @@ passed / 2 skipped plus the forced-enrolment spec 4/4 on a production-mode stack
 | Acceptance | 5 of 6 offline criteria pass; **out-of-scope routing 0.797 < 0.90 FAILS**; no field evaluation. **NOT APPROVED**, inactive, `approved_for_activation: false` |
 | Activation guard | the backend refuses `activate_model` unless `model.json` has `release.approved_for_activation: true` (409 `model_not_approved`) |
 | Field evaluation | protocol `docs/ml/field-evaluation-protocol.md`; validator and scorer `ml/waste_classification/evaluation/field.py` (12 tests); **no field data collected** |
-| Not done | preprocessing ablation not re-run for 2.0.0; no independent re-run of the 2.0.0 training; RealWaste licence unresolved |
+| Reproducibility | three training runs on one machine: identical test metrics and identical weight hashes; the last from a clean code tree (`code_tree_clean: true`, commit `430e027`) |
+| Not done | preprocessing ablation not re-run for 2.0.0; not reproduced on a second machine; RealWaste licence unresolved |

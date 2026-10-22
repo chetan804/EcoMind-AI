@@ -2,14 +2,14 @@
 
 All figures are copied from committed artifacts; the artifact is named in each row. Counts of tests are from
 local runs on 2026-10-22 unless stated; CI results are in `docs/project-completion/REQUIREMENTS_CLOSURE_REPORT.md`
-and `IMPLEMENTATION_STATUS.md`. The classifier was trained on 2026-10-22 (one run; no independent re-run yet).
+and `IMPLEMENTATION_STATUS.md`. The classifier was trained three times on 2026-10-22 from the same inputs (the last from a clean code tree) with identical test metrics (0.8953 / 0.8960 / 0.0364) and identical `head.npz` and `novelty_reference.npy` SHA-256 hashes; the same-machine reruns are not an independent reproduction.
 
 ## 1. Classifier `waste-classification 2.0.0` (research candidate: NOT approved, inactive)
 
 Source: `docs/ml/reports/waste-classification-2.0.0.{json,md}`, model card
 `docs/ml/model-cards/waste-classification-2.0.0.md`, field protocol `docs/ml/field-evaluation-protocol.md`.
 The earlier model `1.0.0` (trained on TrashNet) was **withdrawn on 2026-10-22** because the project has no written
-permission for TrashNet's photographs. **None of its figures appears here.** The new model was trained once, on
+permission for TrashNet's photographs. **None of its figures appears here.** The new model was trained on
 2026-10-22, from RealWaste alone (pinned commit `156e8e91`, 4,752 images); TrashNet and TrashBox are excluded by a
 SHA-256 denylist that is checked on every load.
 

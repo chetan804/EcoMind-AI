@@ -42,8 +42,7 @@ guarded by a test. This is a self-review, not an independent penetration test.
   (a novelty check) is too low. Hyper-parameters, the threshold and the temperature are chosen on
   train/validation only; the test split is scored once.
 - **Reproducibility.** The command, dataset manifest (with SHA-256), configuration and model hashes are
-  committed (`docs/ml/reports/`, `ml/model_registry/`). Model 2.0.0 was trained once (2026-10-22); an independent
-  re-run has not been done. The earlier 1.0.0 reproduction record is withdrawn with that model. The classifier verifies
+  committed (`docs/ml/reports/`, `ml/model_registry/`). Model 2.0.0 was trained three times on 2026-10-22 from the same inputs (the last from a clean code tree) with identical test metrics (0.8953 / 0.8960 / 0.0364) and identical `head.npz` and `novelty_reference.npy` SHA-256 hashes (same machine; not yet reproduced elsewhere). The earlier 1.0.0 reproduction record is withdrawn with that model. The classifier verifies
   file hashes at load and refuses a tampered artifact.
 - **Acceptance and activation.** Criteria (macro-F1, per-class recall, calibration, margin over a baseline, accuracy of
   auto-accepted predictions, out-of-scope routing, and a Hyderabad field evaluation of at least 300 consented images)

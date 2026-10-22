@@ -9,7 +9,7 @@ fees and AI-disclosure rules were not verified and must be read on the venue's o
 | Item | Evidence |
 |---|---|
 | A working, tested, audited platform from report to verified recovery | 787 backend, 386 frontend, 61 ML, 147 contract and 61 browser tests (`results.md` section 6); CI green on `main` |
-| Reproducible, provenance-gated classifier pipeline (fails closed on missing licence evidence, prohibited data or leakage) | `ml/waste_classification/data/provenance.py`, `datasets/manifests/realwaste-2.0.yaml`, 118 ML tests; model `2.0.0` trained on 2026-10-22 (not yet independently re-run) |
+| Reproducible, provenance-gated classifier pipeline (fails closed on missing licence evidence, prohibited data or leakage) | `ml/waste_classification/data/provenance.py`, `datasets/manifests/realwaste-2.0.yaml`, 118 ML tests; model `2.0.0` trained three times on 2026-10-22 from the same inputs (the last from a clean code tree) with identical test metrics (0.8953 / 0.8960 / 0.0364) and identical `head.npz` and `novelty_reference.npy` SHA-256 hashes (same machine; not yet reproduced on another) |
 | Honest evaluation on a group-aware held-out split: per-class metrics, confusion matrix, calibration, abstention, robustness, out-of-scope routing, measured leakage, and a failed acceptance criterion reported as failed | `results.md` section 1, `docs/ml/reports/waste-classification-2.0.0.md` |
 | Forecasting and anomaly detection with baselines and no unlabelled claims | `results.md` section 4 |
 | Licence discipline: TrashNet and TrashBox removed after audit, RealWaste kept research-only because its licence is contested | `ethics-and-data-statement.md`, `docs/ml/dataset-research/` |

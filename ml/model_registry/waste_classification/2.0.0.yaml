@@ -1,0 +1,55 @@
+name: waste-material-classifier
+version: 2.0.0
+status: candidate
+task: material_category
+framework: tflite (frozen backbone) + numpy linear head
+trained_at_utc: '2026-10-22T09:07:57Z'
+git_commit: 430e027daf5f59b746d002a0a0c2f71eac150b41
+code_tree_clean: true
+config_sha256: 120bce10aad632eca1b8e8db9d08be9dedae9e985efcd9f79a50dbca65e370e8
+dataset_manifest: datasets/manifests/realwaste-2.0.yaml
+dataset_files_digest: 59fabef99c26bb25afb86b718981e6fc6e04b6bcba6bd39de5834ee668f432ef
+dataset_licence_status: conflicting
+release_allowed: false
+use: 'research only: the training data licence is unresolved and no field evaluation
+  exists'
+approved_for_activation: false
+acceptance_decision: 'NOT APPROVED: offline criteria failed and no field evaluation
+  exists'
+backbones:
+- name: M
+  file: efficientnet-edgetpu-M_quant_embedding_extractor.tflite
+  sha256: c3817dd3c0d1b1e3c222e4997ae28c828eeb97f96b6ed60e350fc295baf5c94b
+- name: L
+  file: efficientnet-edgetpu-L_quant_embedding_extractor.tflite
+  sha256: 377f55907731363845ea136acdb7c3d994ff54ef7d42575dddf11dc8d8fb2285
+artifact_files:
+  head.npz: 53cd1b298723db3ab9432e203243b7c3e8a8abb90ffa81ff41833e3f1e39d224
+  novelty_reference.npy: bc4a527a8834bec550b0cc27d0fc14bfd9f5d5ed3f201a67f17a7c246aee2771
+artifact_model_json_sha256: 580d6cce168a55f867c0e7bd279b2fb72c1975a872b42b59f714e2b892fdc354
+classes:
+- cardboard
+- glass
+- metal
+- paper
+- plastic
+tta_variants:
+- identity
+temperature: 0.7504192554815501
+review:
+  min_confidence: 0.75
+  min_novelty_similarity: 0.6203650832176208
+headline_metrics:
+  split: test (grouped, evaluated once)
+  accuracy: 0.8953488372093024
+  accuracy_ci95:
+  - 0.8548021771821727
+  - 0.9308539489697427
+  macro_f1: 0.8959506516540954
+  macro_f1_ci95:
+  - 0.8509009911711833
+  - 0.9294573205997715
+  ece: 0.036385031949545815
+  latency_p95_ms: 90.05796710007415
+evaluation_report: docs/ml/reports/waste-classification-2.0.0.json
+model_card: docs/ml/model-cards/waste-classification-2.0.0.md
