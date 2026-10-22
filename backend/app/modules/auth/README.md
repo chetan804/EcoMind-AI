@@ -5,8 +5,8 @@ Login, token refresh/rotation, logout and the current-user endpoint. Owns the se
 **Status:** implemented and tested (register, login, refresh rotation with reuse detection, logout, change password, current user, request-auth dependencies).
 
 ## Ownership
-- **Tables owned:** `auth_sessions`
-- **Files present:** `models.py`. Add `router.py`, `schemas.py`, `repository.py`, `service.py` and the other files of the module contract only when they are needed (docs/architecture/component-boundaries.md).
+- **Tables owned:** `auth_sessions`, `account_tokens`, `mfa_factors`, `mfa_recovery_codes`
+- **Files:** `dependencies.py`, `errors.py`, `mfa.py`, `models.py`, `policy.py`, `recovery.py`, `repository.py`, `router.py`, `schemas.py`, `service.py`, `totp.py`.
 
 ## Relationships
 - **Depends on (via services / foreign keys):** `users`

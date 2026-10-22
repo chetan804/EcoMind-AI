@@ -8,4 +8,4 @@ Word copies of three documents for people who prefer to read or print them in Wo
 | `EcoMind-AI-Project-Guide.docx` | `docs/PROJECT_GUIDE.md` |
 | `EcoMind-AI-Manual-Test-Guide.docx` | `docs/testing/MANUAL_TEST_GUIDE.md` |
 
-Regenerate: `pip install pypandoc_binary` then convert each file with `pypandoc.convert_file(src, "docx", outputfile=dst, extra_args=["--toc"])`. Re-exported on 2026-10-21 after the owner decisions and the two post-audit fixes.
+Regenerate: `pip install pypandoc_binary` then convert each file with `pypandoc.convert_file(src, "docx", outputfile=dst, extra_args=["--toc"])`. Re-exported on 2026-10-22 after the documentation update.

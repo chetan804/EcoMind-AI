@@ -13,26 +13,33 @@ PostgreSQL is the only authoritative store. The schema is defined by SQLAlchemy 
 - Every foreign key column is indexed (verified by `test_migrations.py`).
 - Polymorphic references (`reward_ledger_entries.source_id`, `notifications.entity_id`, `audit_logs.entity_id`) have no FK by design.
 
-## Tables by owner (29)
+## Tables by owner (46)
+Generated list: [data-dictionary.md](data-dictionary.md) (checked by CI). The owner is the module whose `models.py` defines the table.
+
 | Module | Tables |
 |---|---|
 | users | `users` (case-insensitive unique email), `roles`, `permissions`, `user_roles`, `role_permissions` |
-| auth | `auth_sessions` (hashed refresh tokens, rotation family) |
+| auth | `auth_sessions` (hashed refresh tokens, rotation family), `account_tokens` (password-reset and e-mail-verification tokens, hashed), `mfa_factors`, `mfa_recovery_codes` |
 | sorting_guide | `material_categories`, `sorting_guidance` |
-| facilities | `facilities` |
+| facilities | `facilities`, `zones` (named areas, no geometry) |
 | fleet | `fleet_vehicles` |
 | waste_reports | `waste_reports`, `media_assets` |
 | classification | `classification_model_versions`, `classification_predictions` |
 | collection | `collection_tasks`, `collection_assignments`, `collection_task_status_history`, `collection_events` |
 | route_planning | `route_plans`, `route_stops` |
+| tracking | `vehicle_location_events` (append-only) |
 | circular_economy | `recovery_records` |
 | material_passports | `material_passports`, `custody_events` |
 | community_incidents | `community_incidents` |
-| rewards | `reward_ledger_entries` |
+| marketplace | `marketplace_listings`, `marketplace_listing_photos`, `marketplace_requests` |
+| rewards | `reward_ledger_entries`, `reward_items`, `reward_redemptions` |
 | notifications | `notifications` |
-| forecasting | `forecast_results` |
+| forecasting | `forecast_results`, `reference_series`, `reference_series_points` |
 | anomaly_detection | `anomaly_alerts` |
+| support | `knowledge_articles`, `assistant_conversations`, `assistant_messages`, `support_tickets`, `support_ticket_replies` |
 | audit | `audit_logs` |
+
+Alembic also keeps its own `alembic_version` table, so a database dump contains 47 tables.
 
 ## Key relationships
 ```
@@ -54,7 +61,7 @@ Unique case-insensitive email; one active assignment per collection task (partia
 ## Deliberate omissions
 - **Sensor devices/readings:** not created. No hardware exists and no requirement is accepted. They will be added through a migration owned by `integrations/sensors` or a dedicated module when required.
 - **Model version table for forecasting/anomaly detection:** those tables store `model_name`/`model_version` strings, because baseline models have no artifacts and `classification` should not be a dependency of unrelated modules.
-- **Seed data (roles, permissions, material categories):** not invented here; seeded by the milestone that defines them, via a data migration.
+- **Seed data (roles, permissions, material categories):** seeded by data migrations in the milestone that defines them (roles and permissions in `0002` and later migrations; material categories in `0006`; the support articles by the `seed-support-knowledge` CLI command), never invented at run time.
 - **Facility accepted materials, pickup schedules, organizations:** not modelled until required.
 
 ## Evolving the schema

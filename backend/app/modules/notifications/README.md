@@ -6,7 +6,7 @@ In-app notifications per user. Email delivery goes through `integrations/email`.
 
 ## Ownership
 - **Tables owned:** `notifications`
-- **Files present:** `models.py`, `constants.py`. Add `router.py`, `schemas.py`, `repository.py`, `service.py` and the other files of the module contract only when they are needed (docs/architecture/component-boundaries.md).
+- **Files:** `constants.py`, `models.py`, `repository.py`, `router.py`, `schemas.py`, `service.py`.
 
 ## Relationships
 - **Depends on (via services / foreign keys):** `users`
@@ -19,5 +19,5 @@ In-app notifications per user. Email delivery goes through `integrations/email`.
 -
 
 ## Tests
-The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. When endpoints are added, add API tests in `backend/tests/api/` and authorization tests in `backend/tests/security/`.
+The migration, naming rules and selected database constraints are covered by `backend/tests/integration/test_migrations.py` and `test_schema_constraints.py`. API tests: `test_notifications.py` in `backend/tests/api/`; authorization of every route is checked by `backend/tests/security/test_route_inventory.py`.
 Run: `make test-backend`.

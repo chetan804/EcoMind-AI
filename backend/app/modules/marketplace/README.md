@@ -5,7 +5,7 @@ Surplus-material listings that facility operators and managers offer for reuse, 
 **Status:** implemented (listings, lifecycle, requests, accept/decline/withdraw, notifications, audit). It is a matching board: no price, payment, delivery, photos or chat. See docs/api/marketplace-api.md.
 
 ## Ownership
-- **Tables owned:** `marketplace_listings`, `marketplace_requests`
+- **Tables owned:** `marketplace_listings`, `marketplace_listing_photos`, `marketplace_requests`
 - **Files present:** `models.py`, `constants.py`, `schemas.py`, `repository.py`, `service.py`, `router.py`.
 
 ## Relationships

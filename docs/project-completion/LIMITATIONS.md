@@ -1,6 +1,6 @@
 # Known limitations
 
-Everything below is a real, current limitation as of 2026-10-21 (branch `arena/cb4875bc-ecomind-ai`).
+Everything below is a real, current limitation as of 2026-10-22 (code at `main` `625241e`, migration head `0017`).
 Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree with this list.
 
 ## Machine learning
@@ -65,3 +65,8 @@ Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree w
 - Workflows pin `ubuntu-24.04` and every action by commit SHA; the two runner pins need a manual bump when a runner image is retired.
 - GitGuardian reports one false positive (a test credential in `test_administration.py`); it remains in history.
 - **Load and capacity are not established.** `scripts/perf/load_test.py` ran in the build sandbox (2 vCPU, one API worker, database and web server on the same machine, tiny demo data): about 125–130 requests per second saturation, 0 errors at 10 and 50 users, p95 123 ms and 639 ms. Those numbers describe that machine only; no target was set and there is no test on target hardware or with realistic data volumes. See `docs/operations/load-testing.md`.
+
+## Publication and release
+- The repository's `LICENSE` is "All rights reserved; no license is granted". The code is not open source until the owner chooses a licence; a paper must state this honestly.
+- No user study, pilot or field data exist; the ethics and data-licence statement (`docs/academic/ethics-and-data-statement.md`) is a draft and the gaps to a research paper are in `docs/academic/PAPER_READINESS.md`.
+- The related-work survey (`docs/academic/literature-survey.md`) is selective, not a protocol-based search.

@@ -230,7 +230,7 @@ docker compose exec backend python -m app.cli seed-support-knowledge
 - **No map tile file**, so maps show a plain background and a notice.
 - **Google Maps/Routes, OSRM, real GPS and real e-mail** were never tried with real services.
 - No human accessibility review; automated checks only.
-- Backend tests: 763 passed, 1 skipped. Browser tests: 31 passed, 1 skipped. Frontend tests: 365 passed.
+- Tests (2026-10-21): backend 786 passed and 1 skipped on a clean checkout (787 with the model file); browser 61 passed, 2 skipped; frontend 386 passed; ML 61; contract 147.
 
 The full list is in `docs/project-completion/PROJECT_AUDIT_REPORT.md` and `LIMITATIONS.md`.
 

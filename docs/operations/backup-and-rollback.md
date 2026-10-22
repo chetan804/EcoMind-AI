@@ -1,9 +1,10 @@
 # Backup, restore and rollback
 
 What is stored where, how to back it up, how to restore it, and what a rollback costs. Everything marked
-**drilled** was run in the development sandbox on 2026-10-20 against the seeded demonstration database
-(PostgreSQL 16.2, 35 tables, 2,371 rows, Alembic head `0009`); everything else is a procedure that has
-**not** been exercised here (no production environment exists).
+**drilled** was run in the development sandbox, first on 2026-10-20 against the seeded demonstration database
+(then 35 tables, 2,371 rows, Alembic head `0009`: historical) and again on 2026-10-21 at the current head `0017`
+(46 application tables plus Alembic's own `alembic_version` table = 47 tables in a dump, 809 rows); everything
+else is a procedure that has **not** been exercised here (no production environment exists).
 
 ## What holds state
 
@@ -42,11 +43,11 @@ createdb ecomind_restore
 pg_restore --no-owner --exit-on-error -d ecomind_restore ecomind-<stamp>.dump
 ```
 
-Drill result: dump 241,782 bytes in 0.08 s, restore in 0.29 s with `--exit-on-error`; all 35 tables had
+Drill result (2026-10-20, historical, head `0009`): dump 241,782 bytes in 0.08 s, restore in 0.29 s with `--exit-on-error`; all 35 tables had
 identical row counts and `alembic_version` was `0009` in both databases.
 
 Re-drilled on 2026-10-21 against the local development database at Alembic head `0017` (PostgreSQL 16.2, 47
-tables, 809 rows): dump 251,682 bytes in 0.16 s, restore in 0.68 s with `--exit-on-error`, row counts of all 47
+tables = 46 application tables + `alembic_version`, 809 rows): dump 251,682 bytes in 0.16 s, restore in 0.68 s with `--exit-on-error`, row counts of all 47
 tables, `alembic_version` and the 5 append-only triggers identical in both databases; `DELETE FROM audit_logs`
 on the restored copy was refused by the trigger; `alembic downgrade 0016`, `upgrade head` and `alembic check`
 all succeeded on the restored copy. Still a development-sandbox drill with a small seeded database, not a

@@ -13,40 +13,45 @@ Nothing here is claimed without evidence listed in the table or in the "Verifica
 | Missing | Not started |
 | Blocked | Cannot be completed in this environment; reason given |
 
-## 1. Where the project stands (PR #12 was merged into `main` on 2026-10-21 as `2834cf0`; it was developed on branch `arena/34eb0c5c-ecomind-ai`, started from `main` at `8ebe716`)
+## 1. Where the project stands (updated 2026-10-22)
 
-`main` is at `8ebe716` (PR #11 merged: offline map, optional OSRM, TACO audit). This branch carries the five production-hardening
-steps (Phase J below): supply chain and CI, account recovery, marketplace completion, reward redemption, accessibility audit, plus
-three defects found on the way. Alembic head is `0015` (0012 account tokens, 0013 marketplace, 0014 reward catalogue and redemptions, 0015 help assistant and support desk);
-48 permissions (new: `rewards:redeem`, `support:ask`, `support:manage`, `knowledge:manage`). Phase K adds the help assistant (retrieval only) and support desk. **Nothing is deployed and the branch is not merged.**
+`main` is at `625241e` (PR #23 merged by the owner on 2026-10-21; PRs #9 to #12 and #17 to #20 are earlier merges). Alembic head
+is **0017**; 22 backend modules, 168 API operations, 46 application tables, 48 permissions, 5 roles. Nothing is deployed.
 
-The sections below this one that describe "this branch" in earlier phases (B to I) are history of work that is already on `main`.
+Release target recorded by the owner: **supervised demonstration and academic submission**. The project is *not* approved for
+public production: no classifier is approved or active, real e-mail, real map tiles and real GPS sources have not been
+exercised, there has been no human accessibility review and no deployment. The verdict, the PASS / FAIL / BLOCKED /
+NOT VERIFIED rows and the owner-only actions are in [REQUIREMENTS_CLOSURE_REPORT.md](REQUIREMENTS_CLOSURE_REPORT.md);
+the paper-specific gaps are in `docs/academic/PAPER_READINESS.md`.
 
-**Baseline at the start of this branch (before any change, same sandbox):** backend 524 passed / 1 skipped, vitest 220 passed, `tsc` clean.
-
-Local results at the end of Phase I (the state of `main` at `8ebe716`; Phase J results are listed under that phase):
+Latest local results (2026-10-21 and 2026-10-22; details and commands in the closure report and `docs/academic/results.md`):
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 623 passed, 1 skipped (the classification parity test needs the git-ignored model artifact); one more test (transport scheme guard) was added after that run and passes in the re-run of the affected files (58 passed) |
-| Backend ruff, ruff format, mypy (as CI runs them, including tests) | clean |
-| Frontend vitest | 301 tests passed |
-| Playwright e2e (local, real stack, Chromium without extra GL flags) | 22 passed, 1 skipped (the no-model classification test). The first run after the provider change failed the tracking spec (it assumed the Google fallback text); fixed, then the full suite passed. |
-| Contract tests (`pytest tests/contract`) | 37 passed (map script 5, TACO scripts 27, others 5) |
-| Frontend `tsc -b`, ESLint, production build | clean; no `AIza` key material in the bundle |
-| Generated docs (data dictionary, ER diagram, route matrix) `--check` | up to date at `5542389` |
-| `scripts/quality/check_structure.py` | passes |
+| Backend pytest (real PostgreSQL 16.2) | 786 passed, 1 skipped on a clean checkout (2026-10-22; the skipped parity test needs the git-ignored model file); 787 passed, 0 skipped with it (2026-10-21) |
+| Frontend vitest | 386 passed (39 files) |
+| ML tests | 61 passed |
+| Contract tests | 147 passed |
+| Playwright e2e | 61 passed, 2 skipped (real-model test; forced enrolment, run separately 4 of 4) |
+| ruff, ruff format, mypy, `tsc -b`, ESLint, production build | clean |
+| Generated docs `--check`, `check_structure.py`, `check_env_templates.py` | up to date |
+| `pip-audit`, `npm audit`, `bandit` | no findings |
+| GitHub CI on `625241e` | all workflows green |
 
-**Not verified (needs credentials or network the sandbox lacks):** rendering with a real Google Maps key, the live Routes API, the CSP with Google
-loaded, any real GPS source, the offline map on real OpenStreetMap tiles (only synthetic tiles were rendered), a live OSRM server, the nginx `/map-assets/` location, the TACO source-licence scripts against Flickr. See `docs/maps/GOOGLE_MAPS_INTEGRATION.md` ("Pending live verification").
+The sections below describe the work phase by phase. Numbers inside a phase (for example "623 passed" or "head 0015") are
+what was true at the end of that phase and are kept as history, not as the current state.
+
+**Not verified (needs credentials, hardware or network the sandbox lacks):** rendering with a real Google Maps key, the live
+Routes API, any real GPS source, the offline map on real Hyderabad tiles (only synthetic tiles were rendered), a live OSRM server,
+real SMTP delivery, a real authenticator app, a human screen-reader pass, load on target hardware, a deployment.
 
 ## 2. Capability matrix
 
-### Backend modules (all 21 have routes, tests and an API document under `docs/api/`)
+### Backend modules (all 22 have routes, tests and an API document under `docs/api/`)
 
 | Module | Status | Notes |
 |---|---|---|
-| auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA is optional for every role (not forced). |
+| auth (+ MFA) | **Verified** | Argon2id, refresh cookie, lockout, TOTP MFA with recovery codes (35 tests, 12/12 mutations caught). MFA was optional for every role when this row was written; it is now required for administrators and managers in production (Phase L, `DECISION_LOG.md` #13). |
 | users / roles / permissions | **Verified** | 48 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |

@@ -7,14 +7,14 @@
 3. **Design:** modular monolith, PostgreSQL as the only authority, RBAC, audit, MFA, isolated ML package.
 4. **Evidence:** held-out accuracy 0.867, but only 0.454 on real facility photos: I report both, and the
    system abstains and asks for review instead of pretending.
-5. **Completeness:** 22 backend modules, 20 of 22 reference screens (the other two are excluded or ambiguous), sixteen migrations, end-to-end tests.
-6. **Limits:** marketplace without payment or photos, no sensors, no map geometry, no redemption, straight-line routes.
+5. **Completeness:** 22 backend modules, 20 of 22 reference screens (the other two are excluded or ambiguous), seventeen migrations, 168 API operations, and 787 backend, 386 frontend, 61 ML and 61 end-to-end tests passing.
+6. **Limits:** no approved classifier, never deployed, marketplace without payment, no sensors, no zone boundaries, straight-line routes by default, tracking verified only with a simulator, maps only with synthetic tiles, no user study, no human accessibility review.
 
 ## Demonstration order (about 8 minutes)
 Sign in as citizen and submit a report with a photo → as manager open the review queue, verify, create a task
 → assign collector and vehicle, build a route plan → as collector complete the task with a weight → show the
 chain-of-custody passport and recovery record → show the reward ledger and the analytics page after refresh
-→ show the audit log and the route-permission matrix.
+→ show a vehicle on the map (simulator, clearly labelled) → show the audit log and the route-permission matrix.
 
 ## Likely questions and honest answers
 
@@ -48,8 +48,17 @@ become labels later.
 **Is the forecast reliable?** It beats a naive baseline on two long series and not on two short noisy ones;
 the API shows the baseline and refuses to forecast with under 26 weeks of data.
 
-**What would you do with more time?** Fine-tune with legitimate field data and licences; marketplace photos and a payment-free hand-over workflow; sensor integration behind an adapter; travel-time routing; forced MFA for administrators; a
-breached-password check and password reset; a full accessibility and light-theme contrast audit.
+**What would you do with more time?** Fine-tune with legitimate field data and licences; sensor integration behind an adapter; travel-time routing on a self-hosted OSRM with real Hyderabad data; real e-mail and GPS pilots; MFA policy for collectors and operators; a breached-password check; a human accessibility review and a user study; account deletion and data export (not implemented).
+
+**Is two-step verification mandatory?** For administrators and managers when `ENVIRONMENT=production` (they are blocked until they enrol); optional for other roles and in development. Enrolment is permanent per account until an administrator resets it.
+
+**Does the marketplace take payments or photos?** No payment or delivery. A listing can carry up to four photos, each re-encoded with metadata removed.
+
+**Can users redeem points?** Yes, against a catalogue that staff fill in; the platform ships no rewards and gives points no monetary value.
+
+**Is the live tracking real?** The mechanism is real (append-only position events with source and age, stale positions labelled), but it was verified only with a clearly labelled simulator and emulated browser geolocation. No physical GPS device or phone was connected.
+
+**Is the database tamper-proof?** The audit log, custody events, reward ledger, location events and task status history reject UPDATE and DELETE through triggers, and custody events are hash-chained. A database superuser can still drop the triggers or truncate the tables, so this is tamper-resistance against application bugs and ordinary roles, not against the database owner.
 
 **What did testing find?** Real bugs, including CI-only failures (typing differences between numpy versions),
 a missing nginx header inheritance, and CSP-incompatible library behaviour; all are in the commit history.

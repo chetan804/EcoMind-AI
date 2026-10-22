@@ -22,7 +22,7 @@ EcoMind AI is a **complete, working web application for a pilot or an academic d
 | Area | State | Evidence |
 |---|---|---|
 | Backend API | Complete for the stated scope | 168 operations, 22 modules; **Verified** by 763 passing tests |
-| Database | Complete and reversible | 46 tables, migrations 0001–0016; **Verified**: upgrade, no schema drift, full downgrade and upgrade again |
+| Database | Complete and reversible | 46 tables, migrations 0001–0016 at audit time (head is now 0017); **Verified**: upgrade, no schema drift, full downgrade and upgrade again |
 | Role-based access | Complete, tested by probing | 5 roles, 48 permissions; **Verified** against the live API (section 5) |
 | Frontend | Complete for the stated scope | 22 module screens, all reachable from the sidebar by the right role; **Verified** by crawl and 365 unit/component tests |
 | Security | Strong for a pre-launch app | dependency audits and static analysis clean; **Verified** (section 6) |

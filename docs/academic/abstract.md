@@ -1,25 +1,34 @@
 # Abstract
 
-EcoMind AI is a web platform that supports municipal solid-waste operations with data rather than
-guesswork. Residents report waste with a photo; the platform checks the image, runs a material classifier
-when an activated model exists (and says so plainly when none does), and queues uncertain results for human
-review. Operators turn verified reports into collection tasks, assign vehicles and collectors, plan a visiting
-order, record the collected weight, and follow the material through facilities with a hash-chained
-chain-of-custody passport. Reward points and impact figures are computed only from verified, recorded
-quantities, and analytics are queries over the same database, so they are correct after a restart.
+EcoMind AI is a web platform that supports municipal solid-waste operations with recorded data
+rather than guesswork. Residents report waste with a photo; the platform validates and re-encodes the image,
+runs a material classifier **only when an administrator has activated an approved model** (and says so plainly
+when none is active, which is the state of the shipped system), and queues uncertain results for human review.
+Operators turn verified reports into collection tasks, assign vehicles and collectors, plan a visiting order,
+record the collected weight, and follow the material through facilities with a hash-chained chain-of-custody
+passport. Reward points, a staff-run redemption catalogue and impact figures are computed only from verified,
+recorded quantities, and analytics are queries over the same database, so they are correct after a restart.
 
-The system is a modular monolith: a React and TypeScript front end, a FastAPI back end with 22 modules over
-PostgreSQL (SQLAlchemy and Alembic, sixteen migrations), and an isolated `ml/` package for training and
-evaluation. It includes role-based access control with optional TOTP multi-factor authentication, an audit log,
-weekly fill-volume forecasting with a naive baseline, a robust-score anomaly detector, and an exact or
-heuristic route-ordering optimiser validated against a public routing dataset.
+The system is a modular monolith: a React and TypeScript front end, a FastAPI back end with 22 modules and 168
+operations over PostgreSQL 16 (SQLAlchemy and Alembic, 46 tables, 17 migrations), and an isolated `ml/` package
+for training and evaluation. It includes deny-by-default role-based access control (5 roles, 48 permissions) with
+TOTP two-step verification that is mandatory for administrators and managers in production, an audit log and
+chain-of-custody records that the database itself refuses to alter, offline OpenStreetMap-based maps with an
+optional road-routing adapter, a labelled vehicle-position simulator, a retrieval-only help assistant with a
+support desk, weekly fill-volume forecasting against a naive baseline, a robust-score anomaly detector, and an
+exact or heuristic route-ordering optimiser validated against a public routing dataset.
 
 The classifier is a frozen EfficientNet-EdgeTPU feature extractor with a calibrated linear head trained on
-TrashNet (six material classes). On its own held-out test split it reaches 0.867 accuracy (95% CI
+TrashNet (six material classes). On its own group-aware held-out test split it reaches 0.867 accuracy (95% CI
 0.813 to 0.912) with 0.031 expected calibration error. On real facility photographs from a second dataset
-(RealWaste) the same model reaches only 0.454 accuracy, which is why it is shipped as a non-default
-candidate and why low-confidence and out-of-scope inputs are sent to review. This gap between a curated
-benchmark and field-like images is a central, honestly reported finding.
+(RealWaste) the same model reaches only 0.454 accuracy (95% CI 0.437 to 0.472), with calibration error 0.263; it
+sends 64% of the in-scope images and 95.5% of the out-of-scope images (food, textile, vegetation) to human review. For that reason, and because the
+licences of the field datasets that would improve it do not permit a released model, the classifier is shipped
+as a non-default, inactive candidate and the platform makes no field-accuracy claim and does not identify
+individual objects. The gap between a curated benchmark and field-like images is a central, honestly reported
+finding. The software is verified by 787 backend, 386 frontend, 61 ML and 147 contract tests and a 61-test
+browser suite; it has not been deployed, and real e-mail delivery, real map tiles, real GPS devices, human
+screen-reader review and load on target hardware remain unverified (see `LIMITATIONS.md`).
 
-**Keywords:** solid-waste management, image classification, calibration, transfer learning, time-series
-forecasting, anomaly detection, vehicle routing, chain of custody, role-based access control.
+**Keywords:** solid-waste management, image classification, calibration, selective classification, distribution
+shift, time-series forecasting, anomaly detection, vehicle routing, chain of custody, role-based access control.

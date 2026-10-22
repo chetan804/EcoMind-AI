@@ -2,7 +2,7 @@
 
 FastAPI modular monolith exposing the REST API under `/api/v1` (plus `/health` and `/ready`). Architecture rules: `docs/architecture/component-boundaries.md`. API rules: `docs/api/api-conventions.md`.
 
-**State:** complete. 22 business modules expose 166 operations under `/api/v1` (plus `/health` and `/ready`), on a PostgreSQL schema of 46 tables built by 17 Alembic migrations (`0001` to `0017`). Application factory, validated configuration, structured errors, request ids, security primitives, role-based access and MFA are all in place. Per-module status: each module's README, `docs/project-completion/IMPLEMENTATION_STATUS.md`, and the audit in `docs/project-completion/PROJECT_AUDIT_REPORT.md`.
+**State:** complete. 22 business modules expose 168 operations under `/api/v1` (plus `/health` and `/ready`), on a PostgreSQL schema of 46 tables built by 17 Alembic migrations (`0001` to `0017`). Application factory, validated configuration, structured errors, request ids, security primitives, role-based access and MFA are all in place. Per-module status: each module's README, `docs/project-completion/IMPLEMENTATION_STATUS.md`, and the audit in `docs/project-completion/PROJECT_AUDIT_REPORT.md`.
 
 ## Layout
 | Path | Responsibility |
@@ -13,9 +13,9 @@ FastAPI modular monolith exposing the REST API under `/api/v1` (plus `/health` a
 | `app/db/` | `base` (declarative base, naming convention, mixins, `enum_column`), `session` (engine/session), `metadata` (explicit model registration for Alembic) |
 | `app/common/` | `pagination`, `enums`, `response_schemas`, `time` |
 | `app/modules/<name>/` | business modules (see each README) |
-| `app/integrations/` | adapters: `file_storage`, `mapping`, `email`, `sensors` (boundaries only) |
+| `app/integrations/` | adapters: `file_storage`, `mapping`, `email`, `sensors` (boundary only; no hardware, no sensor tables) |
 | `app/health/` | `/health`, `/ready` |
-| `migrations/` | Alembic environment and versions (`0001` initial schema) |
+| `migrations/` | Alembic environment and versions (`0001` initial schema to `0017`) |
 | `tests/` | `unit`, `api`, `security`, `integration`, `fixtures` |
 
 ## Run

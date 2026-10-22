@@ -4,7 +4,7 @@
 | Directory | Responsibility | May depend on |
 |---|---|---|
 | `frontend/` | Browser UI. Talks to the backend only through `/api/v1` (+ `/health`, `/ready`). | nothing in this repo at build time |
-| `backend/` | The only application server and the **only writer** of the database. | `ml/` inference code (planned) |
+| `backend/` | The only application server and the **only writer** of the database. | `ml/` inference code (classifier, forecasting algorithms) |
 | `ml/` | Training, evaluation, inference. Never imports `backend/app`. | `datasets/` manifests |
 | `datasets/` | Data descriptions (manifests); data files are not tracked. | — |
 | `deployment/` | Container build definitions. | `frontend/`, `backend/` |
