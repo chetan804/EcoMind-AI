@@ -7,11 +7,11 @@ import { expect, test } from './fixtures';
  * has an ACTIVE model, so each test checks the server first and is skipped (visibly, with the
  * reason) when it does not apply. Model weights are not in git, so CI normally runs the
  * "no active model" test; the "real model" test needs an activated artifact and a sample photo
- * (E2E_SAMPLE_IMAGE, default: a TrashNet plastic image fetched by ml/waste_classification/data/fetch).
+ * (E2E_SAMPLE_IMAGE, default: a RealWaste plastic image fetched by ml/waste_classification/data/fetch).
  */
 const SAMPLE_IMAGE =
   process.env.E2E_SAMPLE_IMAGE ??
-  resolve(process.cwd(), '../../datasets/external/trashnet/dataset-resized/plastic/plastic1.jpg');
+  resolve(process.cwd(), '../../datasets/external/realwaste-src/RealWaste/Plastic/Plastic_1.jpg');
 const CATEGORIES = ['Cardboard', 'Glass', 'Metal', 'Paper', 'Plastic', 'Other waste', 'Residual / other waste'];
 
 async function activeModel(page: import('@playwright/test').Page): Promise<boolean> {

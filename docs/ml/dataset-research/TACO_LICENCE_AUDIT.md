@@ -95,7 +95,9 @@ by the audit under the old rules (evidence URL and date required).
 
 ## Other datasets under the same policy
 
-- **RealWaste** (CC BY-NC-SA 4.0) and **TrashBox** (no licence): never used in a production or released model.
-  RealWaste stays an evaluation/experiment artefact (`datasets/manifests/realwaste-1.0.yaml`); a model trained
-  on it may exist only as a labelled, inactive research artefact. TrashBox was not downloaded.
-- **TrashNet** (MIT) remains the only dataset behind the candidate model `waste_classification 1.0.0`.
+- **RealWaste** (licence conflict: UCI CC BY 4.0 vs authors' GitHub CC BY-NC-SA 4.0) and **TrashBox** (no
+  licence): never used in a production or released model. RealWaste is now the research training set
+  (`datasets/manifests/realwaste-2.0.yaml`); a model trained on it is a labelled, inactive research artefact.
+  TrashBox was downloaded once on 2026-10-21 for a research experiment and is now prohibited.
+- **TrashNet** is prohibited (2026-10-22). The model trained on it, `waste_classification 1.0.0`, is withdrawn;
+  the candidate is now `2.0.0` (RealWaste only).

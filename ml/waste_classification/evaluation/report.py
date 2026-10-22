@@ -395,8 +395,8 @@ the train split only; **C** by the one-standard-error rule (most regularised C w
 {pairs}
 
 Selected: **backbone {ch["candidate"]}, C = {ch["C"]}, TTA = {ch["tta"]}** (CV macro-F1 {ch["cv_macro_f1"]:.3f} +/- {ch["cv_sem"]:.3f}).
-Larger or combined backbones score slightly higher in CV, but the differences are about one standard error. The rule
-was fixed before the results were seen and was not changed afterwards.
+The rule picks the cheapest (backbone, TTA) pair within one standard error of the best CV score. It was fixed before
+the results were seen and was not changed afterwards.
 
 {ablation_section}### Baselines (must be beaten by a stated margin: +0.10 macro-F1)
 
@@ -448,7 +448,7 @@ The learning curve plots held-out macro-F1 against the share of training data us
 
 ## 5. Calibration and the review rule
 
-Temperature **T = {r["calibration"]["temperature"]:.3f}** (fit on validation). T below 1 means the raw head was slightly *under*-confident.
+Temperature **T = {r["calibration"]["temperature"]:.3f}** (fit on validation). T below 1 means the raw head was under-confident, above 1 over-confident.
 
 | | ECE | log-loss | mean confidence |
 |---|---|---|---|
@@ -557,14 +557,14 @@ items or heavy clutter; any unattended sorting; inferring anything about people.
 - **Single-site data, not field data.** All training and test images come from one Australian facility. Accuracy for Indian municipal waste, Hyderabad lighting, packaging and clutter is **unknown** until the field evaluation in `docs/ml/field-evaluation-protocol.md` is run.
 - Weakest class on test: **{min(zip(r["classes"], tc["per_class"], strict=True), key=lambda cp: cp[1]["f1"])[0]}** (F1 {min(p["f1"] for p in tc["per_class"]):.2f}). {top_confusions(r["classes"], tc["confusion_matrix"], 1)}
 - Out-of-scope waste (catch-all, food, vegetation, textile folders): {pct(r["out_of_scope"]["overall_sent_to_review"])} of {r["out_of_scope"]["n"]} images were sent to review; the rest would have been given a material label.
-- Worst synthetic stress: **{worst[0]}** (accuracy {worst[1]["accuracy"]:.2f}; auto-accepted accuracy {worst[1]["accepted_accuracy"]:.2f}), where the model is over-confident.
+- Worst synthetic stress: **{worst[0]}** (accuracy {worst[1]["accuracy"]:.2f}, mean confidence {worst[1]["mean_confidence"]:.2f}; auto-accepted accuracy {worst[1]["accepted_accuracy"]:.2f}).
 - Only {len(r["classes"])} classes: items outside them can be forced into one (mitigated, not solved, by the novelty gate; tested on the out-of-scope folders above and a ten-input smoke set).
-- Generalisation gap: train macro-F1 {r["train_in_sample"]["macro_f1"]:.2f} vs held-out ~{tc["macro_f1"]:.2f}; limited by data diversity, not by tuning.
+- Generalisation gap: train (in-sample) macro-F1 {r["train_in_sample"]["macro_f1"]:.2f} vs held-out {tc["macro_f1"]:.2f}.
 - Residual near-duplicate similarity across the split (see report section 1), so the test score may be slightly optimistic.
 - Collected in one place and time; Indian municipal waste (packaging, materials, regional streams) is not represented.
 
 ## Ethical and privacy notes
-Training images contain no people by design. Inference inputs are user photographs that may contain people or places; the upload
+No person was looked for in the training photographs and none is expected, but they were not audited (`personal_data: not assessed` in the manifest). Inference inputs are user photographs that may contain people or places; the upload
 pipeline strips EXIF/GPS metadata and stores images under the platform's access rules. Predictions must be shown as suggestions with their confidence.
 
 ## Recommendations

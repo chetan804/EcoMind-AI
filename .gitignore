@@ -40,6 +40,7 @@ datasets/raw/*
 datasets/interim/*
 datasets/processed/*
 datasets/external/*
+datasets/field/*
 !datasets/*/.gitkeep
 datasets/manifests/*
 !datasets/manifests/.gitkeep

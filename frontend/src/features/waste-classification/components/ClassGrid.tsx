@@ -1,14 +1,13 @@
-import { Box, Container, Cylinder, Newspaper, Trash2, Wine, type LucideIcon } from 'lucide-react';
+import { Box, Container, Cylinder, Newspaper, Wine, type LucideIcon } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/Card';
 
-/** The six material categories model 1.0.0 was trained on (see docs/ml/model-cards/waste-classification-1.0.0.md). */
+/** The five material categories the current research model is trained on (docs/ml/model-cards/). */
 const CATEGORIES: { id: string; label: string; icon: LucideIcon; tone: string }[] = [
   { id: 'plastic', label: 'Plastic', icon: Container, tone: 'var(--color-info)' },
   { id: 'paper', label: 'Paper', icon: Newspaper, tone: 'var(--color-text-secondary)' },
   { id: 'cardboard', label: 'Cardboard', icon: Box, tone: 'var(--color-warning)' },
   { id: 'glass', label: 'Glass', icon: Wine, tone: 'var(--color-accent-text)' },
   { id: 'metal', label: 'Metal', icon: Cylinder, tone: 'var(--color-primary)' },
-  { id: 'trash', label: 'Other waste', icon: Trash2, tone: 'var(--color-danger)' },
 ];
 
 export function ClassGrid() {
@@ -26,8 +25,8 @@ export function ClassGrid() {
         ))}
       </ul>
       <p className="classes__note">
-        The model predicts these six material categories only. It does not recognise organic waste, e-waste or hazardous
-        items; such images should be flagged for review.
+        The model predicts these five material categories only. It does not recognise miscellaneous waste, organic or
+        textile waste, e-waste or hazardous items; such images should be flagged for review.
       </p>
     </Card>
   );

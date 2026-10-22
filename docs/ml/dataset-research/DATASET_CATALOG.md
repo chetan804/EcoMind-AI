@@ -23,7 +23,10 @@ Project taxonomy (material classes of the released model): `cardboard, glass, me
 
 ## A. Ingested, audited and used
 
-### A1. TrashNet (resized) — waste image classification — **used to train the released candidate**
+### A1. TrashNet (resized) — waste image classification — **PROHIBITED since 2026-10-22; withdrawn model 1.0.0 only**
+
+> **Excluded from every new training, validation, test and release dataset** because written permission for its photographs was not obtained. Only its SHA-256 digests are kept (`datasets/manifests/prohibited-sha256.txt`) so that copies can be found and refused. The audit below is the historical record. Anything measured on or trained with TrashNet is withdrawn.
+
 | # | Attribute | Value |
 |---|---|---|
 | 1–3 | Name · task · URL | TrashNet · whole-image material classification · https://github.com/garythung/trashnet |
@@ -35,23 +38,23 @@ Project taxonomy (material classes of the released model): `cardboard, glass, me
 | 13 | Mapping | identity (class = project class) |
 | 14 | Reachable | yes (git) |
 | 15 | Quality / leakage | 60.98% of images belong to a multi-image near-duplicate group (1,477 groups, largest 35, cosine ≥ 0.70 on S embeddings, per class). Random splits would leak; the project uses group-aware splits. Labels not audited |
-| 16 | Decision | **Use** (baseline and released candidate 1.0.0). Manifest: `datasets/manifests/trashnet-1.0.yaml` |
+| 16 | Decision | **PROHIBITED / quarantined.** Withdrawn model 1.0.0 was trained on it. Manifest kept as a record only: `datasets/manifests/trashnet-1.0.yaml` (the provenance gate refuses it) |
 | 17 | Main risk | Studio-style images: the model measured here does **not** transfer to real facility photos (see selection report: 0.45 accuracy on RealWaste) |
 
-### A2. RealWaste — waste image classification — **evaluation and one experiment only (non-commercial)**
+### A2. RealWaste — waste image classification — **PRIMARY training candidate, research-only until the licence conflict is resolved**
 | # | Attribute | Value |
 |---|---|---|
 | 1–3 | Name · task · URL | RealWaste · whole-image material classification · https://github.com/sam-single/realwaste |
 | 4–5 | Accessed · version | 2026-10-20 · commit `156e8e9154eeb163df30fcfd767f55b19633bb06` (2024-04-14); README SHA-256 `e812725f…e1b1` |
-| 6–7 | Licence · evidence | **CC BY-NC-SA 4.0** — stated in the README ("this dataset is licenced under CC BY-NC-SA 4.0"); the repository has no LICENSE file and GitHub's licence field is empty |
-| 8 | Size | 4,752 JPEG, all 524×524 (every file decoded, 0 failures), 688,308,374 bytes; no exact duplicates; no exact overlap with TrashNet |
+| 6–7 | Licence · evidence | **CONFLICTING.** UCI dataset page (read 2026-10-22): **CC BY 4.0**, DOI 10.24432/C5SS4G. Authors' GitHub README: **CC BY-NC-SA 4.0** ("this dataset is licenced under CC BY-NC-SA 4.0"); no LICENSE file, GitHub licence field empty. The owner reports IEEE DataPort also says CC BY-NC-SA 4.0 (not verified here). Treated as the more restrictive terms until the authors confirm in writing which applies to the exact version used |
+| 8 | Size | 4,752 JPEG, all 524×524 (every file decoded, 0 failures), 688,308,374 bytes; no exact duplicates; 0 exact overlap with TrashNet (re-checked 2026-10-22 against the digest denylist) |
 | 9 | Labels | one label per image, 9 classes: Cardboard 461, Food Organics 411, Glass 420, Metal 790, Miscellaneous Trash 495, Paper 500, Plastic 921, Textile Trash 318, Vegetation 436 (counts match the README) |
 | 10–12 | Real? · where · conditions | real photographs of waste received at the Whyte's Gully facility, Wollongong NSW, Australia (README). Realistic backgrounds; capture protocol not documented in the README |
-| 13 | Mapping | Cardboard/Glass/Metal/Paper/Plastic → same name; Miscellaneous Trash → `trash` (**approximate**, reported with and without); Food Organics + Vegetation → `organic`, Textile Trash → `textile` (experiment taxonomy only; classes unsupported in the product) |
+| 13 | Mapping | Cardboard/Glass/Metal/Paper/Plastic → same name (exact). **Miscellaneous Trash, Food Organics, Vegetation and Textile Trash → no class** (`maps_to: null`): never trained on, used only as out-of-scope input to measure review routing. "Miscellaneous" is not a material |
 | 14 | Reachable | yes (git; 1.3 GB clone) |
 | 15 | Quality / leakage | 78.7% of images lie in a multi-image near-duplicate group (2,043 groups, largest 72). Splits are group-aware. Labels not audited |
-| 16 | Decision | **Evaluate and experiment; never redistribute; no model trained on it is released or activated.** Manifest: `datasets/manifests/realwaste-1.0.yaml` |
-| 17 | Main risk | NonCommercial + ShareAlike; single site in Australia (Indian waste not represented) |
+| 16 | Decision | **Train (5 classes, research-only), never redistribute images, no released or activated model until the licence is confirmed in writing and the field evaluation passes.** Manifest: `datasets/manifests/realwaste-2.0.yaml` (supersedes `realwaste-1.0.yaml`) |
+| 17 | Main risk | Unresolved licence (NonCommercial + ShareAlike if the GitHub terms apply); single site in Australia (Indian waste not represented); not verified that the UCI zip is byte-identical to the GitHub copy (file sizes of five files and all class counts match) |
 
 ### A3. Municipal solid-waste time series (UCloudMl/solid-waste-prediction) — forecasting and anomaly experiments
 | # | Attribute | Value |
