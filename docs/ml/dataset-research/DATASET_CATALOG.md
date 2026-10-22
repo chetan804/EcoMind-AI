@@ -76,6 +76,9 @@ Results: Austin Holt-Winters MAE = 0.804 × naive, Ballarat 0.731 × naive; Bora
 ### A4. KSU waste-collection routes — route-order validation
 Source `kamthornsa/ksu-waste-collection-dataset`, commit `1653571de51c79058548fd7185980b4ef80ed8ab`, **CC BY 4.0** (recorded when the route validation was built; re-check the repository before redistributing any derived file; see `docs/ml/dataset-research/experiments/route-validation-ksu.json` and `scripts/ml/ksu_route_validation.py`). Observed routes are 1.096 × the exact optimum on the validation days; the project's heuristic matched the optimum. Used for validating the route-ordering algorithm, not for ML training.
 
+### A5. Mendeley "Recyclable Waste Image Dataset" (ISEP, Porto) — **CANDIDATE, pending download; nothing trained**
+Mendeley Data v1, DOI 10.17632/h5pxbsdz4m.1, published 2026-06-04, contributor João Alves. **Licence CC BY 4.0** (publisher's API `data_licence` and landing page, read 2026-10-22; the licence text warns that third-party content may need further permission). 1,000 author-photographed images in five classes (paper, cardboard, plastic, metal, glass), taken in waste facilities, public spaces and homes in Portugal; the author's full 8,068-image set also contained third-party datasets, which are **not** in this release (per the publisher; not verified from the files). The files could not be downloaded here, so structure, per-class counts, readability, duplicates and overlap with RealWaste and the prohibited hashes are **unverified**. Manifest `datasets/manifests/mendeley-recyclable-1.0.yaml` (fails the provenance gate until a files digest exists); plan and blocker: [`mendeley-recyclable-experiment-plan.md`](mendeley-recyclable-experiment-plan.md). Not Hyderabad data.
+
 ## B. Inspected at the source, not ingested
 
 | Dataset | What was verified (2026-10-20) | Why not ingested |
