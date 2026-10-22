@@ -8,7 +8,7 @@
 4. **Evidence:** held-out accuracy 0.895 (macro-F1 0.896) on one Australian facility's photographs, but the
    pre-declared acceptance test failed (out-of-scope routing 79.7% vs 90%) and there is no Hyderabad evidence: I report
    both, and the system abstains and asks for review instead of pretending.
-5. **Completeness:** 22 backend modules, 20 of 22 reference screens (the other two are excluded or ambiguous), seventeen migrations, 168 API operations, and 787 backend, 386 frontend, 61 ML and 61 end-to-end tests passing.
+5. **Completeness:** 22 backend modules, 20 of 22 reference screens (the other two are excluded or ambiguous), seventeen migrations, 168 API operations, and 788 backend, 386 frontend, 118 ML and (last run 2026-10-21) 61 end-to-end tests passing.
 6. **Limits:** no approved classifier, never deployed, marketplace without payment, no sensors, no zone boundaries, straight-line routes by default, tracking verified only with a simulator, maps only with synthetic tiles, no user study, no human accessibility review.
 
 ## Demonstration order (about 8 minutes)

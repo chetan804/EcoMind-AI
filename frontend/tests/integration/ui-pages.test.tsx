@@ -543,11 +543,11 @@ describe('classification', () => {
     expect(screen.queryByRole('form', { name: 'Review this result' })).not.toBeInTheDocument();
   });
 
-  it('states the model scope: six material categories, not organic or e-waste', async () => {
+  it('states the model scope: five material categories, not miscellaneous, organic, textile or e-waste', async () => {
     useBackend();
     renderAt('/classify');
     expect(await screen.findByRole('heading', { name: 'Material categories' })).toBeInTheDocument();
-    expect(screen.getByText(/does not recognise organic waste, e-waste or hazardous/)).toBeInTheDocument();
+    expect(screen.getByText(/predicts these five material categories only\. It does not recognise miscellaneous waste, organic or\s+textile waste, e-waste or hazardous/)).toBeInTheDocument();
     expect(screen.queryByText(/Planned waste classes/)).not.toBeInTheDocument();
   });
 });

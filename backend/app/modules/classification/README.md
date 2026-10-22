@@ -29,7 +29,8 @@ is *activated*; with none active it answers `503 no_active_model` and fabricates
 | `POST /predictions/{id}/review` | `classification:review` | `confirmed`, `corrected` (needs a different known category), `rejected`; once only. |
 
 ## Model lifecycle (CLI, from `backend/`)
-`python -m app.cli register-model --version 1.0.0` then `python -m app.cli activate-model --version 1.0.0`.
+`python -m app.cli register-model --version <version>` then `python -m app.cli activate-model --version <version>`.
+**Activation is refused (409 `model_not_approved`) unless `model.json` carries `release.approved_for_activation: true`**, which the training pipeline writes only when every offline criterion and the Hyderabad field evaluation pass. The current candidate (2.0.0, RealWaste only) is not approved, so it can be registered as a candidate but not activated; 1.0.0 (TrashNet) is withdrawn.
 Artifacts live in `$MODEL_ARTIFACTS_DIR/waste_classification/<version>/` plus `_backbones/`. The registered
 SHA-256 of `model.json` binds the row to exact bytes; a modified artifact is refused at registration,
 activation and load. Only one version can be active (partial unique index).

@@ -45,7 +45,7 @@ All local runs: Python 3.11.2, Node 22.22.3, PostgreSQL 16.2, headless Chromium,
 | Migrations | `alembic upgrade head`, `alembic check`, `downgrade 0016` then `upgrade head` on a scratch DB and on a restored backup | clean; head `0017` |
 | Contract and structure tests | `pytest tests/contract` | 147 passed |
 | Frontend | `npm ci`, `npx tsc -b`, `npm run lint`, `npm test`, `npm run build` | all clean; vitest 386 passed (39 files). No frontend source changed after this run |
-| ML unit tests | `python -m pytest ml/tests` | 61 passed |
+| ML unit tests | `python -m pytest ml/tests` | 118 passed (2026-10-22, after the TrashNet removal; 61 before) |
 | **ML reproduction** | `python -m ml.waste_classification.data.fetch`, `…training.train`, `…evaluation.report` | (2026-10-21, superseded) a reproduction of the TrashNet model 1.0.0; that model is withdrawn. Model 2.0.0 was trained three times on 2026-10-22 on one machine with identical metrics and weight hashes; not reproduced elsewhere |
 | E2E, log-file mail mode | `cd tests/e2e && npx playwright test specs/account-recovery.spec.ts specs/mail.unit.spec.ts --workers=1` with `E2E_MAIL_LOG_FILE` | 24 passed (4 + 20) |
 | E2E, full suite, Mailpit-shaped mode | full `npx playwright test --workers=1` with `E2E_MAILPIT_URL` pointing at a local stand-in (SMTP with mandatory AUTH plus the Mailpit REST shapes; **not real Mailpit**) | **61 passed, 2 skipped** (63 tests) |

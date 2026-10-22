@@ -28,11 +28,11 @@ Latest local results (2026-10-21 and 2026-10-22; details and commands in the clo
 
 | Suite | Result |
 |---|---|
-| Backend pytest (real PostgreSQL 16.2) | 786 passed, 1 skipped on a clean checkout (2026-10-22; the skipped parity test needs the git-ignored model file); 787 passed, 0 skipped with it (2026-10-21) |
+| Backend pytest (real PostgreSQL 16.2) | 788 passed, 0 skipped (2026-10-22, with the git-ignored 2.0.0 artifact, so the parity test ran; a clean checkout skips it) |
 | Frontend vitest | 386 passed (39 files) |
-| ML tests | 61 passed |
+| ML tests | 118 passed (2026-10-22) |
 | Contract tests | 147 passed |
-| Playwright e2e | 61 passed, 2 skipped (real-model test; forced enrolment, run separately 4 of 4) |
+| Playwright e2e | 61 passed, 2 skipped (2026-10-21; **not re-run** after the TrashNet removal, which changed 2 lines of `classification.spec.ts`) |
 | ruff, ruff format, mypy, `tsc -b`, ESLint, production build | clean |
 | Generated docs `--check`, `check_structure.py`, `check_env_templates.py` | up to date |
 | `pip-audit`, `npm audit`, `bandit` | no findings |
@@ -388,7 +388,7 @@ A full audit was run and written up in `PROJECT_AUDIT_REPORT.md`; `docs/PROJECT_
 Full evidence, PASS/FAIL/BLOCKED/NOT VERIFIED rows and the verdict are in
 [REQUIREMENTS_CLOSURE_REPORT.md](REQUIREMENTS_CLOSURE_REPORT.md). Summary: supervised demo / academic use ready;
 public production not ready (no approved classifier, no real e-mail or map data run, no human accessibility
-review, no deployment). Local totals: backend 787 passed / 0 skipped, contract 147, ML 61, vitest 386, e2e 61
+review, no deployment). Local totals (as of 2026-10-22): backend 788 passed / 0 skipped, contract 147, ML 118, vitest 386, e2e 61 (2026-10-21)
 passed / 2 skipped plus the forced-enrolment spec 4/4 on a production-mode stack; CI on `625241e` green.
 
 ### TrashNet removal and the RealWaste research candidate (2026-10-22)

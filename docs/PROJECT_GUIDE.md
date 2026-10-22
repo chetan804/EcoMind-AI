@@ -230,7 +230,7 @@ docker compose exec backend python -m app.cli seed-support-knowledge
 - **No map tile file**, so maps show a plain background and a notice.
 - **Google Maps/Routes, OSRM, real GPS and real e-mail** were never tried with real services.
 - No human accessibility review; automated checks only.
-- Tests (2026-10-21): backend 786 passed and 1 skipped on a clean checkout (787 with the model file); browser 61 passed, 2 skipped; frontend 386 passed; ML 61; contract 147.
+- Tests (2026-10-21): backend 788 passed with the git-ignored 2.0.0 artifact present (a clean checkout skips the one artifact-parity test); browser 61 passed, 2 skipped (last run 2026-10-21, not re-run for the TrashNet removal); frontend 386 passed; ML 118; contract 147 (2026-10-22).
 
 The full list is in `docs/project-completion/PROJECT_AUDIT_REPORT.md` and `LIMITATIONS.md`.
 

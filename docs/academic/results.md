@@ -123,7 +123,7 @@ Local runs on one machine (2 CPUs, PostgreSQL 16.2, headless Chromium; the end-t
 
 | Check | Result |
 |---|---|
-| Backend tests (real PostgreSQL 16, CI-like environment) | 786 passed, 1 skipped (a clean checkout lacks the git-ignored model file that the classification parity test needs; with it, 787 passed and 0 skipped, run 2026-10-21); 8 min 13 s, run on 2026-10-22 |
+| Backend tests (real PostgreSQL 16, CI-like environment) | 788 passed, 0 skipped (2026-10-22, 8 min 17 s; the classification parity test ran against the git-ignored 2.0.0 artifact, and a clean checkout skips it, so CI is expected to report 787 passed, 1 skipped) |
 | Frontend tests (Vitest) | 386 passed in 39 files |
 | ML tests | 118 passed |
 | Contract and structure tests | 147 passed |

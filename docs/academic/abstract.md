@@ -29,7 +29,7 @@ review against a required 90%, no Hyderabad field evaluation exists, and the dat
 on UCI, CC BY-NC-SA 4.0 on the authors' repository). The classifier is therefore shipped as an inactive, research-only
 candidate, activation is refused by the API, and the platform makes no field-accuracy claim and does not identify
 individual objects. A consented Hyderabad collection protocol is specified but not run. The software is verified by
-787 backend, 386 frontend, 118 ML and 147 contract tests and a 61-test browser suite; it has not been deployed, and
+788 backend, 386 frontend, 118 ML and 147 contract tests (2026-10-22) and a 61-test browser suite (last run 2026-10-21); it has not been deployed, and
 real e-mail delivery, real map tiles, real GPS devices, human screen-reader review and load on target hardware remain
 unverified (see `LIMITATIONS.md`).
 

@@ -78,7 +78,8 @@ def test_model_endpoint_requires_login_and_reports_no_active_model(s: Setup) -> 
     assert s.client.get(f"{CLS}/model").status_code == 401
     body = s.client.get(f"{CLS}/model", headers=s.owner).json()
     assert body["active"] is None and body["scope"] == "material_category"
-    assert "real-world dataset" in body["note"] and "suggestion" in body["note"]
+    assert "accuracy on your waste is unknown" in body["note"] and "suggestion" in body["note"]
+    assert "45%" not in body["note"] and "studio" not in body["note"]
 
 
 def test_predict_without_an_active_model_is_503_and_stores_nothing(s: Setup) -> None:
@@ -329,7 +330,10 @@ def test_a_model_that_is_not_approved_cannot_be_activated(s: Setup) -> None:
     assert response.status_code == 409 and response.json()["error"]["code"] == "model_not_approved"
     assert "no field evaluation" in response.json()["error"]["message"]
     assert s.scalar("SELECT status FROM classification_model_versions") == "candidate"
-    assert s.scalar("SELECT count(*) FROM audit_logs WHERE action = 'classification.model_activated'") == 0
+    assert (
+        s.scalar("SELECT count(*) FROM audit_logs WHERE action = 'classification.model_activated'")
+        == 0
+    )
     # an artifact with no release record at all (for example a withdrawn 1.x model) is refused too
     directory = write_artifact(s.artifacts, "1.5.0")
     manifest = json.loads((directory / "model.json").read_text())
@@ -339,7 +343,9 @@ def test_a_model_that_is_not_approved_cannot_be_activated(s: Setup) -> None:
     refused = s.client.post(f"{CLS}/models/{legacy}/activate", headers=s.admin)
     assert refused.status_code == 409 and refused.json()["error"]["code"] == "model_not_approved"
     # no active model, so predictions stay unavailable rather than silently using a candidate
-    assert s.scalar("SELECT count(*) FROM classification_model_versions WHERE status = 'active'") == 0
+    assert (
+        s.scalar("SELECT count(*) FROM classification_model_versions WHERE status = 'active'") == 0
+    )
 
 
 def test_the_database_allows_only_one_active_model(s: Setup) -> None:
