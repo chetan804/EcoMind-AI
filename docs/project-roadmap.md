@@ -9,7 +9,7 @@ Modules are implemented in dependency order (`docs/architecture/component-bounda
 | M1 Identity and access | Done (including TOTP two-step sign-in, forced enrolment for administrators and managers in production, account recovery) |
 | M2 Reference data and reports | Done |
 | M3 Collection operations | Done |
-| M4 Classification | **Partly done**: pipeline, API, review queue and UI exist; the only model is a non-default candidate (TrashNet accuracy 0.867, RealWaste 0.454), no object labels, none active. Acceptance "approved model on representative data" is **not met** |
+| M4 Classification | **Partly done**: pipeline, API, review queue and UI exist; the only model is a non-default research candidate (RealWaste only: held-out accuracy 0.895, one acceptance criterion failed, no field evaluation, licence conflict; the TrashNet model was withdrawn), no object labels, none active. Acceptance "approved model on representative data" is **not met** |
 | M5 Routing, circular economy, passports, rewards | Done (road routing optional, not live-verified) |
 | M6 Analytics, forecasting, anomalies, incidents | Done (statistical models; no labelled anomalies) |
 | M7 Hardening and release | **Partly done**: security review, dependency audits, load test (sandbox only), keyboard automation done; deployment, real e-mail, real map data, backups on real infrastructure, human accessibility review and load on target hardware are **not done** (`RELEASE_CHECKLIST.md`) |

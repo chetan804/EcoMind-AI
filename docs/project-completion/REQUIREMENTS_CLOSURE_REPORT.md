@@ -46,7 +46,7 @@ All local runs: Python 3.11.2, Node 22.22.3, PostgreSQL 16.2, headless Chromium,
 | Contract and structure tests | `pytest tests/contract` | 147 passed |
 | Frontend | `npm ci`, `npx tsc -b`, `npm run lint`, `npm test`, `npm run build` | all clean; vitest 386 passed (39 files). No frontend source changed after this run |
 | ML unit tests | `python -m pytest ml/tests` | 61 passed |
-| **ML reproduction** | `python -m ml.waste_classification.data.fetch`, `…training.train`, `…evaluation.report` | datasets fetched and hash-verified; retraining gave accuracy 0.8670, macro-F1 0.8409, ECE 0.0310 on the TrashNet test split, the same as the registered 1.0.0 values. `head.npz` and `novelty_reference.npy` hashes were identical to the registry; only timestamps and latency differ. Rewritten tracked files were reverted |
+| **ML reproduction** | `python -m ml.waste_classification.data.fetch`, `…training.train`, `…evaluation.report` | (2026-10-21, superseded) a reproduction of the TrashNet model 1.0.0; that model is withdrawn. Model 2.0.0 was trained once on 2026-10-22 and has not been independently re-run |
 | E2E, log-file mail mode | `cd tests/e2e && npx playwright test specs/account-recovery.spec.ts specs/mail.unit.spec.ts --workers=1` with `E2E_MAIL_LOG_FILE` | 24 passed (4 + 20) |
 | E2E, full suite, Mailpit-shaped mode | full `npx playwright test --workers=1` with `E2E_MAILPIT_URL` pointing at a local stand-in (SMTP with mandatory AUTH plus the Mailpit REST shapes; **not real Mailpit**) | **61 passed, 2 skipped** (63 tests) |
 | The 2 skips | `classification.spec.ts:40` needs a real model (none is shipped); `mfa.spec.ts:130` needs a production-mode stack | counted as **not passed** in that run |
@@ -88,7 +88,7 @@ Source of truth: [functional-requirements.md](../requirements/functional-require
 | Anomaly detection | PASS for injected spikes only | **NOT VERIFIED on real data** |
 | Route planning | PASS as straight-line order; road routing optional (OSRM adapter) and verified only against mocks | shown as a fallback, never as navigation |
 | Support assistant | PASS | retrieval-only over 31 articles; no LLM |
-| **Waste classification** | **PARTIAL, not release-approved** | material category only; `object_label` is null; no model is active and the API answers 503 `no_active_model`. Candidate 1.0.0: TrashNet accuracy 0.867; on RealWaste 0.454 (95% CI 0.44–0.47), 64% sent to review. Training data licence is research-only for RealWaste; TrashBox has verbal permission only |
+| **Waste classification** | **PARTIAL, not release-approved** | material category only; `object_label` is null; no model is active and the API answers 503 `no_active_model`. Candidate 2.0.0 (RealWaste only, five classes): held-out accuracy 0.895; failed one acceptance criterion (out-of-scope routing 79.7% vs 90%); no field evaluation; activation refused (409 `model_not_approved`). RealWaste licence is conflicting (research-only); TrashNet and TrashBox are prohibited; the TrashNet model 1.0.0 is withdrawn |
 | Object recognition ("what is this item") | **FAIL / not delivered** | no model identifies objects; the UI and docs do not claim it |
 | Maps, offline MapLibre/PMTiles | PASS for the code (browser-verified in an earlier phase with a synthetic tile set, not a real map); **BLOCKED for real Hyderabad tiles** | `docs/maps/hyderabad-aoi.geojson` is an area outline, not tile data |
 | Google Maps provider | **BLOCKED** | needs owner keys; never loads in the sandbox |

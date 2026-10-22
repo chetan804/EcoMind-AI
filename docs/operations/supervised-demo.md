@@ -27,8 +27,9 @@ Do **not** expose this stack to the Internet. It uses the local development Comp
 
 ## What to say about what you will see
 
-* The waste classifier has **no active model** unless you register and activate one; the candidate `1.0.0` is trained on TrashNet only and
-  reaches 0.45 accuracy on real facility photos (`docs/ml/dataset-research/DATASET_SELECTION_REPORT.md`). Say that plainly; the review
+* The waste classifier has **no active model** unless you register and activate one; the research candidate `2.0.0` (RealWaste only) is
+  **not approved** (a failed acceptance criterion, no Hyderabad field evaluation, contested data licence) and activation is refused with 409
+  `model_not_approved`; the TrashNet model `1.0.0` is withdrawn (`docs/ml/dataset-research/DATASET_SELECTION_REPORT.md`). Say that plainly; the review
   queue is the safety net.
 * Vehicle positions are shown as live only when a real device has reported; simulated points are labelled as simulation.
 * The help assistant quotes help articles and the person's own records; it does not generate text.

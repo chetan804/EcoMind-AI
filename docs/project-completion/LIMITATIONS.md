@@ -4,18 +4,21 @@ Everything below is a real, current limitation as of 2026-10-22 (code at `main` 
 Nothing here is hidden elsewhere: statuses in `IMPLEMENTATION_STATUS.md` agree with this list.
 
 ## Machine learning
-- **Classifier accuracy outside its training domain is low:** 0.867 on the TrashNet test split, 0.454 on
-  real facility photos (RealWaste). No model is activated by default. See `docs/ml/`.
+- **No approved classifier; no field evidence.** The current candidate (2.0.0, RealWaste only) scores 0.895 accuracy on a
+  held-out split of one Australian facility's photographs, **failed** one pre-declared criterion (out-of-scope routing 79.7%
+  vs 90%), and has no Hyderabad evaluation (protocol written, nothing collected). Its training-data licence is
+  contested. The earlier TrashNet model was withdrawn. No model is active and activation is refused. See `docs/ml/`.
 - Frozen backbone with a linear head; no fine-tuning (no GPU or deep-learning framework available here).
-- Six material classes only. Organic, textile, e-waste, battery and medical waste are unsupported and go to
+- Five material classes only (cardboard, glass, metal, paper, plastic). "Miscellaneous trash", organic, textile, e-waste, battery and medical waste are unsupported and go to
   review. Object or product identification is a different task and is not attempted.
-- RealWaste (CC BY-NC-SA 4.0) and TrashBox (no licence) are not used for any released model (RealWaste only
-  evaluates it, and any model trained on it may exist only as a labelled, inactive research artefact).
+- TrashNet and TrashBox are prohibited in every dataset. RealWaste's licence is conflicting (UCI CC BY 4.0, authors' GitHub
+  CC BY-NC-SA 4.0), so the model trained on it is a labelled, inactive, research-only artefact until the authors confirm in writing.
+  The preprocessing ablation was not re-run for 2.0.0.
   **TACO was audited and no image qualifies:** its annotation file records no licence for 715 images, a bare
   "CC" for 319 and ODbL for 466, so none is provably CC BY / BY-SA / CC0 (`docs/ml/dataset-research/TACO_LICENCE_AUDIT.md`).
   Images can be admitted only after the owner runs the source-licence check and import scripts; the label
-  conversion from TACO's 60 object categories to the six material classes is not defined yet. The classifier
-  therefore still rests on TrashNet alone.
+  conversion from TACO's 60 object categories to the material classes is not defined yet. The classifier
+  therefore rests on RealWaste alone.
 - Forecasting: the platform series starts empty; the two public series are reference data. Holt-Winters
   beat the baseline on two of four usable series. Anomaly detection has no labels, so no precision/recall.
 

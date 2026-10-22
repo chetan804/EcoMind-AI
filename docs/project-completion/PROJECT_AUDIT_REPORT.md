@@ -102,12 +102,11 @@ One open security note: GitGuardian flagged a test password in the git history (
 ## 7. Artificial intelligence: the honest position
 
 **Photo classifier — not usable yet.**
-- The product knows six classes: plastic, paper, cardboard, glass, metal, other waste. It cannot recognise organic waste, e-waste or hazardous items.
-- A candidate model (`1.0.0`) was trained only on TrashNet (MIT licence). On its held-out test set it scored **accuracy 0.867** (95% interval 0.813–0.912), **macro-F1 0.841**, calibration error 0.031, p95 speed 29.6 ms. Those numbers describe TrashNet photos, which are tidy studio-style images.
-- On a different public dataset (RealWaste) the same model scored **accuracy 0.454**. That is a large drop and shows it will not generalise to real-world photos without more data.
-- The review rule sends about **64%** of images to a person. This is intentional.
+- The classifier knows five classes: cardboard, glass, metal, paper, plastic. It cannot recognise organic waste, e-waste or hazardous items, and "other waste" is not a prediction.
+- **Update 2026-10-22:** the model `1.0.0` trained on TrashNet was withdrawn (no written permission for those photographs; its figures are history only). The replacement candidate `2.0.0` is trained only on RealWaste: held-out accuracy **0.895** (95% interval 0.855–0.931), macro-F1 0.896, calibration error 0.036 (one Australian facility; not a Hyderabad accuracy).
+- It **fails** the pre-declared acceptance test: 79.7% of out-of-scope images go to a person (required 90%), no field evaluation exists, and the RealWaste licence is contested. It is research-only and inactive.
 - The model file is **not in the repository** and **no model is active**. So the screen says "No classification model is active". Activating needs an administrator to register and approve a file.
-- The licence position stopped further data: RealWaste is non-commercial (CC BY-NC-SA); TrashBox has no licence; the TACO dataset yielded **0 of 1,500** images with a licence we can use. Under the project's production-grade rule none of these may go into a released model.
+- The licence position stopped further data: RealWaste is contested (CC BY 4.0 on UCI, CC BY-NC-SA 4.0 on the authors' GitHub); TrashNet and TrashBox are prohibited; the TACO dataset yielded **0 of 1,500** images with a licence we can use. Under the project's production-grade rule none of these may go into a released model.
 
 **Forecasting.** Backtested on real public municipal waste series. Compared with a naive "same as last week" baseline, the error ratio was **0.804 (Austin)** and **0.731 (Ballarat)** in the recorded evaluation (lower is better). In this audit a live Austin run with an 8-week horizon gave **0.66** over 12 test origins. The platform's own series has 0 points until real collections exist. The screen shows the backtest next to every forecast.
 

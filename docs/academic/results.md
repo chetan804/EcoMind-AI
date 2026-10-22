@@ -2,78 +2,78 @@
 
 All figures are copied from committed artifacts; the artifact is named in each row. Counts of tests are from
 local runs on 2026-10-22 unless stated; CI results are in `docs/project-completion/REQUIREMENTS_CLOSURE_REPORT.md`
-and `IMPLEMENTATION_STATUS.md`. The classifier was re-trained from scratch on 2026-10-21 and reproduced the
-accuracy, macro-F1, calibration error and weight hashes below.
+and `IMPLEMENTATION_STATUS.md`. The classifier was trained on 2026-10-22 (one run; no independent re-run yet).
 
-## 1. Classifier `waste-classification 1.0.0` (candidate, not activated by default)
+## 1. Classifier `waste-classification 2.0.0` (research candidate: NOT approved, inactive)
 
-Source: `docs/ml/reports/waste-classification-1.0.0.json`, model card
-`docs/ml/model-cards/waste-classification-1.0.0.md`.
+Source: `docs/ml/reports/waste-classification-2.0.0.{json,md}`, model card
+`docs/ml/model-cards/waste-classification-2.0.0.md`, field protocol `docs/ml/field-evaluation-protocol.md`.
+The earlier model `1.0.0` (trained on TrashNet) was **withdrawn on 2026-10-22** because the project has no written
+permission for TrashNet's photographs. **None of its figures appears here.** The new model was trained once, on
+2026-10-22, from RealWaste alone (pinned commit `156e8e91`, 4,752 images); TrashNet and TrashBox are excluded by a
+SHA-256 denylist that is checked on every load.
 
-| Measure (TrashNet held-out test split, n = 421) | Value |
+**Data.** Five classes with a justified mapping (cardboard, glass, metal, paper, plastic: 3,092 images). The folders
+"Miscellaneous Trash", "Food Organics", "Vegetation" and "Textile Trash" (1,660 images) are **not** treated as materials,
+are never trained on, and are used only to test review routing. Near-duplicate photographs are clustered (1,390 groups,
+largest 72 images) and a stratified group split was fixed before modelling (seed 42): train 2,060, validation 516, test 516.
+
+| Measure (RealWaste held-out test split, n = 516, evaluated once) | Value |
 |---|---|
-| Accuracy | 0.867 (95% CI 0.813 to 0.912) |
-| Macro-F1 | 0.841 |
-| Expected calibration error | 0.031 |
-| Auto-accepted share / accuracy of those | 73.6% / 96.1% |
-| Weakest class | `trash` (F1 0.653) |
-| CPU latency, median | 23.1 ms |
+| Accuracy | 0.895 (95% CI 0.855 to 0.931, group bootstrap) |
+| Macro-F1 | 0.896 (95% CI 0.851 to 0.929) |
+| Expected calibration error | 0.036 (temperature 0.750 fitted on validation) |
+| Top-2 accuracy | 0.984 |
+| Auto-accepted share / accuracy of those | 82.9% / 93.5% (Wilson 95% CI 90.7% to 95.4%); 48% of the errors go to review |
+| Weakest class | plastic (F1 0.865, recall 0.851) |
+| Most frequent confusions | plastic predicted as glass (11 images); metal predicted as plastic (10) |
+| Majority-class / hand-crafted-feature baselines, macro-F1 | 0.092 / 0.636 (the model beats the better one by 0.260) |
+| CPU latency, median / p95 (shared 2-core sandbox) | 76 ms / 86 ms |
 
-Interpretation: on its own benchmark the model is useful and well calibrated. The `trash` class is small
-and heterogeneous, which is why it is weakest.
+Per class on the test split (precision / recall / F1): cardboard 0.859 / 0.948 / 0.901; glass 0.840 / 0.900 / 0.869;
+metal 0.952 / 0.909 / 0.930; paper 0.926 / 0.904 / 0.915; plastic 0.879 / 0.851 / 0.865. The full confusion matrix,
+reliability diagram, selective-accuracy curve, regularisation sweep and learning curve are in the report and
+`docs/ml/reports/figures/`.
 
-Further rows from the same report (`docs/ml/reports/waste-classification-1.0.0.json`):
+Model selection used grouped 5-fold cross-validation on the training split only (selected: M+L backbones, C = 0.03,
+no test-time augmentation; CV macro-F1 0.854); validation macro-F1 was 0.878 and in-sample training macro-F1 0.976, so
+the train-to-CV gap is 0.124: the linear head fits its training images much better than held-out ones.
 
-| Check | Value |
-|---|---|
-| Majority-class baseline, test accuracy / macro-F1 | 0.235 / 0.063 |
-| Hand-crafted-feature logistic regression, test accuracy / macro-F1 | 0.618 / 0.592 (the model beats it by 0.249 macro-F1) |
-| Naive random split instead of the group-aware split (leakage study) | accuracy 0.893 vs 0.867: near-duplicate photos inflate the estimate by about 2.7 points, which is why the group split is used |
-| In-sample training accuracy | 0.980 (a gap to 0.867 that shows over-fitting capacity; the head is regularised and selected by cross-validation) |
-| Robustness of test accuracy under perturbation | dark 0.860; bright 0.834; blur 0.822; JPEG quality 15 0.824; sensor noise 0.803; low contrast 0.781; rotation 20° 0.834; low resolution (48 px) 0.746; **30% occlusion 0.660** |
-| Latency (2 CPU cores, no GPU, single request, includes decoding) | median 23.1 ms, p95 29.6 ms |
+**Leakage, measured.** The same recipe under a naive random split scores accuracy 0.905 and macro-F1 0.904, and 31.8%
+of its test images have a same-class near-twin in training; under the group split the figure is 5.8%. Grouping reduces
+but does not remove similarity, so the 0.895 may still be slightly optimistic.
 
-## 2. Cross-dataset generalisation (RealWaste, real facility photographs)
+**Robustness (synthetic proxies on the test images).** accuracy under dark 0.843, bright 0.810, low contrast 0.822, blur
+0.835, JPEG quality 15 0.843, sensor noise 0.828, low resolution (48 px) 0.760, rotation 20 degrees 0.729 and
+**30% occlusion 0.624**. The background perturbations barely change RealWaste photographs and are not evidence of
+robustness to clutter.
 
-Source: `docs/ml/dataset-research/experiments/cross-dataset-realwaste.json`.
+## 2. Pre-declared acceptance test (set in `ml/configs/waste_classification.yaml` before the run)
 
-| Measure (in-scope shared classes, n = 3,092) | Value |
-|---|---|
-| Accuracy | **0.454** (95% CI 0.437 to 0.472) |
-| Macro-F1 | 0.514 |
-| Expected calibration error | 0.263 |
-| Coverage / accuracy of accepted predictions | 36.4% / 55.3% |
-| Out-of-scope images (food, textile, vegetation; n = 1,165) sent to review | 95.5% |
+| Criterion | Required | Observed | Result |
+|---|---|---|---|
+| Test macro-F1 | at least 0.80 | 0.896 | pass |
+| Minimum per-class recall | at least 0.60 | 0.851 | pass |
+| Expected calibration error | at most 0.08 | 0.036 | pass |
+| Margin over hand-crafted baseline (macro-F1) | at least 0.10 | 0.260 | pass |
+| Accuracy of auto-accepted predictions, 95% CI lower bound | at least 0.90 | 0.907 | pass |
+| **Out-of-scope images sent to review** | **at least 0.90** | **0.797** | **FAIL** |
+| Hyderabad field evaluation | at least 300 images, macro-F1 at least 0.75, auto-accepted accuracy at least 0.90 | **not done** | **not met** |
 
-Per class on RealWaste (in-scope, n = 3,092): recall is low for cardboard (0.24, 91 of 461 predicted as paper),
-glass (0.43), plastic (0.49; confused with metal and glass) and paper (0.46); metal is best (F1 0.63). When RealWaste's
-"miscellaneous trash" is mapped to the model's `trash` class (n = 3,587), accuracy is 0.463 and `trash` F1 is only
-0.29, so the mapping is approximate and that variant is not used as the headline. Out-of-scope images that were sent
-to review: food organics 97.6%, textile 87.1%, vegetation 99.8%.
+**Decision: NOT APPROVED.** The criteria were not changed after the results were seen. Out-of-scope routing, by source
+folder: Food Organics 83.9%, Textile 72.3%, Miscellaneous 68.3%, Vegetation 94.0% (1,660 images, 79.7% overall); without
+the review rule these images would have been called cardboard, metal, plastic or paper. Of ten non-waste smoke-test inputs
+(ImageNet-style photographs and synthetic images), 10 were routed to review; that is a smoke test, not a measurement.
 
-An independent study reports the same kind of drop for a different model: 94.18% on TrashNet but 41.04% zero-shot on
-the overlapping RealWaste classes (Echchidmi and Bouayad 2026, `literature-survey.md` entry 9). The two evaluations
-differ in model, split and classes, so only the direction and size of the gap are comparable.
-
-Interpretation: **accuracy drops from 0.87 to 0.45 outside the training distribution**, and confidence is no
-longer well calibrated. The abstention rule does its job on out-of-scope material (95.5% to review) and keeps
-the accepted share more accurate (55.3%), but this is not a field-ready accuracy. The project therefore
-makes no field-accuracy claim.
-
-## 3. Multi-dataset experiment (experiment only; frozen backbones; shared six classes)
-
-Source: `experiments/multi-dataset-realwaste.json`; tables in `DATASET_SELECTION_REPORT.md`.
-Accuracy ranges across the backbones tried, TrashNet test / RealWaste test:
-
-| Training data | TrashNet test | RealWaste test |
-|---|---|---|
-| TrashNet only | 0.87 to 0.89 | 0.50 to 0.56 |
-| RealWaste only | 0.59 to 0.70 | 0.79 to 0.80 |
-| Both | 0.82 to 0.84 | 0.77 to 0.79 |
-
-Confidence intervals are about ±0.05. Class balancing made no significant difference. Training on both
-datasets gives the best compromise, but RealWaste is non-commercial (CC BY-NC-SA 4.0), so **no model trained
-on it is released**. This is an owner decision recorded in the selection report.
+## 3. What the numbers do not say
+* RealWaste is **one facility in Wollongong, Australia**. The scores are **not** a Hyderabad accuracy, and no field image
+  has been collected (the protocol is written; there are no field results).
+* The RealWaste licence is **conflicting** (UCI: CC BY 4.0; authors' GitHub: CC BY-NC-SA 4.0), so the model is research-only
+  and cannot be released until the authors confirm the licence for the exact files in writing.
+* 77% of the images share a group with another photograph; the test split is cleaner than a naive one but not independent.
+* One seed, one split, one dataset. The preprocessing ablation that was run for `1.0.0` was not repeated for `2.0.0`.
+* A cross-dataset result (training on one dataset, testing on another) is no longer available, because the only other
+  dataset, TrashNet, is prohibited. The earlier cross-dataset, multi-dataset and TrashBox experiments are withdrawn.
 
 ## 4. Forecasting and anomaly detection
 
@@ -125,7 +125,7 @@ Local runs on one machine (2 CPUs, PostgreSQL 16.2, headless Chromium; the end-t
 |---|---|
 | Backend tests (real PostgreSQL 16, CI-like environment) | 786 passed, 1 skipped (a clean checkout lacks the git-ignored model file that the classification parity test needs; with it, 787 passed and 0 skipped, run 2026-10-21); 8 min 13 s, run on 2026-10-22 |
 | Frontend tests (Vitest) | 386 passed in 39 files |
-| ML tests | 61 passed |
+| ML tests | 118 passed |
 | Contract and structure tests | 147 passed |
 | End-to-end (Playwright, local, 63 tests) | 61 passed, 2 skipped: the real-model test (no model is active) and the forced two-step enrolment test (needs a stack that enforces it in production mode; it was run separately on such a stack: 4 of 4 in that spec). Mail was read through a local stand-in for Mailpit; CI uses the real Mailpit container |
 | Mutation checks | recorded per module in `docs/project-completion/IMPLEMENTATION_STATUS.md` (for example 12 of 12 for authentication, 9 of 9 for administration and audit); not re-run on 2026-10-22 |
@@ -136,7 +136,7 @@ Local runs on one machine (2 CPUs, PostgreSQL 16.2, headless Chromium; the end-t
 | Load (sandbox only: 1 API worker, shared machine, tiny data) | 10 users 130 requests/s, 0% errors, p95 123 ms; 50 users 122 requests/s, p95 639 ms. Not a capacity claim |
 
 ## 7. Limitations (summary; full list in `docs/project-completion/LIMITATIONS.md`)
-Classifier accuracy outside its training domain (and no approved model, so none is active); frozen backbone; six
+No approved classifier (so none is active), no field evaluation, a contested training-data licence and one failed acceptance criterion; frozen backbone; five
 material classes only (organic, textile, e-waste and battery inputs go to review) and no object identification;
 forecasting needs history that a new deployment lacks and beat the naive baseline on 2 of 4 usable public series;
 anomaly detection has no labelled data (tested on injected spikes only); straight-line route ordering, with optional

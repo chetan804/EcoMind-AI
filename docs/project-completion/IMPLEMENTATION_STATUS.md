@@ -55,7 +55,7 @@ real SMTP delivery, a real authenticator app, a human screen-reader pass, load o
 | users / roles / permissions | **Verified** | 48 permissions, 5 roles, drift-guard test. |
 | administration + audit | **Verified** | Users, roles, deactivate/reactivate, MFA reset, audit log read, system info (14 tests, 9/9 mutations). |
 | waste_reports + media | **Verified** | Idempotent create, review workflow, photo upload. |
-| classification | **Verified, no model active here** | Real inference service and review flow. The 1.0.0 model is a *candidate* (see §4 Phase D); its artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
+| classification | **Verified, no model active here** | Real inference service and review flow. The only model is the research candidate 2.0.0 (RealWaste only; **not approved**; activation is refused with 409 `model_not_approved`; see the TrashNet-removal section below); 1.0.0 is withdrawn. The artifact is git-ignored and absent in this sandbox, so the screen reports "no model" honestly. |
 | collection | **Verified** | Lifecycle with transitions, weights, events, reschedule. |
 | facilities, fleet | **Verified** | |
 | tracking (vehicle positions) | **Verified with mocks; no live GPS source** | Migration 0011, append-only `vehicle_location_events`, ingestion with validation/authorisation/rate limit, out-of-order and duplicate handling, derived LIVE/DELAYED/STALE/HISTORICAL/SIMULATED status, labelled simulator, retention CLI; 42 API tests plus road-route tests; `docs/api/tracking-api.md`. Real source shipped: browser sharing by the assigned collector (e2e-verified with emulated geolocation). Not a connected GPS fleet. |
@@ -86,10 +86,10 @@ audited screen by screen. The prediction review queue (`/classify/review`) exist
 
 | Area | Status |
 |---|---|
-| Image preprocessing, classification training/eval/inference | Verified (ML tests); model 1.0.0 is a candidate, not released |
+| Image preprocessing, classification training/eval/inference | Verified (ML tests); model 2.0.0 is a research candidate, not approved, not released (1.0.0 withdrawn) |
 | Forecasting benchmark (Austin, Ballarat and others) | Verified; `docs/ml/dataset-research/experiments/time-series-results.json` |
-| Dataset research (catalogue, manifest, selection report, ingestion, rejected list) | **Rebuilt and verified** 2026-10-20: `docs/ml/dataset-research/`. RealWaste ingested (4,752 images, checksummed, group-aware); cross-dataset evaluation and a bounded multi-dataset experiment (experiment-only: RealWaste is non-commercial) |
-| Model 1.0.0 on real facility photos (RealWaste, never seen) | **0.454 accuracy (95% CI 0.437–0.472), ECE 0.263**; the review rule sends 64% to a person and 96% of unsupported-class images. Stated in the model card |
+| Dataset research (catalogue, manifest, selection report, ingestion, rejected list) | **Rebuilt and verified** 2026-10-20: `docs/ml/dataset-research/`. RealWaste ingested (4,752 images, checksummed, group-aware). **Revised 2026-10-22:** the cross-dataset, multi-dataset and TrashBox experiments are withdrawn (they used TrashNet) |
+| Model 2.0.0 (RealWaste only), held-out group-aware test, n = 516 | accuracy 0.895 (95% CI 0.855–0.931), macro-F1 0.896, ECE 0.036; **out-of-scope routing 79.7% (criterion 90%: FAIL); no field evaluation: NOT APPROVED**. The former 0.454 figure belonged to the withdrawn TrashNet model |
 
 ## 3. Blockers, losses and environment limits
 
@@ -180,6 +180,12 @@ Known limitations of this increment (also in `docs/security/security-baseline.md
 **GitGuardian, read carefully:** it posted **no check at all** for the four Phase C commits (neither pass nor fail; the reason is not known), while its **failure on the earlier commits `46bb072` and `2477278` still stands** (the two false positives described above, not yet dismissed in its dashboard). `CLEAN` therefore only means the head commit has no failing check; it is not a scanner approval of the new code. The Phase C tests deliberately contain no password-like literals.
 
 ### Phase D: AI/ML waste classification (this branch)
+
+> **REVISED 2026-10-22: the model and every number in this phase were withdrawn.** Model 1.0.0 was trained on TrashNet,
+> for which the project has no written permission. The classification *software* described here (service, API, review
+> flow, UI, migration, tests) stays; the model, its metrics (0.867 / 0.841 / 0.031), the real-model e2e screenshot and the
+> reproducibility claims are history only. The replacement is below.
+
 
 **Scope boundary.** Done: material-category classifier (training, evaluation, serving, API, UI). **Not done:** forecasting and anomaly-detection baselines; object-level labels (the data has none, so `object_label` is always null); any field-data evaluation.
 
@@ -384,3 +390,17 @@ Full evidence, PASS/FAIL/BLOCKED/NOT VERIFIED rows and the verdict are in
 public production not ready (no approved classifier, no real e-mail or map data run, no human accessibility
 review, no deployment). Local totals: backend 787 passed / 0 skipped, contract 147, ML 61, vitest 386, e2e 61
 passed / 2 skipped plus the forced-enrolment spec 4/4 on a production-mode stack; CI on `625241e` green.
+
+### TrashNet removal and the RealWaste research candidate (2026-10-22)
+
+| Item | Result |
+|---|---|
+| Audit | TrashNet referenced in 49 files (code, manifests, configs, registry, reports, model card, UI text, tests, academic docs); all removed, qualified or marked withdrawn (`docs/ml/TRASHNET_REMOVAL.md`) |
+| Exclusion | `datasets/manifests/prohibited-sha256.txt` (2,524 TrashNet file hashes); the provenance gate refuses TrashNet/TrashBox by name and any file whose hash matches; 0 matches in RealWaste |
+| Dataset | RealWaste commit `156e8e91`, 4,752 files, content digest reproduced; 3,092 in five mapped classes, 1,660 unmapped (miscellaneous, food, vegetation, textile) used only to test review routing; licence **conflicting** (UCI CC BY 4.0 vs GitHub CC BY-NC-SA 4.0), `release_allowed: false` |
+| Split | 1,390 near-duplicate groups; train/validation/test 2,060/516/516; seed 42; leakage checks in code |
+| Model 2.0.0 (trained once 2026-10-22) | test accuracy 0.895 (0.855–0.931), macro-F1 0.896, ECE 0.036; per-class F1 0.865–0.930; 82.9% auto-accepted at 93.5% accuracy |
+| Acceptance | 5 of 6 offline criteria pass; **out-of-scope routing 0.797 < 0.90 FAILS**; no field evaluation. **NOT APPROVED**, inactive, `approved_for_activation: false` |
+| Activation guard | the backend refuses `activate_model` unless `model.json` has `release.approved_for_activation: true` (409 `model_not_approved`) |
+| Field evaluation | protocol `docs/ml/field-evaluation-protocol.md`; validator and scorer `ml/waste_classification/evaluation/field.py` (12 tests); **no field data collected** |
+| Not done | preprocessing ablation not re-run for 2.0.0; no independent re-run of the 2.0.0 training; RealWaste licence unresolved |

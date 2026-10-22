@@ -1,4 +1,8 @@
 {
+  "withdrawn": {
+    "status": "WITHDRAWN 2026-10-22",
+    "reason": "depends on TrashNet and/or TrashBox, which are excluded from every dataset (no permission for the photographs). History only; do not cite."
+  },
   "experiment_only": true,
   "licence_note": "TrashBox: no licence in the repository; verbal permission reported by the owner, nothing in writing. RealWaste (external test only): CC BY-NC-SA 4.0. No model from this experiment is released, registered or activated.",
   "taxonomy": [

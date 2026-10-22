@@ -2,24 +2,33 @@
 
 **Date:** 2026-10-20. Companion files: [`DATASET_CATALOG.md`](DATASET_CATALOG.md), [`dataset_manifest.yaml`](dataset_manifest.yaml),
 [`REJECTED_DATASETS.md`](REJECTED_DATASETS.md), [`ingestion/INGESTION_REPORT.md`](ingestion/INGESTION_REPORT.md).
-Raw results: `experiments/cross-dataset-realwaste.json`, `experiments/multi-dataset-realwaste.json`, `experiments/trashbox-experiment.json` (added 2026-10-21, §4b).
+Raw results of the withdrawn experiments (history only): `experiments/cross-dataset-realwaste.json`, `experiments/multi-dataset-realwaste.json`, `experiments/trashbox-experiment.json`. Current results: `docs/ml/reports/waste-classification-2.0.0.{md,json}`.
 
-## 1. Decision summary
+> **REVISED 2026-10-22.** TrashNet (and the 819 TrashBox files that are byte-identical to it) were removed from every
+> training, validation, test and release dataset because the project has no written permission for those photographs.
+> Sections 2, 3, 4 and 4b describe experiments that used them. They are **withdrawn, kept as history, and none of their
+> numbers may be cited as evidence about EcoMind.** Sections 1, 6 and 7 are current. Companion: `../TRASHNET_REMOVAL.md`.
+
+## 1. Decision summary (current)
 
 | Question | Decision | Evidence |
 |---|---|---|
-| Which waste-image model is the released candidate? | **`waste-classification 1.0.0` (TrashNet only, MIT) stays the single candidate, not activated by default** | reproduced bit-for-bit (§2) |
-| Is it good enough for field use? | **No.** On real facility photos it reaches 0.45 accuracy | §3 |
-| Does more real-world data help? | **Yes, a lot** (+28 points on real photos) — but the only reachable labelled real-world set (RealWaste) is non-commercial | §4 |
-| Is a RealWaste-trained model released? | **No.** Experiment only; no artifact written; never auto-activated | licence in the manifest |
-| New taxonomy classes (organic, textile, e-waste, medical, battery)? | **None added.** No legitimately licensed, reachable labelled data. They stay `unsupported`→ review | §5 |
-| Does TrashBox (e-waste, medical) help? | **It adds two classes the product lacks and fits its own photos well, but it does not close the real-world gap.** Research only, under verbal permission the owner reports; not released | §4b |
-| What closes the gap legitimately? | Local, consented field photos labelled through the app's own **review queue** (`/classify/review`) plus a licensed external set (TACO images whose licences are verified at source, see `TACO_LICENCE_AUDIT.md`; TrashBox only with a written permission and licence from its authors) | §6 |
+| Which dataset is the primary research candidate? | **RealWaste** (UCI 908; Single, Iranmanesh and Raad, 2023), pinned to GitHub commit `156e8e91`, 4,752 images | `datasets/manifests/realwaste-2.0.yaml` |
+| Is its licence clear? | **No.** UCI says CC BY 4.0; the authors' GitHub README says CC BY-NC-SA 4.0. Unresolved, so the manifest records `licence_status: conflicting` and `release_allowed: false` | `DATASET_CATALOG.md` A2 |
+| What is trained? | Five classes with a justified mapping (cardboard, glass, metal, paper, plastic: 3,092 images). "Miscellaneous Trash", food, vegetation and textile are **not** mapped to any material; they are used only to measure how many go to human review | manifest `label_mapping` |
+| Are TrashNet / TrashBox used? | **No.** TrashNet is prohibited; a SHA-256 denylist of its 2,524 files is checked on every load (0 matches in RealWaste) | `prohibited-sha256.txt`, `provenance.py` |
+| Which model exists? | **`waste-classification 2.0.0`** (RealWaste only): test accuracy 0.895, macro-F1 0.896, ECE 0.036 on a group-aware held-out split (n = 516). **Research candidate, not approved, inactive** | `docs/ml/reports/waste-classification-2.0.0.md` |
+| Does it pass the acceptance criteria? | **No.** Offline: 5 of 6 pass; the review rule sends only 79.7% of out-of-scope images to a person (required 90%). The Hyderabad field evaluation has not been done | same report |
+| Is it good enough for field use? | **Unknown.** RealWaste is one Australian facility; the score says nothing about Hyderabad | report section 1 |
+| New taxonomy classes (organic, textile, e-waste, medical, battery)? | **None added.** No legitimately licensed, reachable labelled data. They stay `unsupported` and go to review | §5 |
+| What closes the gap legitimately? | Consented Hyderabad field photographs (`../field-evaluation-protocol.md`), reviewer corrections from `/classify/review`, and the authors' written licence confirmation | §6 |
 
-The product therefore behaves honestly today: predictions carry a calibrated confidence, 64% of real-world images go to a
-person, and the model card states the measured field result.
+The product behaves honestly today: no model is active, the API refuses to predict, and activation is refused (409
+`model_not_approved`) until the artifact carries an approval that only the training pipeline can write.
 
 ## 2. Baseline reproduction (TrashNet)
+
+> **WITHDRAWN 2026-10-22, history only.** Model 1.0.0 was trained on TrashNet. Do not cite these numbers. The code is tombstoned (`ml/waste_classification/research/`).
 
 `python -m ml.waste_classification.training.train` was re-run from scratch on 2026-10-20 from the pinned sources.
 Result: `head.npz` and `novelty_reference.npy` are **bit-identical** to the published artifact; held-out test accuracy 0.867
@@ -28,6 +37,8 @@ Result: `head.npz` and `novelty_reference.npy` are **bit-identical** to the publ
 (F1 0.653).
 
 ## 3. Cross-dataset generalisation of the released model (RealWaste, never seen)
+
+> **WITHDRAWN 2026-10-22, history only.** Evaluates model 1.0.0, trained on TrashNet. Do not cite these numbers. The code is tombstoned (`ml/waste_classification/research/`).
 
 Everything below is computed by `ml/waste_classification/research/cross_dataset.py` over **all** 4,752 images; nothing was
 tuned on them. Plain bootstrap CIs over images (RealWaste has no object identifiers; near-duplicates make the intervals a
@@ -53,6 +64,8 @@ accepted accuracy), but 55% accuracy on accepted real photos is not acceptable f
 suggestion.
 
 ## 4. Multi-dataset experiment (experiment only; RealWaste licence prevents release)
+
+> **WITHDRAWN 2026-10-22, history only.** Mixed TrashNet with RealWaste. Do not cite these numbers. The code is tombstoned (`ml/waste_classification/research/`).
 
 Protocol (fixed before looking at test numbers, `multi_dataset_experiment.py`): frozen backbone embeddings (identity view,
 no TTA); logistic-regression head; **C chosen on validation macro-F1** from {0.01, 0.03, 0.1, 0.3}; **temperature and review rule
@@ -116,6 +129,8 @@ Food Organics + Vegetation; textile). "Shared 6" = the six classes every trainin
 
 ## 4b. TrashBox experiment (research only; no model written, registered or activated)
 
+> **WITHDRAWN 2026-10-22, history only.** Used TrashBox, which republishes TrashNet photographs and has no licence. Do not cite these numbers. The code is tombstoned (`ml/waste_classification/research/`).
+
 **Status of the data.** TrashBox has no licence. The owner reported on 2026-10-21 that its authors gave verbal permission; nothing
 is in writing, so for this project it is research input only. Manifest: `datasets/manifests/trashbox-research-1.0.yaml`. The
 script (`ml/waste_classification/research/trashbox_experiment.py`) writes no model, refuses to overwrite its result file and was
@@ -169,28 +184,31 @@ RealWaste image the model labels `e_waste` or `medical` counts as wrong for the 
 ## 5. Why no new classes were added
 
 A class needs adequate, legitimately licensed, labelled images and a held-out test. `organic` and `textile` have them only in
-RealWaste (non-commercial); `e_waste`/`medical` only in TrashBox (no licence on file; verbal permission reported, §4b); `battery` nowhere reachable. Adding any of
-them would mean shipping a model whose training data we may not use. They stay `unsupported`; the review gate is the mitigation
-and its measured effect is §3 (96% of unsupported-class images go to review).
+RealWaste (licence conflicting, research only); `e_waste`/`medical` only in TrashBox (no licence on file; prohibited);
+`battery` nowhere reachable. Adding any of them would mean shipping a model whose training data we may not use. They stay
+`unsupported`; the review gate is the mitigation, and its measured effect on the four unmapped RealWaste folders is 79.7%
+sent to review (`waste-classification-2.0.0.md` §7a), which is below the 90% the project required.
 
 ## 6. Recommended path (owner decisions are marked)
 
-1. **Keep 1.0.0 as a non-default candidate** and keep the review gate mandatory. (Done.)
-2. **Owner decision A:** is the deployment *non-commercial research/education* and is CC BY-NC-SA ShareAlike acceptable? If yes,
-   a `1.1.0-research` model trained on TrashNet + RealWaste (M or L backbone, mixture) is a justified, clearly-labelled
-   research candidate; its model card would carry the licence. The experiment above indicates ≈ +28 points on real photos.
-   If no, skip.
-3. **Owner decision B (partly done):** the owner reports verbal permission from the TrashBox authors (2026-10-21). Still needed before
-   any use in a released model: written permission and a licence statement, and an answer on the third-party images in the dataset
-   (819 files are byte-identical to TrashNet; the rest have no recorded source). The experiment (§4b) shows the gain is on
-   TrashBox-like photos, not on real facility photos. Alternatively supply TACO/Flickr images by an owner-run download with a
-   per-image licence audit.
-4. **Collect in-domain data legitimately:** every reviewer correction in `/classify/review` is a labelled field example linked
-   to a prediction and a person. After enough volume, retrain with a group-aware split by reporting site/date and re-estimate the
-   review threshold on that data.
-5. Before any activation: field acceptance test on locally collected images, with the pass criteria set in advance.
+1. **Keep every classifier inactive** and keep the review gate mandatory. (Done: nothing is active; activation is refused.)
+2. **Owner decision A (licence):** write to the RealWaste authors (contact listed on the UCI page) asking which licence
+   applies to the exact files used (UCI zip or GitHub `156e8e91`) and whether EcoMind may distribute a model trained on them.
+   Until the answer is in `datasets/manifests/realwaste-2.0.yaml`, the model is research-only and cannot be released.
+   If the answer is CC BY-NC-SA only, a non-commercial deployment may use it with the licence on the model card; a commercial
+   one may not.
+3. **Owner decision B (field data):** run the Hyderabad collection in `../field-evaluation-protocol.md` (permission, consent,
+   privacy, two-person labelling, at least 300 images and 30 per class). Nothing has been collected.
+4. **Out-of-scope routing** is the one offline criterion that failed (79.7% vs 90%). A fix needs a decision made on
+   validation data, not on the test result; collecting real "other waste" examples locally is the sound route. The criteria
+   were not relaxed.
+5. **Collect in-domain data legitimately:** every reviewer correction in `/classify/review` is a labelled field example.
+6. TrashBox and TACO stay excluded: TrashBox has no licence on file (verbal permission only, and its third-party images
+   include TrashNet's); TACO has no image with a verified licence (`TACO_LICENCE_AUDIT.md`).
 
 ## 7. Limits of this evidence
-Single split per dataset; one real-world dataset from one Australian facility; mapping of Miscellaneous Trash → `trash` is
-approximate; CIs for RealWaste in §3 ignore near-duplicate clustering; CPU latency was measured on a shared 2-core sandbox; no
-Indian waste images were available; the RealWaste paper could not be retrieved, so its authors and year are not cited here.
+
+One dataset from one Australian facility; 77% of its images have near-duplicate siblings, so grouping reduces but does not
+remove similarity across the split; one split, one seed (confidence intervals use a group bootstrap on the test split only);
+the preprocessing ablation of 1.0.0 was **not** re-run for 2.0.0; CPU latency was measured on a shared 2-core sandbox; no
+Indian waste images exist; the RealWaste licence question is open; the authors' labels were not independently re-checked.

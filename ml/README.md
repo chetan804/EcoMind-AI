@@ -2,7 +2,7 @@
 
 Model training, evaluation and inference code for EcoMind AI. It is **separate from the API**: the backend never trains models, and nothing here imports `backend/app`. The backend calls the `inference/` code of a capability through the owning module's service (for example `backend/app/modules/classification`).
 
-**Status:** one model exists: the waste *material* classifier `1.0.0` (candidate; TrashNet only; see `waste_classification/README.md`, its model card and evaluation report). Shared code: image preprocessing (`common/preprocessing`) and classification metrics (`common/evaluation`). Forecasting and anomaly detection are statistical algorithms in `time_series/` (no trained model files); they are evaluated against naive baselines on public series. Nothing in this repository may claim a model is accurate or production-ready beyond the evidence stored under `docs/ml/`.
+**Status:** one model exists: the waste *material* classifier `2.0.0` (research candidate, RealWaste only, **not approved, inactive**; `1.0.0` trained on TrashNet is withdrawn; see `waste_classification/README.md`, its model card and evaluation report). Shared code: image preprocessing (`common/preprocessing`) and classification metrics (`common/evaluation`). Forecasting and anomaly detection are statistical algorithms in `time_series/` (no trained model files); they are evaluated against naive baselines on public series. Nothing in this repository may claim a model is accurate or production-ready beyond the evidence stored under `docs/ml/`.
 
 ## Layout
 | Path | Responsibility |
@@ -34,6 +34,6 @@ Serving needs only NumPy, Pillow and LiteRT (`ai-edge-litert`): the classifier i
 ## Commands
 ```bash
 make install-backend   # installs backend and ml dev dependencies (ml/requirements-dev.txt) into backend/.venv
-make test-ml           # pytest for ml/ (61 tests)
+make test-ml           # pytest for ml/ (118 tests)
 ```
-Reproduce the candidate classifier (needs network access to GitHub; about 10 minutes on 2 CPUs): `PYTHONPATH=. python -m ml.waste_classification.data.fetch`, then `…training.train`, then `…evaluation.report`. These rewrite the tracked report, model card and registry entry (timestamps, commit, latency); review the diff before committing. Reproduced on 2026-10-21: accuracy 0.8670, macro-F1 0.8409, ECE 0.0310 and identical weight hashes.
+Reproduce the candidate classifier (needs network access to GitHub; about 10 minutes on 2 CPUs): `PYTHONPATH=. python -m ml.waste_classification.data.fetch`, then `…training.train`, then `…evaluation.report`. These rewrite the tracked report, model card and registry entry (timestamps, commit, latency); review the diff before committing. Model 2.0.0 was trained once on 2026-10-22 (test accuracy 0.895, macro-F1 0.896, ECE 0.036); an independent re-run has not been done. The first run takes about 30 minutes because it embeds every image with three backbones; later runs reuse the git-ignored cache.

@@ -14,9 +14,9 @@ will be run; none is claimed today.
 
 | Dataset | Use in this project | Licence evidence | Consequence |
 |---|---|---|---|
-| TrashNet (Thung and Yang) | training and in-domain test of the candidate classifier | MIT licence file in the source repository (copyright Gary Thung, 2017); the file covers the repository and says nothing about where the photographs came from | usable; cite the source; provenance of the photographs is not stated by the authors |
-| RealWaste (Single et al.) | cross-dataset evaluation and a labelled experiment only | README states CC BY-NC-SA 4.0 (non-commercial, share-alike); the repository has no licence file | **no model trained on it is released or activated**; results may be reported with attribution and the non-commercial restriction |
-| TrashBox | researched; an experiment record exists; **no released artefact depends on it** | no licence in the repository. The project owner reports verbal permission from the authors (2026-10-21), which is not documented in writing | do not train a released model or redistribute images until written permission or a licence exists. **OWNER:** obtain it in writing |
+| RealWaste (Single, Iranmanesh and Raad, 2023; UCI 908) | the only training, validation and test data of the research candidate `2.0.0`; pinned to the authors' GitHub commit `156e8e91` | **conflicting:** UCI states CC BY 4.0; the authors' GitHub README states CC BY-NC-SA 4.0; the repository has no licence file. Whether the UCI zip is byte-identical to the GitHub files is not verified | **research use only; the model must not be released or activated**, and images must not be redistributed, until the authors confirm the licence for the exact files in writing. Attribution required either way. **OWNER:** send that question to the authors (contact on the UCI page) |
+| TrashNet (Thung and Yang) | **excluded from every training, validation, test and release dataset** (2026-10-22). Only its SHA-256 file hashes are kept, as a denylist | the repository has an MIT licence file, but no written permission covers the photographs and the authors state no provenance | prohibited by project policy. Model `1.0.0`, which was trained on it, is withdrawn and was never released. Re-admission needs written permission |
+| TrashBox | **prohibited**; no artefact depends on it; the earlier experiment was withdrawn | no licence in the repository; 819 of its files are byte-identical to TrashNet; verbal permission reported by the owner (2026-10-21) is not documented in writing and cannot cover those files | **OWNER:** nothing to do unless written permission covering every image exists |
 | TACO | tooling only | code MIT; annotations CC BY 4.0; images come from Flickr with per-image licence strings; 0 images were verifiably eligible | no TACO image is used |
 | Public time series (Austin, Ballarat and Sri Lankan council tickets) | forecasting and anomaly benchmarks, shown in the product only as labelled reference data | the repository that supplied the records is MIT; **the licence of the underlying open-data records is not stated (unverified)** | confirm each city's open-data licence before publishing derived figures or redistributing the series |
 | Kalasin University campus routes | route-ordering validation | CC BY 4.0 as recorded when the validation was built | re-check the repository before redistributing derived files |
@@ -41,13 +41,14 @@ applicable law (the Digital Personal Data Protection Act, 2023, and its rules). 
 and is not claimed.
 
 ## 4. AI-specific statements
-* The classifier is a candidate and **inactive**; with no active model the API answers 503 `no_active_model` and the UI says so.
-* It predicts only six material classes from the TrashNet taxonomy; it does not identify objects, brands or people.
-* Its accuracy outside its training distribution was measured at 0.454 (RealWaste) against 0.867 on its own test split.
+* The classifier is a candidate and **inactive**; with no active model the API answers 503 `no_active_model` and the UI says so. Activation is refused (409 `model_not_approved`) unless the artifact carries an approval that the training pipeline writes only after the acceptance criteria and a Hyderabad field evaluation pass. Neither is the case today.
+* It predicts only five material classes (cardboard, glass, metal, paper, plastic); it does not identify objects, brands or people. "Miscellaneous trash", food, vegetation and textile are deliberately not treated as materials.
+* Its held-out score (accuracy 0.895, macro-F1 0.896) comes from one Australian facility's photographs and is **not** a Hyderabad accuracy. One offline acceptance criterion failed: 79.7% of out-of-scope images were sent to review against a required 90%.
 * Predictions are suggestions; low-confidence or unfamiliar images are routed to a human reviewer, who can correct
   them. A deployment should monitor the review and correction rate.
-* Training data contain no people by design; inference photographs may. Photos are not used for training without a
-  separate, consented process, which does not exist yet.
+* The training photographs were not audited for people; inference photographs may contain them. Photos from the platform
+  are not used for training. A consented Hyderabad collection process (permission, consent, privacy checks, two-person
+  labelling) is specified in `docs/ml/field-evaluation-protocol.md`; **no field image has been collected.**
 * The help assistant is retrieval-only: it generates no text and sends nothing to a third party.
 * No emission or energy saving is claimed because no sourced coefficient exists.
 

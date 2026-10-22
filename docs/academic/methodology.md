@@ -25,10 +25,15 @@ covered). Custody events are additionally hash-chained and can be re-verified. C
 guarded by a test. This is a self-review, not an independent penetration test.
 
 ## 3. Material classification
-- **Data.** TrashNet (six classes, MIT) for training. Splits are made by *group* (near-identical photos of
-  one item stay together: 1,477 groups, train/validation/test = 1,684/422/421) so that the test split cannot
-  contain a near-duplicate of a training image. RealWaste (CC BY-NC-SA 4.0) is used only for cross-dataset
-  evaluation and an experiment.
+- **Data and provenance.** RealWaste only (UCI 908; pinned GitHub commit `156e8e91`). TrashNet and TrashBox are
+  prohibited: the loader compares every file's SHA-256 with a denylist and refuses a dataset whose manifest lacks a source
+  URL, version, access date, licence evidence, citation or per-file hash, or whose licence status blocks release. Only the
+  folders with a justified mapping are trained (cardboard, glass, metal, paper, plastic); "Miscellaneous Trash" is never
+  treated as a material, and the food, vegetation and textile folders are held out to measure review routing. Splits are by
+  *group* (near-identical photographs of one item stay together at a cosine-similarity threshold of 0.70: 1,390 groups,
+  train/validation/test = 2,060/516/516, seed 42), checked in code for group and byte-level leakage, and the per-file
+  table (hash, label, role, group) is committed. The licence conflict (CC BY 4.0 vs CC BY-NC-SA 4.0) is recorded in the
+  manifest and keeps the model research-only.
 - **Model.** A frozen EfficientNet-EdgeTPU TFLite backbone gives L2-normalised features; a regularised
   multinomial logistic head is trained on them. The backbone is not fine-tuned (no GPU or deep-learning
   framework is available in the build environment, so this is a stated limitation, not a design preference).
@@ -37,12 +42,17 @@ guarded by a test. This is a self-review, not an independent penetration test.
   (a novelty check) is too low. Hyper-parameters, the threshold and the temperature are chosen on
   train/validation only; the test split is scored once.
 - **Reproducibility.** The command, dataset manifest (with SHA-256), configuration and model hashes are
-  committed (`docs/ml/reports/`, `ml/model_registry/`); the 1.0.0 model was re-trained and matched
-  bit-for-bit (`docs/ml/dataset-research/ingestion/reproducibility-1.0.0.md`; re-run again on 2026-10-21 with identical accuracy, macro-F1, calibration error and weight hashes). The classifier verifies
+  committed (`docs/ml/reports/`, `ml/model_registry/`). Model 2.0.0 was trained once (2026-10-22); an independent
+  re-run has not been done. The earlier 1.0.0 reproduction record is withdrawn with that model. The classifier verifies
   file hashes at load and refuses a tampered artifact.
-- **Cross-dataset and multi-dataset study.** The released model is scored on RealWaste's six shared
-  classes; separate experiments train on TrashNet, RealWaste, and both, with and without class balancing,
-  and report each model on both datasets' held-out splits (`docs/ml/dataset-research/DATASET_SELECTION_REPORT.md`).
+- **Acceptance and activation.** Criteria (macro-F1, per-class recall, calibration, margin over a baseline, accuracy of
+  auto-accepted predictions, out-of-scope routing, and a Hyderabad field evaluation of at least 300 consented images)
+  are fixed in the configuration before training. `approved_for_activation` is written true only if all pass and a field
+  report whose model-file hashes match the artifact exists; the API refuses to activate anything else (409
+  `model_not_approved`). Field data rules (permission, consent, privacy, two-person labelling, training and
+  prohibited-hash overlap refusal) are in `docs/ml/field-evaluation-protocol.md` and `ml/waste_classification/evaluation/field.py`.
+- **Withdrawn experiments.** The earlier cross-dataset, multi-dataset and TrashBox experiments used TrashNet and are
+  withdrawn (their code is tombstoned); the selection report keeps them as history only.
 
 ## 4. Forecasting and anomaly detection
 Weekly series (platform-collected weight, plus two public reference series) with chronological splits.

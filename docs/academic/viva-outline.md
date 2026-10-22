@@ -5,8 +5,9 @@
    their benchmark.
 2. **Solution:** one platform from citizen report to verified recovery, with an honest classifier.
 3. **Design:** modular monolith, PostgreSQL as the only authority, RBAC, audit, MFA, isolated ML package.
-4. **Evidence:** held-out accuracy 0.867, but only 0.454 on real facility photos: I report both, and the
-   system abstains and asks for review instead of pretending.
+4. **Evidence:** held-out accuracy 0.895 (macro-F1 0.896) on one Australian facility's photographs, but the
+   pre-declared acceptance test failed (out-of-scope routing 79.7% vs 90%) and there is no Hyderabad evidence: I report
+   both, and the system abstains and asks for review instead of pretending.
 5. **Completeness:** 22 backend modules, 20 of 22 reference screens (the other two are excluded or ambiguous), seventeen migrations, 168 API operations, and 787 backend, 386 frontend, 61 ML and 61 end-to-end tests passing.
 6. **Limits:** no approved classifier, never deployed, marketplace without payment, no sensors, no zone boundaries, straight-line routes by default, tracking verified only with a simulator, maps only with synthetic tiles, no user study, no human accessibility review.
 
@@ -18,21 +19,21 @@ chain-of-custody passport and recovery record → show the reward ledger and the
 
 ## Likely questions and honest answers
 
-**Why only 87% and why not 95/99%?** A frozen backbone with a linear head on 2,527 curated photos. I did not
-promise a target; I measured, with intervals, and I reported that the figure falls to 45% on a different
-dataset. Higher numbers would need more legitimate labelled field data and fine-tuning, which this
-environment could not run.
+**Why only about 90% and why not 95/99%?** A frozen backbone with a linear head on 3,092 labelled photographs from one
+facility. I did not promise a target; I set acceptance criteria before training, measured with intervals, and reported
+the one that failed. Higher numbers would need more legitimate labelled field data and fine-tuning, which this
+environment could not run. The score is not a Hyderabad accuracy.
 
 **Why is the model not active by default?** Because no accuracy on real photos justifies it. An administrator
 must activate a registered model deliberately; until then the API answers "no model" honestly.
 
-**Why not train on RealWaste, which does much better on real photos?** Its licence is CC BY-NC-SA 4.0
-(non-commercial, share-alike). Using it in a model that may be deployed is an owner decision; the experiment
-is documented, nothing trained on it is released.
+**Why not TrashNet, which everyone uses?** The project has no written permission for its photographs, so it is excluded
+and a hash denylist stops it re-entering. **Is the RealWaste model releasable?** No: its licence is contested (UCI says
+CC BY 4.0, the authors' GitHub says CC BY-NC-SA 4.0), so the model is research-only until the authors confirm in writing.
 
 **What is calibration and why does it matter?** Confidence should match correctness. Temperature scaling on
-the validation split gave ECE 0.031 in-domain; out of domain it was 0.263, which is exactly why the novelty
-check and review queue exist.
+the held-out split gave ECE 0.036 in-domain; I have no out-of-domain calibration figure for 2.0.0, which is why the
+novelty check, the review queue and a field evaluation exist.
 
 **Why a modular monolith?** One team, one database, transactional integrity across report, task, weight and
 reward. Modules own their tables and communicate through services; extraction is possible later.

@@ -13,15 +13,18 @@ reference is included that could not be checked. Where a page showed only part o
    report, Stanford University.** <https://cs229.stanford.edu/proj2016/report/ThungYang-ClassificationOfTrashForRecyclabilityStatus-report.pdf>.
    Introduces the six-class (glass, paper, metal, plastic, cardboard, trash) hand-collected image dataset
    later distributed as TrashNet, and compares SVM-with-SIFT and a CNN. The repository
-   `garythung/trashnet` (MIT) is the data source used here (2,527 images in the distributed archive).
-   *Use in this project:* training and held-out evaluation of the baseline classifier. *Limitation noted by
-   the project:* photographs of single items on a plain background, unlike field images.
-2. **Single, S. et al. (2023). RealWaste. *Information* 14(12):633.** (Title as
-   recorded in the dataset README; the full subtitle was not verified.) <https://www.mdpi.com/2078-2489/14/12/633>
-   (citation as given in the dataset's README at `sam-single/realwaste`; the paper page itself was not opened, so
-   only the first author is named). 4,752 photographs in nine classes from a waste
-   facility near Wollongong, Australia, licensed CC BY-NC-SA 4.0 per the README. *Use:* cross-dataset evaluation and an
-   experiment-only multi-dataset study; non-commercial terms mean no model trained on it is released.
+   `garythung/trashnet` carries an MIT licence file, but the project has **no written permission covering the
+   photographs themselves**, so TrashNet is **excluded from every training, validation, test and release dataset**
+   (2026-10-22). *Use in this project:* cited as background only; its 2,524 file hashes are kept in a denylist so
+   that no copy of it, including the 819 byte-identical files in TrashBox, can enter a dataset. *Limitation noted
+   by others and observed here:* photographs of single items on a plain background, unlike field images.
+2. **Single, S., Iranmanesh, S. and Raad, R. (2023). RealWaste: A Novel Real-Life Data Set for Landfill Waste
+   Classification Using Deep Learning. *Information* 14(12):633.** DOI 10.3390/info14120633
+   <https://doi.org/10.3390/info14120633>; dataset UCI id 908, DOI 10.24432/C5SS4G. 4,752 photographs in nine
+   classes taken at a landfill near Wollongong, Australia (University of Wollongong); the authors' best reported
+   result is 89.19% (Inception V3, their own split). **Licence conflict:** the UCI page states CC BY 4.0; the authors'
+   GitHub README states CC BY-NC-SA 4.0. *Use:* the only training dataset of the current research candidate
+   (`waste-classification 2.0.0`), treated as research-only until the authors confirm the licence in writing.
 3. **Proença, P. F. and Simões, P. (2020). TACO: Trash Annotations in Context for Litter Detection.
    arXiv:2003.06975.** <https://arxiv.org/abs/2003.06975>. An open litter detection and segmentation
    dataset (1,500 images and 4,784 annotations in the paper's version) with a 60-category hierarchical
@@ -29,9 +32,9 @@ reference is included that could not be checked. Where a page showed only part o
    images are hosted per-photo on a service this sandbox cannot reach (see
    `docs/ml/dataset-research/REJECTED_DATASETS.md`).
 4. **TrashBox** (`nikhilvenkatkumsetty/TrashBox`; README cites IEEE FRUCT'31, IEEE Xplore 9770922).
-   Seven classes including e-waste and medical waste. *Use:* catalogued and **not used**, because the
-   repository carries no licence and its README counts disagree with its folders. The paper itself was not
-   read.
+   Seven classes including e-waste and medical waste. *Use:* **prohibited and not used.** The repository carries no
+   licence, its README counts disagree with its folders, and 819 of its files are byte-identical to TrashNet
+   images. An earlier research experiment on it was withdrawn on 2026-10-22. The paper itself was not read.
 
 ## Methods used
 
@@ -62,9 +65,9 @@ reference is included that could not be checked. Where a page showed only part o
    10.3389/frai.2026.1804734 <https://pmc.ncbi.nlm.nih.gov/articles/PMC13366473/>. Reports 94.18% top-1 accuracy
    for a compact student model on TrashNet and, evaluated zero-shot on the six RealWaste classes that overlap
    with TrashNet, 41.04% accuracy (macro-F1 0.3648), and attributes the gap to the controlled TrashNet
-   background versus cluttered landfill images. *Use:* an independent observation of the same
-   benchmark-to-field gap this project measured (0.867 to 0.454). The two studies use different models, splits and
-   class sets, so the numbers are not comparable one to one; only the direction and size of the drop agree.
+   background versus cluttered landfill images. *Use:* independent evidence that benchmark
+   accuracy overstates field accuracy. This project's own measurement of that gap was withdrawn with the TrashNet
+   model, so it now relies on this entry and on a field evaluation it has not yet run.
 10. **Ijaz, M. et al. (2026). GlobalWasteData: A Large-Scale, Integrated Dataset for Robust Waste Classification
     and Environmental Monitoring. arXiv:2602.07463** (submitted 7 February 2026; preprint, not peer reviewed as
     far as this survey could verify). <https://arxiv.org/abs/2602.07463>. Merges public datasets into one
@@ -99,12 +102,12 @@ reference is included that could not be checked. Where a page showed only part o
     Examples in Neural Networks. ICLR 2017. arXiv:1610.02136.** <https://arxiv.org/abs/1610.02136>. Shows that
     the maximum softmax probability tends to be lower for misclassified and out-of-distribution examples and
     is a usable detection baseline, while sometimes ineffective. *Use:* motivates routing low-confidence
-    inputs to review; the project adds a feature-similarity (novelty) check because confidence alone was
-    measured to be poorly calibrated on RealWaste (ECE 0.263).
+    inputs to review; the project adds a feature-similarity (novelty) check because confidence alone is not a
+    reliable guard against unfamiliar inputs (the novelty gate is evaluated on the out-of-scope RealWaste folders).
 16. **Geifman, Y. and El-Yaniv, R. (2017). Selective Classification for Deep Neural Networks. arXiv:1705.08500
     (NeurIPS 2017).** <https://arxiv.org/abs/1705.08500>. Formalises a classifier that may abstain, trading
     coverage for risk. *Use:* the project reports coverage and accuracy of accepted predictions together
-    (RealWaste: 36.4% coverage, 55.3% accuracy), which is the selective-classification view. The project does
+    (2.0.0 on the held-out test split: 82.9% coverage, 93.5% accuracy of accepted predictions), which is the selective-classification view. The project does
     not provide the risk guarantee of that paper's method.
 
 ## Related systems
@@ -130,8 +133,8 @@ reference is included that could not be checked. Where a page showed only part o
 
 ## Positioning (what this survey supports, and what it does not)
 
-* **Supported:** the benchmark-to-field accuracy gap for TrashNet-trained classifiers is not unique to this
-  project (entry 9); merged and larger datasets exist but raise licence questions (entries 8 and 10); abstention
+* **Supported:** a benchmark-to-field accuracy gap for TrashNet-trained classifiers is reported by others
+  (entry 9; this project has no measurement of its own, because its TrashNet model was withdrawn); merged and larger datasets exist but raise licence questions (entries 8 and 10); abstention
   is an established idea (entries 15 and 16); integrated web systems with classifiers already exist
   (entries 17 and 18).
 * **Candidate contributions, to be argued in a paper:** an audited reference implementation (the code is currently all-rights-reserved, so "open" cannot be claimed) that connects
@@ -141,7 +144,7 @@ reference is included that could not be checked. Where a page showed only part o
   traceable to articles. Whether each is novel relative to the literature has **not** been established by this
   survey.
 * **Not supported:** any claim that the classifier is accurate in the field, any claim of better accuracy than
-  published TrashNet results (different protocol, frozen backbone), any claim about forecasting or routing
+  published results on TrashNet or RealWaste (different protocol, frozen backbone, single seed), any claim about forecasting or routing
   performance relative to the literature.
 
 ## Gaps this survey does not fill
