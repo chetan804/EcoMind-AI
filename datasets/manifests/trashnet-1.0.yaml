@@ -1,3 +1,7 @@
+# QUARANTINED 2026-10-22. TrashNet is PROHIBITED for every new training, validation, test and release dataset
+# (written permission for its photographs was not obtained). This file is kept only as the record of what
+# the withdrawn model 1.0.0 was trained on. The provenance gate refuses it by name, and `fetch` no longer
+# downloads TrashNet. Its image digests live in prohibited-sha256.txt (hashes only) so copies can be found.
 # Dataset manifest: TrashNet (resized), as used by the waste material classifier v1.0.0.
 # The image files are NOT in this repository (datasets/external/ is git-ignored). Run
 #   python -m ml.waste_classification.data.fetch

@@ -4,24 +4,23 @@
 
 Everything is pinned to a commit and verified against a SHA-256, so a changed upstream cannot
 silently change an experiment. Needs ``git`` and network access to github.com.
+
+TrashNet and TrashBox are deliberately NOT fetched: they are excluded from every new run (see
+``provenance.py``). The training dataset is RealWaste (``datasets/manifests/realwaste-2.0.yaml``);
+its licence status is *conflicting*, so a model trained on it is research-only.
 """
 
 from __future__ import annotations
 
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
-from ml.waste_classification.data.trashnet import extract_dataset
-from ml.waste_classification.inference.embedder import sha256_file
+from ml.waste_classification.data import provenance
+from ml.waste_classification.data.imagefolder import Sample, files_digest, list_folder
 
 REPO = Path(__file__).resolve().parents[3]
-TRASHNET = {
-    "url": "https://github.com/garythung/trashnet",
-    "commit": "6fa2b878c6c1b4304b91109070ce0edf9279bb31",
-    "zip_sha256": "0bf472790f8b20e5c950d5b5012a9d38af0d3392efd65f8ce171334fc16b07c2",
-}
+REALWASTE_MANIFEST = REPO / "datasets" / "manifests" / "realwaste-2.0.yaml"
 CORAL = {
     "url": "https://github.com/google-coral/test_data",
     "commit": "104342d2d3480b3e66203073dac24f4e2dbb4c41",
@@ -47,19 +46,37 @@ def _checkout(url: str, commit: str, target: Path, paths: list[str] | None) -> N
     _git("checkout", commit, cwd=target)
 
 
+def fetch_realwaste(manifest: dict, external: Path) -> Path:  # type: ignore[type-arg]
+    """Clone the pinned RealWaste commit and verify every file against the manifest digest."""
+    source = external / "realwaste-src"
+    root = source / "RealWaste"
+    if not root.is_dir():
+        if source.exists():
+            shutil.rmtree(source)
+        source.mkdir(parents=True)
+        _git("init", "-q", cwd=source)
+        _git("remote", "add", "origin", manifest["source"]["mirror_url"] + ".git", cwd=source)
+        _git("fetch", "--depth", "1", "origin", manifest["source"]["commit"], cwd=source)
+        _git("checkout", "-q", "FETCH_HEAD", cwd=source)
+    everything = [
+        Sample(path, folder.name, -1)
+        for folder in sorted(p for p in root.iterdir() if p.is_dir())
+        for path in list_folder(folder)
+    ]
+    if len(everything) != manifest["images"]["total"]:
+        raise SystemExit(
+            f"RealWaste has {len(everything)} images, manifest says {manifest['images']['total']}"
+        )
+    if files_digest(everything) != manifest["images"]["files_digest"]:
+        raise SystemExit("RealWaste content differs from the pinned manifest digest")
+    return root
+
+
 def main() -> int:
     external = REPO / "datasets" / "external"
-    source = external / "trashnet-src"
-    if not (source / "data" / "dataset-resized.zip").exists():
-        _checkout(
-            TRASHNET["url"], TRASHNET["commit"], source, ["data/dataset-resized.zip", "LICENSE"]
-        )
-    archive = source / "data" / "dataset-resized.zip"
-    if sha256_file(archive) != TRASHNET["zip_sha256"]:
-        print("TrashNet archive hash mismatch", file=sys.stderr)
-        return 1
-    if not (external / "trashnet" / "dataset-resized").exists():
-        extract_dataset(archive, external / "trashnet")
+    manifest = provenance.load_manifest(REALWASTE_MANIFEST)
+    provenance.require_acceptable(manifest)  # fail closed before anything is downloaded
+    fetch_realwaste(manifest, external)
 
     backbones = REPO / "ml" / "artifacts" / "_backbones"
     ood = backbones.parent / "_ood"
@@ -75,7 +92,7 @@ def main() -> int:
         for name in OOD_FILES:
             shutil.copy2(scratch / name, ood / name)
         shutil.copy2(scratch / "LICENSE", backbones / "LICENSE.coral-test-data")
-    print("datasets and backbones ready")
+    print("RealWaste (verified) and backbones ready")
     return 0
 
 

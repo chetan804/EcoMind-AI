@@ -20,7 +20,6 @@ from ml.waste_classification.inference.classifier import INPUT_SCALE
 Arr = NDArray[np.float64]
 F32 = NDArray[np.float32]
 Ints = NDArray[np.int_]
-N_CLASSES = 6
 
 
 def fit_head(features: F32, y: Ints, c_value: float) -> LogisticRegression:
@@ -79,11 +78,12 @@ def cross_validate(
         model = fit_head(train_x, y[fit_idx], c_value)
         scores = head_scores(model, x[held_idx])
         pred = scores[:, 0].argmax(axis=1)
-        result.f1.append(mt.macro_f1(y[held_idx], pred, N_CLASSES))
+        k = scores.shape[-1]  # number of classes, from the model's own output
+        result.f1.append(mt.macro_f1(y[held_idx], pred, k))
         result.acc.append(mt.accuracy(y[held_idx], pred))
         result.nll.append(mt.log_loss(y[held_idx], mt.softmax(scores[:, 0])))
         own = head_scores(model, x[fit_idx][:, :1])[:, 0].argmax(axis=1)
-        result.train_f1.append(mt.macro_f1(y[fit_idx], own, N_CLASSES))
+        result.train_f1.append(mt.macro_f1(y[fit_idx], own, k))
         result.fold_scores.append(scores)
         result.fold_idx.append(held_idx)
     return result
@@ -98,7 +98,7 @@ def one_se_choice(c_grid: list[float], results: dict[float, CVResult]) -> float:
 
 def tta_cv_f1(result: CVResult, y: Ints, variant_idx: list[int]) -> tuple[float, float]:
     scores = [
-        mt.macro_f1(y[idx], tta_logits(s, variant_idx).argmax(axis=1), N_CLASSES)
+        mt.macro_f1(y[idx], tta_logits(s, variant_idx).argmax(axis=1), s.shape[-1])
         for s, idx in zip(result.fold_scores, result.fold_idx, strict=True)
     ]
     return float(np.mean(scores)), float(np.std(scores, ddof=1) / np.sqrt(len(scores)))
@@ -159,12 +159,13 @@ def evaluate_probabilities(
     y: Ints, proba: Arr, groups: Ints | None, config: dict[str, Any], seed: int
 ) -> dict[str, Any]:
     pred = proba.argmax(axis=1)
-    matrix = mt.confusion_matrix(y, pred, N_CLASSES)
+    n_classes = proba.shape[1]
+    matrix = mt.confusion_matrix(y, pred, n_classes)
     ece, bins = mt.expected_calibration_error(y, proba)
     out: dict[str, Any] = {
         "n": len(y),
         "accuracy": mt.accuracy(y, pred),
-        "macro_f1": mt.macro_f1(y, pred, N_CLASSES),
+        "macro_f1": mt.macro_f1(y, pred, n_classes),
         "top2_accuracy": mt.top_k_accuracy(y, proba, 2),
         "log_loss": mt.log_loss(y, proba),
         "brier": mt.brier_score(y, proba),
@@ -178,10 +179,96 @@ def evaluate_probabilities(
         boot = config["bootstrap"]
         for key, fn in (
             ("accuracy", lambda i: mt.accuracy(y[i], pred[i])),
-            ("macro_f1", lambda i: mt.macro_f1(y[i], pred[i], N_CLASSES)),
+            ("macro_f1", lambda i: mt.macro_f1(y[i], pred[i], n_classes)),
         ):
             low, high = mt.grouped_bootstrap(
                 fn, groups, resamples=boot["resamples"], confidence=boot["confidence"], seed=seed
             )
             out[f"{key}_ci"] = [low, high]
     return out
+
+
+def evaluate_acceptance(
+    *,
+    test: dict[str, Any],
+    review: dict[str, float],
+    margin_over_handcrafted: float,
+    out_of_scope_review_rate: float,
+    criteria: dict[str, Any],
+    field_report: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Compare measured results with the configured criteria. Pure; never activates anything.
+
+    ``approved_for_activation`` needs the offline criteria AND a passing field evaluation. With no
+    field report (the current state) it is always False.
+    """
+    offline_cfg = criteria["offline"]
+    recalls = [row["recall"] for row in test["per_class"]]
+    checks: dict[str, dict[str, Any]] = {
+        "test_macro_f1": {
+            "required": f">= {offline_cfg['min_test_macro_f1']}",
+            "observed": test["macro_f1"],
+            "passed": test["macro_f1"] >= offline_cfg["min_test_macro_f1"],
+        },
+        "min_class_recall": {
+            "required": f">= {offline_cfg['min_class_recall']}",
+            "observed": min(recalls),
+            "passed": min(recalls) >= offline_cfg["min_class_recall"],
+        },
+        "ece": {
+            "required": f"<= {offline_cfg['max_ece']}",
+            "observed": test["ece"],
+            "passed": test["ece"] <= offline_cfg["max_ece"],
+        },
+        "margin_over_handcrafted_macro_f1": {
+            "required": f">= {offline_cfg['min_margin_over_handcrafted_macro_f1']}",
+            "observed": margin_over_handcrafted,
+            "passed": margin_over_handcrafted
+            >= offline_cfg["min_margin_over_handcrafted_macro_f1"],
+        },
+        "auto_accepted_accuracy_ci_low": {
+            "required": f">= {offline_cfg['min_auto_accepted_accuracy_ci_low']}",
+            "observed": review["accepted_accuracy_ci_low"],
+            "passed": review["accepted_accuracy_ci_low"]
+            >= offline_cfg["min_auto_accepted_accuracy_ci_low"],
+        },
+        "out_of_scope_review_rate": {
+            "required": f">= {offline_cfg['min_out_of_scope_review_rate']}",
+            "observed": out_of_scope_review_rate,
+            "passed": out_of_scope_review_rate >= offline_cfg["min_out_of_scope_review_rate"],
+        },
+    }
+    offline_passed = all(c["passed"] for c in checks.values())
+    field = criteria["field"]
+    field_done = field_report is not None
+    field_passed = False
+    if field_report is not None:
+        field_passed = (
+            field_report.get("n_images", 0) >= field["min_images"]
+            and field_report.get("macro_f1", 0.0) >= field["min_macro_f1"]
+            and field_report.get("accuracy_of_auto_accepted", 0.0)
+            >= field["min_accuracy_of_auto_accepted"]
+        )
+    approved = offline_passed and (field_passed or not field["required"])
+    if field["required"] and not field_done:
+        decision = (
+            "NOT APPROVED: the offline criteria were met but no field evaluation exists"
+            if offline_passed
+            else "NOT APPROVED: offline criteria failed and no field evaluation exists"
+        )
+    elif not approved:
+        decision = "NOT APPROVED: a criterion failed"
+    else:
+        decision = "criteria met"
+    return {
+        "offline": checks,
+        "offline_passed": offline_passed,
+        "field_evaluation": {
+            "required": bool(field["required"]),
+            "done": field_done,
+            "passed": field_passed,
+            "criteria": field,
+        },
+        "approved_for_activation": approved,
+        "decision": decision,
+    }

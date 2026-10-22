@@ -1,0 +1,128 @@
+# Dataset manifest: RealWaste, the PRIMARY training candidate that replaces TrashNet.
+# Research use only until the licence conflict below is resolved in writing. Images are NOT in this
+# repository (datasets/external/ is git-ignored). To obtain exactly this content:
+#   python -m ml.waste_classification.data.fetch
+# which clones the pinned commit and verifies `images.files_digest` (SHA-256 over the sorted
+# "<folder>/<file> <sha256-of-file>" lines).
+# Validated (fail closed) by ml/waste_classification/data/provenance.py before every run.
+name: realwaste
+version: "2.0"
+accessed: "2026-10-22"
+description: >
+  Photographs of waste received at the Whyte's Gully Waste and Resource Recovery facility,
+  Wollongong NSW, Australia, in nine material classes.
+source:
+  url: https://archive.ics.uci.edu/dataset/908/realwaste      # UCI Machine Learning Repository, donated 2023-10-17
+  doi: 10.24432/C5SS4G
+  version: "UCI dataset 908 / authors' GitHub main branch at 156e8e9154eeb163df30fcfd767f55b19633bb06"
+  mirror_url: https://github.com/sam-single/realwaste           # the copy that was actually downloaded
+  commit: 156e8e9154eeb163df30fcfd767f55b19633bb06              # 2024-04-14
+  retrieved_from: github mirror
+  uci_zip_downloaded: false     # archive.ics.uci.edu is not reachable from the build sandbox
+  uci_equivalence_evidence: >
+    The UCI file listing (read 2026-10-22) names files as realwaste-main/RealWaste/<Class>/<file>.jpg
+    and gives the sizes of five files (Vegetation_107 to _111: 239.6, 239.5, 242.8, 242.7 and 241 KB).
+    All five equal the sizes of the GitHub copy (239.6, 239.5, 242.8, 242.7, 241.0 KB), and the UCI
+    instance count (4,752) and per-class counts equal the GitHub copy. This is supporting evidence, NOT
+    proof that the two archives are byte-identical: the UCI zip itself was not downloaded or hashed.
+licence:
+  status: conflicting
+  declared:
+    - source: UCI Machine Learning Repository dataset page (https://archive.ics.uci.edu/dataset/908/realwaste)
+      read: "2026-10-22"
+      spdx: CC-BY-4.0
+      evidence: >
+        Page text: "This dataset is licensed under a Creative Commons Attribution 4.0 International
+        (CC BY 4.0) license. This allows for the sharing and adaptation of the datasets for any purpose,
+        provided that the appropriate credit is given."
+    - source: authors' GitHub README (https://github.com/sam-single/realwaste, commit 156e8e9154eeb163df30fcfd767f55b19633bb06)
+      read: "2026-10-22"
+      spdx: CC-BY-NC-SA-4.0
+      evidence: >
+        README line 7: "Please note, this dataset is licenced under CC BY-NC-SA 4.0." The repository has
+        no LICENSE file and GitHub reports no licence field.
+  unverified_reports:
+    - "The project owner reports that IEEE DataPort also lists CC BY-NC-SA 4.0. Not opened or verified here."
+    - "The MDPI paper's data-availability statement was not read."
+  treated_as: >
+    The more restrictive terms (CC BY-NC-SA 4.0: non-commercial, share-alike) until the conflict is resolved.
+    Neither listing was silently preferred because it was more convenient.
+  release_allowed: false
+  resolution: null
+  to_resolve: >
+    Ask the corresponding authors (contact on the UCI page) to confirm in writing which licence applies to
+    the exact version downloaded and whether it covers redistribution of images and of models trained on
+    them. Record the reply, its date and the answer under `resolution`, then set `status: resolved` and
+    `release_allowed` accordingly. Until then no image is redistributed and no model trained on this
+    data is released, shipped or activated.
+citation:
+  text: >
+    Single, S., Iranmanesh, S. and Raad, R. (2023). RealWaste: A Novel Real-Life Data Set for Landfill Waste
+    Classification Using Deep Learning. Information 14(12), 633. https://doi.org/10.3390/info14120633
+    (published 26 November 2023, University of Wollongong). Dataset: Single, S., Iranmanesh, S. and Raad, R.
+    (2023). RealWaste [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5SS4G
+  verified_at: "2026-10-22 (author list, year, journal and DOI read on the MDPI and UCI pages)"
+contains_third_party_from: []
+exclusion_checks:
+  prohibited_sources: [TrashNet, TrashBox]
+  denylist: datasets/manifests/prohibited-sha256.txt        # 2,524 distinct TrashNet image digests
+  files_checked: 4752
+  byte_identical_to_a_prohibited_image: 0
+  checked_on: "2026-10-22"
+  scope_note: >
+    Byte-identical match only. Resized or re-encoded copies would not be found by this check (RealWaste
+    images are 524x524 photographs of landfill intake, TrashNet's are 512x384 studio photographs).
+images:
+  total: 4752
+  format: JPEG
+  size_px: [524, 524]            # all 4,752 images, verified by decoding every file (2026-10-20)
+  total_bytes: 688308374
+  files_digest: 59fabef99c26bb25afb86b718981e6fc6e04b6bcba6bd39de5834ee668f432ef
+  undecodable: 0
+  exact_duplicate_files: 0
+labels:
+  scope: material_category          # one label per image, whole-image classification; NOT object identity
+  classes:
+    - {name: Cardboard, count: 461, maps_to: cardboard, mapping: exact}
+    - {name: Glass,     count: 420, maps_to: glass,     mapping: exact}
+    - {name: Metal,     count: 790, maps_to: metal,     mapping: exact}
+    - {name: Paper,     count: 500, maps_to: paper,     mapping: exact}
+    - {name: Plastic,   count: 921, maps_to: plastic,   mapping: exact}
+    - name: Miscellaneous Trash
+      count: 495
+      maps_to: null
+      reason: >
+        A catch-all class (the authors' own wording is "miscellaneous"). It is not a material, so it is not
+        mapped to any EcoMind class: it is never trained on and is evaluated only as out-of-scope input that
+        should be sent to a human reviewer.
+    - name: Food Organics
+      count: 411
+      maps_to: null
+      reason: EcoMind's classifier has no organic class; held out as out-of-scope input for review-routing evaluation only.
+    - name: Textile Trash
+      count: 318
+      maps_to: null
+      reason: EcoMind's classifier has no textile class; held out as out-of-scope input for review-routing evaluation only.
+    - name: Vegetation
+      count: 436
+      maps_to: null
+      reason: EcoMind's classifier has no organic class; held out as out-of-scope input for review-routing evaluation only.
+  counts_verified_against_readme: true
+  counts_verified_against_uci_page: true
+split:
+  method: StratifiedGroupKFold over near-duplicate groups (per-class average-linkage clustering of S-backbone embeddings, cosine >= 0.70); byte-identical files may never straddle folds
+  seed: 42
+  n_folds: 6
+  test_fold: 0
+  validation_fold: 1
+  config: ml/configs/waste_classification.yaml
+  per_file_table: datasets/manifests/realwaste-2.0.files.tsv   # file, sha256, source label, class, role, group (written by the training run)
+personal_data:
+  contains: not assessed        # no image was inspected by a person; photographs of received waste, people not expected but not ruled out
+leakage:
+  collection: one facility (per the README); camera, period and capture protocol not documented in the README.
+known_limitations:
+  - Single site in Australia. Indian waste streams, packaging and lighting are not represented; results from this dataset are NOT evidence of accuracy in Hyderabad.
+  - Labels are the authors' and were not independently audited here.
+  - Only five of the nine classes are material categories the classifier is trained on (3,092 images); the other 1,660 are out-of-scope evaluation input.
+  - Many images are near-duplicates of each other (several photos of one item); group-aware splitting is required.

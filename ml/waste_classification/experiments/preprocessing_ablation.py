@@ -19,7 +19,8 @@ from PIL import Image, ImageOps
 import ml.waste_classification.inference.embedder as embedder_module
 from ml.common.evaluation.metrics import macro_f1
 from ml.common.preprocessing.images import load_rgb_image
-from ml.waste_classification.data.trashnet import assign_folds, build_groups, list_samples
+from ml.waste_classification.data.dataset import load_verified
+from ml.waste_classification.data.imagefolder import assign_folds, build_groups
 from ml.waste_classification.training import pipeline as pl
 from ml.waste_classification.training.features import (
     REPO,
@@ -42,10 +43,7 @@ MODES: dict[str, Callable[[Image.Image, int], Image.Image]] = {
 def main() -> int:
     config = load_config()
     seed = config["seed"]
-    samples = list_samples(
-        REPO / "datasets" / "external" / "trashnet" / "dataset-resized",
-        config["dataset"]["classes"],
-    )
+    samples = load_verified(config).samples
     y = np.array([s.label_index for s in samples])
     grouping = backbone_embeddings(
         config, config["grouping"]["backbone"], samples, config["augmentations"]

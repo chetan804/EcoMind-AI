@@ -35,3 +35,10 @@ class InvalidReviewError(AppError):
 class ModelVersionNotFoundError(AppError):
     status_code = 404
     code = "model_version_not_found"
+
+
+class ModelNotApprovedError(AppError):
+    """The artifact's own release record does not approve it for activation (fail closed)."""
+
+    status_code = 409
+    code = "model_not_approved"

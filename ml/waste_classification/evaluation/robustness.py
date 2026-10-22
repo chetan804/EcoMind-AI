@@ -1,7 +1,7 @@
 """Synthetic perturbations for stress-testing the classifier.
 
 These are *proxies* for real-world conditions (lighting, focus, compression, clutter), applied to
-studio photographs. They show relative sensitivity; they are not a substitute for field data.
+photographs. They show relative sensitivity; they are not a substitute for field data.
 """
 
 from __future__ import annotations

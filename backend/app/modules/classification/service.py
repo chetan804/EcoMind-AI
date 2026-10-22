@@ -22,6 +22,7 @@ from app.modules.classification import repository
 from app.modules.classification.constants import ModelVersionStatus, ReviewStatus
 from app.modules.classification.errors import (
     InvalidReviewError,
+    ModelNotApprovedError,
     ModelUnavailableError,
     ModelVersionNotFoundError,
     NoActiveModelError,
@@ -129,7 +130,15 @@ def activate_model(
     row = repository.get_version(db, version_id, for_update=True)
     if row is None:
         raise ModelVersionNotFoundError("Model version not found")
-    load_verified(artifacts_dir, row.name, row.version, row.artifact_manifest_sha256)
+    runtime = load_verified(artifacts_dir, row.name, row.version, row.artifact_manifest_sha256)
+    release = runtime.manifest.get("release")
+    if not isinstance(release, dict) or release.get("approved_for_activation") is not True:
+        # Fail closed: a model is activated only when its own release record (written by the
+        # training pipeline after the acceptance criteria and the field evaluation) says so.
+        raise ModelNotApprovedError(
+            "This model version is not approved for activation: "
+            + (str(release.get("decision")) if isinstance(release, dict) else "no release record")
+        )
     if row.status != ModelVersionStatus.ACTIVE:
         previous = repository.active_version(db)
         if previous is not None:

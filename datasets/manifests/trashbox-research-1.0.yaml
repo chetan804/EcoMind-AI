@@ -1,3 +1,5 @@
+# QUARANTINED 2026-10-22. TrashBox is PROHIBITED: it has no licence and republishes TrashNet images (819
+# byte-identical files). Kept as the record of a withdrawn experiment; the provenance gate refuses it by name.
 # Dataset manifest: TrashBox. RESEARCH EXPERIMENT ONLY. NOT cleared for any released model.
 # The image files are NOT in this repository (datasets/external/ is git-ignored). To obtain exactly this
 # content (a 4.5 GB archive; the repository holds every image twice, only `TrashBox_train_set` is used):

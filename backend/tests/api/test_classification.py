@@ -253,7 +253,7 @@ def test_listing_and_activating_models_needs_manage_permission(s: Setup) -> None
     assert s.client.get(f"{CLS}/models", headers=s.manager).status_code == 403
     listed = s.client.get(f"{CLS}/models", headers=s.admin).json()
     assert [m["version"] for m in listed] == ["1.0.0"] and listed[0]["status"] == "candidate"
-    assert listed[0]["evaluation_metrics"]["accuracy"] == 0.867
+    assert listed[0]["evaluation_metrics"]["accuracy"] == 0.9
     assert (
         s.client.post(f"{CLS}/models/{version_id}/activate", headers=s.manager).status_code == 403
     )
@@ -311,6 +311,35 @@ def test_a_tampered_or_missing_artifact_cannot_be_activated(s: Setup) -> None:
     assert (
         unknown.status_code == 404 and unknown.json()["error"]["code"] == "model_version_not_found"
     )
+
+
+def test_a_model_that_is_not_approved_cannot_be_activated(s: Setup) -> None:
+    """Fail closed: only a release record with approved_for_activation == true activates a model."""
+    write_artifact(
+        s.artifacts,
+        "2.0.0",
+        release={
+            "status": "research_candidate",
+            "approved_for_activation": False,
+            "decision": "NOT APPROVED: no field evaluation exists",
+        },
+    )
+    version_id = _register(s, "2.0.0")
+    response = s.client.post(f"{CLS}/models/{version_id}/activate", headers=s.admin)
+    assert response.status_code == 409 and response.json()["error"]["code"] == "model_not_approved"
+    assert "no field evaluation" in response.json()["error"]["message"]
+    assert s.scalar("SELECT status FROM classification_model_versions") == "candidate"
+    assert s.scalar("SELECT count(*) FROM audit_logs WHERE action = 'classification.model_activated'") == 0
+    # an artifact with no release record at all (for example a withdrawn 1.x model) is refused too
+    directory = write_artifact(s.artifacts, "1.5.0")
+    manifest = json.loads((directory / "model.json").read_text())
+    del manifest["release"]
+    (directory / "model.json").write_text(json.dumps(manifest))
+    legacy = _register(s, "1.5.0")
+    refused = s.client.post(f"{CLS}/models/{legacy}/activate", headers=s.admin)
+    assert refused.status_code == 409 and refused.json()["error"]["code"] == "model_not_approved"
+    # no active model, so predictions stay unavailable rather than silently using a candidate
+    assert s.scalar("SELECT count(*) FROM classification_model_versions WHERE status = 'active'") == 0
 
 
 def test_the_database_allows_only_one_active_model(s: Setup) -> None:
