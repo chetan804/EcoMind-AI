@@ -674,6 +674,9 @@ def main() -> int:
     # ---- acceptance: configured criteria vs measured results (never activates anything) --------
     field_file = REPO / "docs" / "ml" / "reports" / f"field-evaluation-{version}.json"
     field_report = json.loads(field_file.read_text()) if field_file.is_file() else None
+    if field_report is not None and field_report.get("model_files") != manifest["files"]:
+        log("   field report ignored: it was measured on different model weights")
+        field_report = None
     report["acceptance"] = pl.evaluate_acceptance(
         test=test_eval,
         review=report["test"]["review"],
