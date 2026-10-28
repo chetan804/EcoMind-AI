@@ -114,7 +114,7 @@ services:
   # Accepts what the backend sends and shows it at http://localhost:8025; nothing leaves the host.
   # Credentials come from the git-ignored .env.demo-mail (scripts/setup/init_demo_mail.py).
   mailpit:
-    image: axllent/mailpit:v1.31.6
+    image: axllent/mailpit:v1.32.0
     profiles: ["demo-mail"]
     environment:
       MP_SMTP_AUTH: ${MAILPIT_SMTP_AUTH:-}
