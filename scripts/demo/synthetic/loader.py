@@ -158,6 +158,7 @@ def load_dimensions(conn: psycopg.Connection, world: World) -> dict[str, int]:
         cur = conn.execute("insert into user_roles (user_id, role_id) select user_id, role_id from _roles on conflict do nothing")
         added["user_roles"] = cur.rowcount
         added["reward_items"] = _upsert(conn, "reward_items", world.reward_item_rows())
+    conn.commit()  # the reads in guard() opened an outer transaction; make the dimensions durable now
     return added
 
 
@@ -355,4 +356,5 @@ def cleanup(conn: psycopg.Connection, *, allow_remote: bool, progress: Progress 
             cur = conn.execute(f"delete from \"{table}\" where \"{column}\"::text like '{P}%'")
             deleted[table] = cur.rowcount
             progress(f"  deleted {cur.rowcount:>9,} from {table}")
+    conn.commit()
     return deleted

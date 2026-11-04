@@ -114,11 +114,24 @@ class Simulator:
         self.min_cost = min(c for _, _, c in world.item_ids)
         self.passport_no = 0
         r = stream(world.seed, "surges")
-        n = world.profile.days
-        starts = sorted(r.sample(range(int(n * 0.25), int(n * 0.9) - 7), 3))
-        self.surge_weeks = {starts[0]: 1.9, starts[1]: 2.0}  # busy weeks
+        weeks = max(1, world.profile.days // 7)
+        # Two busy weeks and one disrupted week, kept at least four weeks apart so the weekly
+        # detector (which compares a week with the weeks just before it) can tell them from the
+        # normal ramp. They are injected on purpose; the detector is not told where they are.
+        chosen: list[int] = []
+        candidates = list(range(max(4, weeks // 4), max(5, weeks - 2)))
+        r.shuffle(candidates)
+        for w in candidates:
+            if all(abs(w - c) >= 4 for c in chosen):
+                chosen.append(w)
+            if len(chosen) == 3:
+                break
+        while len(chosen) < 3:  # tiny profiles: fall back to whatever fits
+            chosen.append(chosen[-1] + 1 if chosen else 4)
+        starts = [c * 7 for c in chosen]
+        self.surge_weeks = {starts[0]: 2.4, starts[1]: 2.6}  # busy weeks
         self.dip_week = starts[2]  # a disrupted week with little collection
-        self.first_day = world.anchor - dt.timedelta(days=n)
+        self.first_day = world.anchor - dt.timedelta(days=world.profile.days)
 
     # ------------------------------------------------------------------ volumes
     def volume(self, d: dt.date) -> int:
@@ -133,7 +146,7 @@ class Simulator:
             if start <= i < start + 7:
                 factor = mult
         if self.dip_week <= i < self.dip_week + 7:
-            factor = 0.35
+            factor = 0.25
         return max(1, round(p.tasks_per_day * weekday * season * trend * noise * factor))
 
     # ------------------------------------------------------------------ the day

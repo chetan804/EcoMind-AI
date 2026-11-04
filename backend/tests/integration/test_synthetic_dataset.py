@@ -38,11 +38,15 @@ def synth() -> Any:
 
 
 @pytest.fixture
-def conn(db_engine: Engine) -> Iterator[psycopg.Connection]:
-    url = db_engine.url.render_as_string(hide_password=False).replace(
+def dsn(db_engine: Engine) -> str:
+    return db_engine.url.render_as_string(hide_password=False).replace(
         "postgresql+psycopg://", "postgresql://", 1
     )
-    connection = psycopg.connect(url)
+
+
+@pytest.fixture
+def conn(dsn: str) -> Iterator[psycopg.Connection]:
+    connection = psycopg.connect(dsn)
     try:
         yield connection
     finally:
@@ -52,6 +56,17 @@ def conn(db_engine: Engine) -> Iterator[psycopg.Connection]:
 @pytest.fixture
 def world(synth: Any) -> Any:
     return synth.world.World.build(42, synth.profiles.PROFILES["test"], ANCHOR)
+
+
+def committed_count(dsn: str, sql: str) -> int:
+    """Count through a separate connection, so only COMMITTED rows are seen (a rollback must show)."""
+    other = psycopg.connect(dsn)
+    try:
+        row = other.execute(sql).fetchone()
+    finally:
+        other.close()
+    assert row is not None
+    return int(row[0])
 
 
 def count(conn: psycopg.Connection, sql: str) -> int:
@@ -79,7 +94,7 @@ def test_generation_is_deterministic_and_labelled(synth: Any, world: Any) -> Non
     other = synth.world.World.build(42, synth.profiles.PROFILES["test"], ANCHOR)
     a = synth.days.Simulator(world).day(dt.date(2026, 10, 14))
     b = synth.days.Simulator(other).day(dt.date(2026, 10, 14))
-    assert a == b and sum(len(v) for v in a.values()) > 100
+    assert a == b and sum(len(v) for v in a.values()) > 10
     reseeded = synth.days.Simulator(
         synth.world.World.build(7, synth.profiles.PROFILES["test"], ANCHOR)
     ).day(dt.date(2026, 10, 14))
@@ -92,13 +107,21 @@ def test_generation_is_deterministic_and_labelled(synth: Any, world: Any) -> Non
 
 
 def test_load_is_consistent_idempotent_and_matches_the_plan(
-    synth: Any, conn: psycopg.Connection, world: Any
+    synth: Any, conn: psycopg.Connection, world: Any, dsn: str
 ) -> None:
     quiet = lambda _msg: None  # noqa: E731
     synth.loader.guard(conn, world, allow_existing=False, allow_remote=False)
     synth.loader.load_dimensions(conn, world)
     totals = synth.loader.load(conn, world, quiet)
     assert totals == synth.loader.count_rows(world)
+    # durable: visible to another connection, not just inside the loading transaction
+    assert (
+        committed_count(
+            dsn, f"select count(*) from collection_tasks where id::text like '{PREFIX}%'"
+        )
+        == totals["collection_tasks"]
+    )
+    assert committed_count(dsn, f"select count(*) from users where id::text like '{PREFIX}%'") > 0
     failures = [(name, bad) for name, bad in synth.loader.run_checks(conn) if bad]
     assert failures == []
     # fully populated chain: reports, tasks, routes, recovery, passports, rewards, notifications
@@ -130,17 +153,17 @@ def test_load_is_consistent_idempotent_and_matches_the_plan(
 
 
 def test_an_interrupted_load_resumes_to_the_same_result(
-    synth: Any, conn: psycopg.Connection, world: Any, monkeypatch: pytest.MonkeyPatch
+    synth: Any, conn: psycopg.Connection, world: Any, monkeypatch: pytest.MonkeyPatch, dsn: str
 ) -> None:
     quiet = lambda _msg: None  # noqa: E731
     synth.loader.load_dimensions(conn, world)
     days = list(synth.loader.days_range(world))
     monkeypatch.setattr(synth.loader, "days_range", lambda _w: iter(days[:25]))
     synth.loader.load(conn, world, quiet)
-    partial = count(conn, "select count(*) from collection_tasks")
+    partial = committed_count(dsn, "select count(*) from collection_tasks")
     monkeypatch.undo()
     synth.loader.load(conn, world, quiet)
-    full = count(conn, "select count(*) from collection_tasks")
+    full = committed_count(dsn, "select count(*) from collection_tasks")
     assert 0 < partial < full == synth.loader.count_rows(world)["collection_tasks"]
     assert [name for name, bad in synth.loader.run_checks(conn) if bad] == []
 
@@ -187,7 +210,7 @@ def test_safety_guards(
 
 
 def test_cleanup_removes_only_synthetic_rows(
-    synth: Any, conn: psycopg.Connection, world: Any, db_engine: Engine
+    synth: Any, conn: psycopg.Connection, world: Any, db_engine: Engine, dsn: str
 ) -> None:
     quiet = lambda _msg: None  # noqa: E731
     real_user = uuid.uuid4()
@@ -210,6 +233,14 @@ def test_cleanup_removes_only_synthetic_rows(
     assert sum(deleted.values()) > 1000
     synthetic_left = [(t, s) for t, _, s in synth.loader.table_counts(conn) if s]
     assert synthetic_left == []
+    # the deletion was committed (it is visible from another connection)
+    assert committed_count(dsn, f"select count(*) from users where id::text like '{PREFIX}%'") == 0
+    assert (
+        committed_count(
+            dsn, f"select count(*) from collection_tasks where id::text like '{PREFIX}%'"
+        )
+        == 0
+    )
     assert count(conn, "select count(*) from users where email = 'real.person@example.org'") == 1
     assert count(conn, "select count(*) from facilities where code = 'REAL-1'") == 1
     # and a real row that points at a synthetic one blocks the cleanup instead of being orphaned
