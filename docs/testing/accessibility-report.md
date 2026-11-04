@@ -6,7 +6,7 @@ critical violations and every `color-contrast` finding fail the test. Map canvas
 
 | Spec | Covers | Result |
 |---|---|---|
-| `tests/e2e/specs/accessibility.spec.ts` | 22 signed-in pages as an administrator, dark and light theme | passed |
+| `tests/e2e/specs/accessibility.spec.ts` | 26 signed-in pages as an administrator (includes security, access requests, users, audit), dark and light theme | passed |
 | `tests/e2e/specs/accessibility-public.spec.ts` (new) | landing, sign-in, sign-up, forgot-password, reset-password, verify-email and the open walkthrough dialog; dark and light; 1440 px and 390 px wide | passed after one fix (below) |
 | `tests/e2e/specs/role-homes.spec.ts` (new) | the dashboard home of a citizen, collector, facility operator and manager; dark and light | passed |
 | `tests/e2e/specs/keyboard.spec.ts` | skip link, visible focus on every Tab stop, no focus trap, account menu, page search dialog, phone navigation drawer, keyboard navigation and sign-out | passed |

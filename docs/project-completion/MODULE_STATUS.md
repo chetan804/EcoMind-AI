@@ -33,10 +33,10 @@ administrator, dark and light). Every route is also in the permission matrix `do
 | 19 | Rewards | `/rewards` | `rewards` | `test_rewards`, `test_rewards_catalogue` | `rewards-catalogue` | `rewards-redemption.spec` | yes | |
 | 20 | Help Assistant | `/assistant` | `support` | `test_support_assistant_quality` | `support` | `support.spec` | yes | retrieval over seeded articles, no generative model |
 | 21 | Support | `/support` | `support` | `test_support` | `support` | `support.spec` | yes | |
-| 22 | Security / MFA | `/settings/security` | `auth` | `test_mfa`, `test_mfa_enforcement` | `security` | `mfa.spec` (some steps skip without Mailpit or enforced MFA) | partly (not under `ROUTES`) | |
-| 23 | User Management | `/settings/users`, `/settings/access` | `administration`, `access_requests` | `test_administration`, `test_access_requests` | `security`, `ui-pages` (sign-up role request) | `role-homes` (direct API refusals) | `/settings/users` not in the axe route list | |
-| 24 | Audit Logs | `/settings/audit` | `audit` | `test_administration` | `security` | `role-homes` (403/200 per role) | not in the axe route list | generated data adds no audit rows by design |
+| 22 | Security / MFA | `/settings/security` | `auth` | `test_mfa`, `test_mfa_enforcement` | `security` | `mfa.spec` (some steps skip without Mailpit or enforced MFA) | yes | |
+| 23 | User Management | `/settings/users`, `/settings/access` | `administration`, `access_requests` | `test_administration`, `test_access_requests` | `security`, `ui-pages` (sign-up role request) | `role-homes` (direct API refusals) | yes (users, access) | |
+| 24 | Audit Logs | `/settings/audit` | `audit` | `test_administration` | `security` | `role-homes` (403/200 per role) | yes | generated data adds no audit rows by design |
 | 25 | System Status | `/settings/system-status` | `health` | `test_health` | `SystemStatusPage` | `system-status.spec` | yes | |
 
 Reading the gaps: a missing "UI tests" or "E2E" cell means no automated test of that kind exists today, not that the module is broken.
-Pages 22-24 were not in the axe route list of `accessibility.spec.ts`; they are a candidate for the next scan.
+Pages 22-24 (security, access, users, audit) were added to the axe route list of `accessibility.spec.ts` and passed (26 routes x 2 themes).
