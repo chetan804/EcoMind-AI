@@ -7,7 +7,7 @@ import decimal
 import uuid
 from typing import Any
 
-from sqlalchemy import Date, case, func, or_, select
+from sqlalchemy import Date, Select, case, func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import SQLColumnExpression
 
@@ -167,6 +167,52 @@ def events(db: Session, task_id: uuid.UUID) -> list[CollectionEvent]:
     )
 
 
+def _worked_by(user_id: uuid.UUID) -> Select[tuple[uuid.UUID]]:
+    """Tasks a person is, or finished as, the assignee: their current work and their own history.
+
+    A finished task (completed or failed) ends its assignment, so the history is the person's
+    *latest* assignment on a terminal task. A task that was handed to someone else is not theirs.
+    """
+    latest = (
+        select(
+            CollectionAssignment.collection_task_id.label("task_id"),
+            func.max(CollectionAssignment.assigned_at).label("last_at"),
+        )
+        .group_by(CollectionAssignment.collection_task_id)
+        .subquery()
+    )
+    history = (
+        select(CollectionAssignment.collection_task_id)
+        .join(
+            latest,
+            (latest.c.task_id == CollectionAssignment.collection_task_id)
+            & (latest.c.last_at == CollectionAssignment.assigned_at),
+        )
+        .join(CollectionTask, CollectionTask.id == CollectionAssignment.collection_task_id)
+        .where(
+            CollectionAssignment.assignee_id == user_id,
+            CollectionTask.status.in_(
+                (CollectionTaskStatus.COMPLETED, CollectionTaskStatus.FAILED)
+            ),
+        )
+    )
+    current = select(CollectionAssignment.collection_task_id).where(
+        CollectionAssignment.assignee_id == user_id,
+        CollectionAssignment.unassigned_at.is_(None),
+    )
+    both = history.union(current).subquery()
+    return select(both.c.collection_task_id)
+
+
+def is_worked_by(db: Session, task_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    found = db.scalar(
+        select(func.count())
+        .select_from(CollectionTask)
+        .where(CollectionTask.id == task_id, CollectionTask.id.in_(_worked_by(user_id)))
+    )
+    return bool(found)
+
+
 def list_page(
     db: Session,
     params: PageParams,
@@ -180,8 +226,11 @@ def list_page(
     q: str | None,
     sort_by: str,
     order: SortOrder,
+    visible_to: uuid.UUID | None = None,
 ) -> tuple[list[CollectionTask], int]:
     stmt = select(CollectionTask)
+    if visible_to is not None:
+        stmt = stmt.where(CollectionTask.id.in_(_worked_by(visible_to)))
     if status is not None:
         stmt = stmt.where(CollectionTask.status == status)
     if priority is not None:

@@ -207,6 +207,7 @@ def list_tasks(
     q: str | None,
     sort_by: str,
     order: SortOrder,
+    visible_to: uuid.UUID | None = None,
 ) -> Page[TaskOut]:
     rows, total = repository.list_page(
         db,
@@ -220,6 +221,7 @@ def list_tasks(
         q=q,
         sort_by=sort_by,
         order=order,
+        visible_to=visible_to,
     )
     return Page.build(_task_out(db, rows), total, params)
 
@@ -243,11 +245,14 @@ def get_task(db: Session, task_id: uuid.UUID, *, viewer: Principal | None = None
     task = repository.get(db, task_id)
     if task is None:
         raise NotFoundError("Collection task not found")
-    if viewer is not None and sees_own_tasks_only(viewer):
-        current = repository.active_assignment(db, task.id)
-        if current is None or current.assignee_id != viewer.user_id:
-            # 404, not 403: do not confirm that someone else's task exists.
-            raise NotFoundError("Collection task not found")
+    restricted = viewer is not None and sees_own_tasks_only(viewer)
+    if (
+        viewer is not None
+        and restricted
+        and not repository.is_worked_by(db, task.id, viewer.user_id)
+    ):
+        # 404, not 403: do not confirm that someone else's task exists.
+        raise NotFoundError("Collection task not found")
     return _detail(db, task)
 
 

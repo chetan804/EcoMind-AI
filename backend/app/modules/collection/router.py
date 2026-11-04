@@ -63,15 +63,14 @@ def list_tasks(
         params,
         status=status_filter,
         priority=priority,
-        assignee_id=principal.user_id
-        if (mine or service.sees_own_tasks_only(principal))
-        else assignee_id,
+        assignee_id=principal.user_id if mine else assignee_id,
         waste_report_id=waste_report_id,
         due_before=due_before,
         due_after=due_after,
         q=q,
         sort_by=sort_by,
         order=order,
+        visible_to=principal.user_id if service.sees_own_tasks_only(principal) else None,
     )
 
 
