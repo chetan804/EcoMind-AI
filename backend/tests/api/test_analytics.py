@@ -17,6 +17,8 @@ from app.modules.anomaly_detection.constants import AlertStatus, AnomalySeverity
 from app.modules.anomaly_detection.models import AnomalyAlert
 from app.modules.collection.constants import CollectionTaskStatus
 from app.modules.collection.models import CollectionTask
+from app.modules.facilities.constants import ZoneType
+from app.modules.facilities.models import Zone
 from app.modules.forecasting.series import PLATFORM_REF, REFERENCE_PREFIX
 from tests.fixtures.api import ClientFactory, bearer, create_user, login
 from tests.fixtures.series import monday_of, seed_platform_weeks
@@ -137,6 +139,14 @@ def test_open_and_overdue_tasks_are_counted_from_stored_state(env: Env) -> None:
     assert c["open_tasks"] == 4
     assert c["overdue_tasks"] == 2
     assert counts(c["by_status"])["completed"] == 1
+
+
+def test_the_overview_says_when_generated_demonstration_data_is_present(env: Env) -> None:
+    assert env.get("/overview").json()["contains_demonstration_data"] is False
+    with Session(env.engine) as db:
+        db.add(Zone(code="SYN-ZN-01", name="[Demo] Uppal", zone_type=ZoneType.RESIDENTIAL))
+        db.commit()
+    assert env.get("/overview").json()["contains_demonstration_data"] is True
 
 
 def test_open_alerts_exclude_public_reference_series(env: Env) -> None:

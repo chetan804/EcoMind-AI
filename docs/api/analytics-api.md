@@ -7,6 +7,12 @@ Base path `/api/v1/analytics`. Read-only; requires `analytics:read` (managers an
 | `GET /analytics/overview` | `window_days` 1–365 (default 30) | Operational snapshot |
 | `GET /analytics/weekly-trend` | `weeks` 1–104 (default 12) | Weekly collected weight, completed tasks and submitted reports |
 
+## Demonstration data flag
+
+`contains_demonstration_data` (boolean) is `true` when records written by the synthetic dataset generator
+(zone code prefix `SYN-ZN-`, see `docs/database/synthetic-data.md`) are present. The dashboard then shows a
+"Demonstration data, not live" notice. It is `false` on a database without generated data.
+
 ## Overview sections
 
 * **reports**: total, submitted within the window, count per status.

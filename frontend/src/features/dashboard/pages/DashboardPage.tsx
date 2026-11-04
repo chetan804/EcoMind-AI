@@ -4,6 +4,7 @@ import { CheckCircle2, ClipboardList, Layers, Recycle, ShieldAlert, TriangleAler
 import { DonutChart } from '@/components/data-display/DonutChart';
 import { MetricTile } from '@/components/data-display/MetricTile';
 import { QueryBoundary } from '@/components/feedback/QueryBoundary';
+import { DemoDataNotice } from '@/components/feedback/DemoDataNotice';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Topbar } from '@/components/layout/Topbar';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -48,6 +49,12 @@ function OperationsOverview() {
             const total = statuses.reduce((sum, c) => sum + c.count, 0);
             return (
               <>
+                {o.contains_demonstration_data ? (
+                  <p className="dash__demo" role="note">
+                    <DemoDataNotice>Demonstration data, not live</DemoDataNotice>
+                    <span>This system holds generated sample records. The figures below describe that sample, not real operations.</span>
+                  </p>
+                ) : null}
                 <ul className="dash__kpis" aria-label="Key metrics">
                   <li>
                     <Card className="dash__kpi">

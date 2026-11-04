@@ -1,6 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import roles from '../fixtures/role-permissions.json';
 import { errorReply, page, routeApi } from '../helpers/api-mock';
+import { overviewFixture } from '../helpers/fixtures';
 import { renderAt, userWith } from '../helpers/render';
 import { resetSession } from '../helpers/session';
 
@@ -119,6 +120,20 @@ describe('role homes', () => {
     expect(await screen.findByRole('link', { name: 'Analytics' })).toBeInTheDocument();
     expect(roles.manager).not.toContain('users:manage');
     expect([...api.unmatched].some((p) => p.includes('/access-requests'))).toBe(false);
+  });
+
+  it('the overview says so when the data is generated demonstration data, and only then', async () => {
+    const withFlag = (flag: boolean) => ({ ...overviewFixture, contains_demonstration_data: flag });
+    routeApi(fetchSpy, { 'GET /api/v1/analytics/overview': withFlag(true) }, roleUser('manager'));
+    renderAt('/dashboard');
+    expect(await screen.findByText('Demonstration data, not live')).toBeInTheDocument();
+    expect(screen.getByText(/describe that sample, not real operations/)).toBeInTheDocument();
+    cleanup();
+    resetSession();
+    routeApi(fetchSpy, { 'GET /api/v1/analytics/overview': withFlag(false) }, roleUser('manager'));
+    renderAt('/dashboard');
+    expect(await screen.findByText('Collected, 30 days')).toBeInTheDocument();
+    expect(screen.queryByText('Demonstration data, not live')).not.toBeInTheDocument();
   });
 
   it('administrator: operations overview, and may read the role-request queue', async () => {
