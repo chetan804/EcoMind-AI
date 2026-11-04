@@ -25,5 +25,5 @@ Not an API or permission fault. The database was empty until `seed_demo.py` ran,
 
 - **The 25 authenticated modules were audited and the shared shell, tables, filters, empty and error states already follow one design system, but they were not redesigned one by one.** This change fixes the defects found in the sweep (D8 to D12) and adds the Needs attention list. A page-by-page visual redesign against the 22 references remains open; no fidelity claim is made.
 - No classifier is approved, so the classification screen shows its honest "no model active" state. Not changed.
-- Role-based dashboards for collector, operator and manager reuse the existing permission-driven navigation and pages; only the citizen home and the operations overview have dedicated views.
+- Role-based home pages: the citizen home, a collector home (My open tasks, read with `mine=true`) and the operations overview (manager, administrator, anyone with `analytics:read`) exist. A facility operator without `analytics:read` still gets the plain link home.
 - Real e-mail, a base-map tile file, load testing and a human accessibility review are still owner actions (see `LIMITATIONS.md`).

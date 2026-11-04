@@ -9,6 +9,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { CountList } from '@/components/ui/StatList';
 import { useRequests } from '@/features/access-requests';
+import { useTasks } from '@/features/collection';
 import { CollectedWeightChart, useOverview, useWeeklyTrend, type Overview } from '@/features/analytics';
 import { FleetMap } from '@/features/tracking';
 import { useAuth } from '@/services/session';
@@ -165,6 +166,7 @@ function MemberHome({ name }: { name: string | null }) {
   return (
     <>
       <PageHeader title={`${greeting()}${name ? `, ${name}` : ''}`} subtitle="What would you like to do?" />
+      {can('collection:read') && <MyTasks />}
       <ul className="member-links">
         {links.map((l) => (
           <li key={l.to}>
@@ -221,5 +223,34 @@ function AttentionList({ overview: o }: { overview: Overview }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** A collector's own open tasks, read from the collection API (only tasks assigned to the signed-in person). */
+function MyTasks() {
+  const query = useTasks({ page: 1, q: '', status: '', priority: '', mine: true });
+  const open = (query.data?.items ?? []).filter((t) => t.status === 'assigned' || t.status === 'in_progress').slice(0, 5);
+  return (
+    <Card aria-labelledby="my-tasks-title">
+      <CardHeader title="My open tasks" titleId="my-tasks-title" actions={<Link to="/collection">All collections</Link>} />
+      <QueryBoundary query={query} label="your tasks">
+        {() =>
+          open.length === 0 ? (
+            <p className="muted">No tasks are assigned to you right now.</p>
+          ) : (
+            <ul className="attention" aria-label="Your open tasks">
+              {open.map((t) => (
+                <li key={t.id}>
+                  <Link to="/collection" className="attention__row">
+                    <span className="alert-row__title">{t.title}</span>
+                    <span className="attention__go">{humanize(t.status)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </QueryBoundary>
+    </Card>
   );
 }
