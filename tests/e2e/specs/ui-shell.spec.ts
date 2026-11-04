@@ -6,11 +6,32 @@ import { expect, publicTest, test } from './fixtures';
 publicTest('landing page leads to sign-up and sign-in', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: /Waste Management/ })).toBeVisible();
-  await page.getByRole('link', { name: 'Get started' }).click();
+  await page.getByRole('banner').getByRole('link', { name: 'Get started' }).click();
   await expect(page).toHaveURL(/\/sign-up$/);
   await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
   await page.getByRole('link', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/sign-in$/);
+});
+
+publicTest('Watch demo opens a walkthrough dialog that Escape closes', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Watch demo' }).first().click();
+  const dialog = page.getByRole('dialog', { name: 'Product walkthrough' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('tab', { name: 'Routes' }).click();
+  await expect(dialog.getByRole('heading', { name: '4. Plan a route' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+});
+
+publicTest('sign-in and sign-up have a close control and offer no unavailable social buttons', async ({ page }) => {
+  await page.goto('/sign-in');
+  await expect(page.getByRole('button', { name: /google|microsoft/i })).toHaveCount(0);
+  await page.getByRole('link', { name: /close and return to the home page/i }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto('/sign-up');
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/\/$/);
 });
 
 publicTest('sign-in validates locally and sends nothing until the form is valid', async ({ page }) => {

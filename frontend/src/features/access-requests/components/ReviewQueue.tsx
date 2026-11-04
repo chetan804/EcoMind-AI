@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Alert } from '@/components/feedback/Alert';
-import { EmptyState } from '@/components/feedback/EmptyState';
 import { QueryBoundary } from '@/components/feedback/QueryBoundary';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -37,7 +36,7 @@ export function ReviewQueue() {
       <QueryBoundary query={query} label="role requests">
         {(data) =>
           data.items.length === 0 ? (
-            <EmptyState title="No role requests here" description="When someone asks for a collector, facility operator or manager role it appears in this list." />
+            <p className="muted">No role requests match this filter. A request for a collector, facility operator or manager role appears here when someone sends one.</p>
           ) : (
             <>
               <Table caption="Role requests">

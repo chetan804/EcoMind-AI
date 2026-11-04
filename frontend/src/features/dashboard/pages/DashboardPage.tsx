@@ -1,5 +1,6 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { ClipboardList, Layers, Recycle, TriangleAlert } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Layers, Recycle, ShieldAlert, TriangleAlert, UserCheck, Clock } from 'lucide-react';
 import { DonutChart } from '@/components/data-display/DonutChart';
 import { MetricTile } from '@/components/data-display/MetricTile';
 import { QueryBoundary } from '@/components/feedback/QueryBoundary';
@@ -7,7 +8,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Topbar } from '@/components/layout/Topbar';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { CountList } from '@/components/ui/StatList';
-import { CollectedWeightChart, useOverview, useWeeklyTrend } from '@/features/analytics';
+import { useRequests } from '@/features/access-requests';
+import { CollectedWeightChart, useOverview, useWeeklyTrend, type Overview } from '@/features/analytics';
 import { FleetMap } from '@/features/tracking';
 import { useAuth } from '@/services/session';
 import { formatKg, formatPercent, humanize } from '@/utils/format';
@@ -110,6 +112,11 @@ function OperationsOverview() {
                   </Card>
                 </div>
 
+                <Card aria-labelledby="attention-title">
+                  <CardHeader title="Needs attention" titleId="attention-title" />
+                  <AttentionList overview={o} />
+                </Card>
+
                 {can('fleet:read') && (
                   <Card aria-labelledby="map-title">
                     <CardHeader title="Fleet and facilities map" titleId="map-title" />
@@ -171,5 +178,48 @@ function MemberHome({ name }: { name: string | null }) {
         ))}
       </ul>
     </>
+  );
+}
+
+type AttentionItem = { key: string; icon: ReactNode; tone: 'danger' | 'warning'; text: string; to: string };
+
+/** Things a manager can act on now, derived only from the counts above; nothing is invented. */
+function AttentionList({ overview: o }: { overview: Overview }) {
+  const { can } = useAuth();
+  const pending = useRequests({ status_filter: 'pending', page: 1 }, can('users:manage'));
+  const items: AttentionItem[] = [];
+  if (o.collection.overdue_tasks > 0)
+    items.push({ key: 'overdue', icon: <Clock size={18} />, tone: 'danger', text: `${o.collection.overdue_tasks} overdue collection task${o.collection.overdue_tasks === 1 ? '' : 's'}`, to: '/collection' });
+  if (o.anomalies.critical_open > 0)
+    items.push({ key: 'critical', icon: <TriangleAlert size={18} />, tone: 'danger', text: `${o.anomalies.critical_open} critical suspected anomal${o.anomalies.critical_open === 1 ? 'y' : 'ies'} to review`, to: '/anomalies' });
+  else if (o.anomalies.open_alerts > 0)
+    items.push({ key: 'anomalies', icon: <TriangleAlert size={18} />, tone: 'warning', text: `${o.anomalies.open_alerts} suspected anomal${o.anomalies.open_alerts === 1 ? 'y' : 'ies'} awaiting review`, to: '/anomalies' });
+  if (o.incidents.unassigned_open > 0)
+    items.push({ key: 'incidents', icon: <ShieldAlert size={18} />, tone: 'warning', text: `${o.incidents.unassigned_open} open incident${o.incidents.unassigned_open === 1 ? '' : 's'} with nobody assigned`, to: '/incidents' });
+  if (o.recovery.pending_records > 0)
+    items.push({ key: 'recovery', icon: <Layers size={18} />, tone: 'warning', text: `${o.recovery.pending_records} recovery record${o.recovery.pending_records === 1 ? '' : 's'} waiting for verification`, to: '/recovery' });
+  const waiting = pending.data?.total ?? 0;
+  if (waiting > 0)
+    items.push({ key: 'roles', icon: <UserCheck size={18} />, tone: 'warning', text: `${waiting} role request${waiting === 1 ? '' : 's'} waiting for a decision`, to: '/settings/users' });
+  if (items.length === 0)
+    return (
+      <p className="attention__clear">
+        <CheckCircle2 size={18} aria-hidden="true" /> Nothing needs attention right now.
+      </p>
+    );
+  return (
+    <ul className="attention" aria-label="Items that need attention">
+      {items.map((item) => (
+        <li key={item.key}>
+          <Link to={item.to} className="attention__row">
+            <span className={`alert-row__icon alert-row__icon--${item.tone}`} aria-hidden="true">
+              {item.icon}
+            </span>
+            <span className="alert-row__title">{item.text}</span>
+            <span className="attention__go">Open</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

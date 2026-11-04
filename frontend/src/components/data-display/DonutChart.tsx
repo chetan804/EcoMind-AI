@@ -53,7 +53,7 @@ export function DonutChart({
           <li key={segment.label}>
             <span className="legend__swatch" style={{ background: segment.color, width: 10, height: 10, borderRadius: '50%' }} aria-hidden="true" />
             {segment.label}
-            <span className="value">{segment.value}%</span>
+            <span className="value">{Number.isInteger(segment.value) ? segment.value : segment.value.toFixed(1)}%</span>
           </li>
         ))}
       </ul>

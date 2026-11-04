@@ -28,25 +28,45 @@ function renderAt(path: string) {
 }
 
 describe('landing page', () => {
-  it('renders the hero without the application shell and links to sign-up', async () => {
+  it('renders the hero without the application shell and links to sign-up and sign-in', async () => {
     renderAt('/');
     expect(await screen.findByRole('heading', { level: 1, name: /Waste Management/ })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/sign-up');
-    expect(screen.getByRole('link', { name: 'Explore platform' })).toHaveAttribute('href', '/dashboard');
+    for (const link of screen.getAllByRole('link', { name: 'Get started' })) expect(link).toHaveAttribute('href', '/sign-up');
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
   });
 
-  it('does not claim unavailable things: the demo is unavailable and facts are not performance claims', async () => {
+  it('has every content section the page promises, and a footer', async () => {
     renderAt('/');
-    const demo = await screen.findByRole('button', { name: 'Watch demo' });
-    expect(demo).toHaveAttribute('aria-disabled', 'true');
-    expect(demo).toHaveAccessibleDescription('No product demo is available yet.');
+    await screen.findByRole('heading', { level: 1 });
+    for (const id of ['problem', 'product', 'capabilities', 'classification', 'forecasting', 'anomaly', 'routing', 'command-center', 'citizens', 'marketplace', 'traceability', 'impact', 'workflow', 'roles', 'security']) {
+      expect(document.getElementById(id), `section ${id}`).not.toBeNull();
+    }
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+  });
+
+  it('does not make claims it cannot back: no accuracy figures, and the classifier is stated as not approved', async () => {
+    renderAt('/');
+    await screen.findByRole('heading', { level: 1 });
     expect(screen.getByText('Classifiers approved for use')).toBeInTheDocument();
-    expect(screen.queryByText(/accuracy/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+(\.\d+)?\s?% (accuracy|accurate)/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/not approved|No classifier is approved/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/under active development/i)).toBeInTheDocument();
   });
 
-  it('exposes in-page section links that have a target', async () => {
+  it('Watch demo opens an accessible walkthrough that can be stepped through and closed', async () => {
+    renderAt('/');
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Watch demo' }))[0] as HTMLElement);
+    const dialog = await screen.findByRole('dialog', { name: 'Product walkthrough' });
+    expect(within(dialog).getAllByRole('tab')).toHaveLength(5);
+    await userEvent.click(within(dialog).getByRole('tab', { name: 'Forecast' }));
+    expect(within(dialog).getByRole('heading', { name: '2. Forecast collection volume' })).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/Demonstration data/).length).toBeGreaterThan(0);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close dialog' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Product walkthrough' })).not.toBeInTheDocument());
+  });
+
+  it('exposes in-page section links that have a target, and a mobile menu that opens and closes with Escape', async () => {
     renderAt('/');
     await screen.findByRole('heading', { level: 1 });
     const nav = screen.getByRole('navigation', { name: 'Sections' });
@@ -54,6 +74,14 @@ describe('landing page', () => {
       const id = link.getAttribute('href')?.slice(1) ?? '';
       expect(document.getElementById(id), `target for ${link.textContent}`).not.toBeNull();
     }
+    const toggle = screen.getByRole('button', { name: 'Open menu' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('navigation', { name: 'Menu sections' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveFocus();
   });
 });
 

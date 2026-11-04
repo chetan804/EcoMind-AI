@@ -448,6 +448,30 @@ for series in ("reference:austin", "reference:ballarat"):
         json={"series": series, "horizon_weeks": 8, "save": True},
     )
     call("manager", "POST", "/anomalies/scan", json={"series": series, "lookback_weeks": 104})
+# Surplus-material listings so the marketplace is not empty (demo records, invented quantities).
+for title, desc, cat, qty, unit, cond in (
+    ("Clean glass cullet, demo batch", "Sorted clear glass from the demo processing centre.", "glass", "400", "kg", "good"),
+    ("Baled cardboard, demo batch", "Flattened corrugated cardboard, dry and baled.", "paper", "650", "kg", "good"),
+    ("Office chairs, demo lot", "Twelve used office chairs, some wear.", "furniture", "12", "units", "fair"),
+):
+    listing = call(
+        "operator",
+        "POST",
+        "/marketplace/listings",
+        json={
+            "title": title,
+            "description": desc + " Demonstration record.",
+            "category": cat,
+            "quantity": qty,
+            "unit": unit,
+            "condition": cond,
+            "facility_id": mrf["id"],
+            "pickup_city": "Hyderabad",
+        },
+    )
+    if listing:
+        call("operator", "POST", f"/marketplace/listings/{listing['id']}/publish")
+
 # Run the real forecasting and anomaly detectors over every series that has enough history. A
 # series that is too short answers 422 `insufficient_history`, which is expected and skipped.
 for ser in call("manager", "GET", "/forecasting/series"):

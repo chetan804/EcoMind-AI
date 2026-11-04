@@ -10,8 +10,8 @@ import {
 
 export const useMyRequests = () => useQuery({ queryKey: ['access-requests', 'mine'], queryFn: ({ signal }) => fetchMyRequests(signal) });
 
-export const useRequests = (params: { status_filter: string; page: number }) =>
-  useQuery({ queryKey: ['access-requests', 'all', params], queryFn: ({ signal }) => fetchRequests(params, signal) });
+export const useRequests = (params: { status_filter: string; page: number }, enabled = true) =>
+  useQuery({ queryKey: ['access-requests', 'all', params], queryFn: ({ signal }) => fetchRequests(params, signal), enabled });
 
 export function useRequestChanges() {
   const client = useQueryClient();

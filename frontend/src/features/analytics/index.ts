@@ -2,3 +2,4 @@
 export { AnalyticsPage } from './pages/AnalyticsPage';
 export { useOverview, useWeeklyTrend } from './hooks/useAnalytics';
 export { CollectedWeightChart } from './components/CollectedWeightChart';
+export type { Overview } from './api/schemas';
