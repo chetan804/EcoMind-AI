@@ -37,32 +37,32 @@ Design choices:
   task or facility.
 * **Failure paths are included:** rejected and contaminated reports, failed and cancelled tasks, skipped
   stops, pending and rejected recovery verification, cancelled redemptions, declined marketplace
-  requests, dismissed incidents. Weekly volume has weekday/weekend seasonality, four spaced surge weeks and
-  a dip week, so the real anomaly detector has something to find.
+  requests, dismissed incidents. Weekly volume has weekday/weekend seasonality, two spaced surge weeks and
+  one dip week, so the real anomaly detector has something to find.
 
 ## Row counts
 
 Measured with `python -m synthetic plan` / `load` (anchor 2026-11-04, seed 42):
 
-| Table | test | development |
-|---|---|---|
-| waste_reports | | 2,184 |
-| collection_tasks | | 2,056 |
-| collection_assignments | | 1,958 |
-| collection_task_status_history | | 8,048 |
-| collection_events | | 5,287 |
-| route_plans / route_stops | | 1,405 / 3,260 |
-| vehicle_location_events | | 15,400 |
-| recovery_records | | 947 |
-| material_passports / custody_events | | 518 / 3,239 |
-| reward_ledger_entries / reward_redemptions | | 2,195 / 666 |
-| notifications | | 3,362 |
-| community_incidents | | 226 |
-| marketplace_listings / requests | | 27 / 29 |
-| Dimensions: zones / facilities / vehicles / users / reward items | | 31 / 21 / 18 / 452 / 8 |
-| **All synthetic rows** | ~9.7 k | **51,789** |
+| Table | development |
+|---|---|
+| waste_reports | 2,184 |
+| collection_tasks | 2,056 |
+| collection_assignments | 1,958 |
+| collection_task_status_history | 8,048 |
+| collection_events | 5,287 |
+| route_plans / route_stops | 1,405 / 3,260 |
+| vehicle_location_events | 15,400 |
+| recovery_records | 947 |
+| material_passports / custody_events | 518 / 3,239 |
+| reward_ledger_entries / reward_redemptions | 2,195 / 666 |
+| notifications | 3,362 |
+| community_incidents | 226 |
+| marketplace_listings / requests | 27 / 29 |
+| Dimensions: zones / facilities / vehicles / users / reward items | 31 / 21 / 18 / 452 / 8 |
+| **All synthetic rows (incl. dimensions)** | **51,789** |
 
-Planned totals for the other profiles: integration ~285 k, large ~1.81 M. The `stress` profile (5 M+)
+Planned totals for the other profiles: test ~9.7 k (loaded in the automated tests), integration ~285 k, large ~1.81 M. The `stress` profile (5 M+)
 is defined but **has not been planned or loaded**. Load speed with `COPY` was ~13-15 k rows/s on the
 2-CPU sandbox (development in about 3 s). The large profile has **not been loaded**; only its plan
 was computed (about 16 s).
@@ -101,9 +101,10 @@ was computed (about 16 s).
    12 weekly points, report/task status counts, collected kg, recovery, rewards, passports, fleet).
 3. Pagination: lists are served server-side by the application as before; nothing here changes that.
 4. Real analytics on the loaded history: 4-week forecasts saved for the platform series and the two
-   reference series; the anomaly detector flagged one platform week (collected 32,801 kg vs 16,766 expected).
-   The three other planned surges were not flagged by the detector's thresholds; no thresholds were
-   changed to make it do so.
+   reference series. The generator plants two surge weeks (week of 2026-06-15: 33,161 kg; week of
+   2026-09-14: 32,801 kg) and one dip week (2026-07-20: 7,845 kg). The real anomaly detector flagged
+   **one** platform week, 2026-09-14 (observed 32,801 kg, expected 16,766 kg). It did **not** flag the June
+   surge or the July dip; no detector threshold was changed to make it do so.
 
 ## Cleanup
 
