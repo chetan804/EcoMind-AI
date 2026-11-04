@@ -40,6 +40,8 @@
 .account-type:has(input:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .account-type__name { font-weight: var(--font-weight-semibold); }
 .account-type__hint { font-size: var(--text-sm); color: var(--color-text-muted); }
+/* On the tinted selected card the muted text drops below 4.5:1 (axe), so it steps up one level. */
+.account-type:has(input:checked) .account-type__hint { color: var(--color-text-secondary); }
 .account-types__help { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .auth-roles-detail { margin-top: var(--space-3); }
 .auth-roles-detail > summary { cursor: pointer; color: var(--color-accent-text); font-size: var(--text-sm); font-weight: var(--font-weight-medium); min-height: var(--touch-target); display: flex; align-items: center; }
