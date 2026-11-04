@@ -37,18 +37,19 @@ def sign_in(environment, **_kwargs):  # type: ignore[no-untyped-def]
         environment.process_exit_code = 2
         environment.runner.quit()
         return
-    import httpx
+    import requests
 
     password = os.environ["LOAD_PASSWORD"]
     for role, email in ACCOUNTS.items():
-        r = httpx.post(f"{environment.host}{API}/auth/login", json={"email": email, "password": password}, timeout=30)
+        r = requests.post(f"{environment.host}{API}/auth/login", json={"email": email, "password": password}, timeout=30)
         r.raise_for_status()
         TOKENS[role] = r.json()["access_token"]
 
 
 class Member(HttpUser):
     abstract = True
-    wait_time = between(1, 3)  # think time, as a person reading a screen
+    # think time, as a person reading a screen; LOAD_THINK_MIN/MAX=0 gives a saturation run
+    wait_time = between(float(os.environ.get("LOAD_THINK_MIN", 1)), float(os.environ.get("LOAD_THINK_MAX", 3)))
     role = "citizen"
 
     def get(self, path: str, name: str | None = None) -> None:
@@ -131,7 +132,7 @@ class Manager(Member):
         self.get("/waste-reports?page=1&page_size=20", "/waste-reports (page)")
 
     @task(3)
-    def tasks(self) -> None:
+    def task_queue(self) -> None:
         self.get("/collection/tasks?page=1&page_size=20", "/collection/tasks (page)")
 
     @task(2)

@@ -69,7 +69,7 @@ def get_current_principal(
     if user is None or not user.is_active:
         raise UnauthenticatedError("Invalid or expired access token", headers=_CHALLENGE)
     roles = frozenset(users.role_names(db, user.id))
-    return Principal(
+    principal = Principal(
         user_id=user.id,
         email=user.email,
         full_name=user.full_name,
@@ -78,6 +78,12 @@ def get_current_principal(
         email_verified=user.email_verified_at is not None,
         mfa_enrollment_required=mfa.enrollment_required(db, settings, user.id, roles),
     )
+    # Authentication only read. End that transaction so the connection goes back to the pool before
+    # the request waits for its next thread: holding it across the hand-off is what let waiting
+    # requests starve each other of connections (see ``get_db``). Nothing is expired
+    # (``expire_on_commit=False``), so the loaded user stays usable.
+    db.commit()
+    return principal
 
 
 CurrentPrincipal = Annotated[Principal, Depends(get_current_principal)]
