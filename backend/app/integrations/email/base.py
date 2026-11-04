@@ -17,7 +17,16 @@ class EmailMessage:
 
 
 class EmailDeliveryError(Exception):
-    """The message could not be handed to the mail server (the cause is chained)."""
+    """The message could not be handed to the mail server (the cause is chained).
+
+    ``transient`` is True for failures that may succeed on a later attempt (network error, timeout,
+    server disconnect, 4xx reply). Rejected recipients, authentication failures, 5xx replies and
+    configuration problems are permanent and are never retried.
+    """
+
+    def __init__(self, message: str, *, transient: bool = False) -> None:
+        super().__init__(message)
+        self.transient = transient
 
 
 class EmailSender(Protocol):
