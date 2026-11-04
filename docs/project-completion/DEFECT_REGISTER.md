@@ -17,6 +17,36 @@ Found by auditing the running application (real browser, six viewports) and the 
 | D11 | Demo seed not idempotent, marketplace empty, no forecasts or scans | Script always created records | `scripts/demo/seed_demo.py`, `docs/operations/supervised-demo.md` | Exits without change when facilities or tasks exist (`DEMO_FORCE=1` overrides); adds history, three marketplace listings, forecasts and scans; records are labelled demonstration data | Re-run on a seeded database printed "already seeded" and changed nothing; fresh rebuild printed "seeded" |
 | D12 | Access page role guide icons on their own line; Users role-request card showed a large empty state when empty | CSS | `access.css`, `ReviewQueue.tsx` | Flex alignment; one-line empty note | screenshots |
 
+## Round 2 (2026-11-04, branch `arena/38bece53-ecomind-ai`): role scoping, role homes, synthetic data
+
+Columns: ID, module, current behaviour versus expected, root cause, files, implementation, test, result. A row is marked **Resolved** only when a test that exercises the backend (or, for UI-only rows, the rendered component) was run; "Resolved (local)" means verified on this branch and not yet confirmed by CI on the remote.
+
+### Critical / High
+
+| ID | Module | Current vs expected | Root cause | Files | Implementation | Test | Result |
+|---|---|---|---|---|---|---|---|
+| D13 | Collections (authorisation) | A collector could list and open **every** collector's collection tasks (titles, addresses, notes). Expected: own work only. | `list`/`get` checked `collection:read` only; there was no ownership filter. | `backend/app/modules/collection/{router,service,repository}.py` | `collection:execute` without `collection:manage` or `circular_economy:manage` sees current assignments plus own finished work; other tasks answer 404 (not 403, so existence is not leaked). Managers, administrators and facility operators keep the full queue. | `backend/tests/api/test_collection.py::test_collector_sees_only_their_own_tasks` and `::test_a_collector_keeps_their_finished_work_but_not_someone_elses` (16 collection tests passed) | Resolved (local) |
+| D14 | Dashboard (role homes) | A facility operator, who holds `collection:read`, was offered the collector card "My open tasks" and got an empty or confusing list. Expected: links to what the operator can actually use. | Card was gated on `collection:read`, which is not specific to collectors. | `frontend/src/features/dashboard/pages/DashboardPage.tsx` | Card gated on `collection:execute`; operator gets a links-only home gated by their permissions; every link is checked against the permission fixture. | `frontend/tests/integration/role-homes.test.tsx` (9 tests: citizen, collector, operator, manager, administrator; no analytics calls for non-analytics roles); `scripts/quality/export_role_permissions.py --check` keeps the fixture equal to the backend catalogue and runs in CI | Resolved (local) |
+| D15 | Synthetic data loader | `cleanup` and the dimension upsert reported success but were **rolled back** when the connection closed. Found because a re-load printed "already present" after a cleanup. Expected: committed. | psycopg `conn.transaction()` inside a connection that already had an open transaction (from the safety reads) becomes a savepoint; nothing committed the outer transaction. My tests read through the same connection and so could not see it. | `scripts/demo/synthetic/loader.py`, `backend/tests/integration/test_synthetic_dataset.py` | Explicit `conn.commit()` after both; tests now count rows through a **second** connection (load, resume and cleanup). | `test_synthetic_dataset.py` (7 passed); manual cleanup, reload, verify on `ecomind_demo` | Resolved (local) |
+
+### Medium
+
+| ID | Module | Current vs expected | Root cause | Files | Implementation | Test | Result |
+|---|---|---|---|---|---|---|---|
+| D16 | Command Center (evidence) | Dashboard figures could not be shown to match the database. Expected: reconciliation. | No reconciliation tool; data was a handful of rows. | `scripts/demo/synthetic/compare_api.py`, `docs/database/synthetic-data.md` | 73 figures from `/analytics/overview` and `/analytics/weekly-trend` recomputed with independent SQL using the API's own `window_start`. | Run against `ecomind_demo` (development profile): 73 of 73 agree | Resolved (local), only for the loaded profile |
+| D17 | Analytics demo | The anomaly detector flagged nothing on the platform series because the first generated surge weeks were adjacent. | Generator choice, not a detector fault. | `scripts/demo/synthetic/days.py` | Two spaced surges and one dip week. The detector now flags one (2026-09-14). The June surge and the July dip are **not** flagged; thresholds were not touched. | Query of `anomaly_alerts` after `run_analytics` | Resolved as data realism; detector sensitivity is unchanged and is stated in the dataset doc |
+
+### External dependency / Owner action (unchanged by this round)
+
+| ID | Module | Item | Status |
+|---|---|---|---|
+| X1 | Classification | No approved classifier (2.0.0 fails the out-of-scope gate; 1.0.0 withdrawn) | Owner and licence decision |
+| X2 | E-mail | Console backend only; no verified delivery | Needs real SMTP credentials |
+| X3 | Maps | No Hyderabad PMTiles file; labelled fallback only | Needs the tile file |
+| X4 | Accessibility | Automated axe and human review not yet run | Pending |
+| X5 | Load testing | Not yet executed | Pending |
+| X6 | Collections / Routes | The collector also holds `waste_reports:read_all`; route-plan stops may expose other collectors' task titles. Not yet examined or changed. | Open (privacy review) |
+
 ## Why data looked missing
 
 Not an API or permission fault. The database was empty until `seed_demo.py` ran, the seed put everything at one instant (flat trends), the platform series had fewer than the 26 weeks forecasting needs, the default filters on two pages hid existing rows, and the marketplace had no listings. The first three are fixed in the seed, the last two in the pages. A missing PMTiles base map still returns a 404 for `/map-assets/tiles/region.pmtiles` and the map says "Base map not installed" (owner action: `docs/maps/OFFLINE_MAPS.md`).
