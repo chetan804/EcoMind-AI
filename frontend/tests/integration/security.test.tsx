@@ -290,6 +290,6 @@ describe('users administration', () => {
     routeApi(fetchSpy, { 'GET /api/v1/auth/mfa': status() }, user);
     renderAt('/settings/security');
     const nav = await screen.findByRole('navigation', { name: 'Settings sections' });
-    expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Security', 'System status']);
+    expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Security', 'Access and roles', 'System status']);
   });
 });

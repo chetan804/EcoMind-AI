@@ -4,6 +4,7 @@ import './settings.css';
 
 const LINKS = [
   { to: '/settings/security', label: 'Security', permission: null },
+  { to: '/settings/access', label: 'Access and roles', permission: null },
   { to: '/settings/system-status', label: 'System status', permission: null },
   { to: '/settings/users', label: 'Users', permission: 'users:read' },
   { to: '/settings/audit', label: 'Audit log', permission: 'audit:read' },

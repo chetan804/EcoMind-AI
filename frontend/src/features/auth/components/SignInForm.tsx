@@ -12,7 +12,6 @@ import { signIn } from '@/services/session/session-store';
 import { signInSchema, type SignInValues } from '../schemas/auth-forms';
 import { describeAuthError, isEmailNotVerified } from '../utils/auth-errors';
 import { MfaStep } from './MfaStep';
-import { SocialButtons } from './SocialButtons';
 
 /**
  * Signs in through the backend. On success the session store flips to authenticated and
@@ -89,7 +88,6 @@ export function SignInForm() {
           Sign in
         </Button>
       </form>
-      <SocialButtons />
       <p className="auth-switch">
         Don&rsquo;t have an account? <Link to="/sign-up">Sign up</Link>
       </p>

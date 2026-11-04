@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RouterProvider } from 'react-router/dom';
 import { createTestRouter } from '@/app/router';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 import { authResponse, dataCalls, resetSession, signInViaRefresh, testUser } from '../helpers/session';
 
 const fetchSpy = vi.fn();
@@ -19,7 +20,9 @@ function renderAt(path: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <RouterProvider router={createTestRouter([path])} />
+      <ToastProvider>
+        <RouterProvider router={createTestRouter([path])} />
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }
@@ -246,7 +249,9 @@ describe('sign-in', () => {
     const router = createTestRouter(['/classify']);
     render(
       <QueryClientProvider client={client}>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </QueryClientProvider>,
     );
     await submitSignIn();
@@ -261,12 +266,17 @@ describe('sign-in', () => {
     expect(screen.queryByRole('heading', { name: 'Welcome back' })).not.toBeInTheDocument();
   });
 
-  it('social sign-in is visibly unavailable, and password reset is a real link', async () => {
+  it('offers no social sign-in buttons that cannot work, and password reset is a real link', async () => {
     renderAt('/sign-in');
+    expect(await screen.findByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
     for (const name of ['Google', 'Microsoft']) {
-      expect(await screen.findByRole('button', { name })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
-    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
+  });
+
+  it('has a keyboard-reachable close control that returns to the landing page', async () => {
+    renderAt('/sign-in');
+    expect(await screen.findByRole('link', { name: /close/i })).toHaveAttribute('href', '/');
   });
 
   it('switches to sign-up and validates the confirmation', async () => {
@@ -310,6 +320,31 @@ describe('sign-up', () => {
       password: 'a long passphrase 1',
       full_name: 'Asha Verma',
     });
+  });
+
+  it('asks for a reason before an operational account type and then sends a role request', async () => {
+    fetchSpy.mockImplementation((url: string) => {
+      if (url.endsWith('/auth/register')) return Promise.resolve(Response.json(authResponse(), { status: 201 }));
+      if (url.endsWith('/access-requests')) return Promise.resolve(Response.json({ id: 'r1' }, { status: 201 }));
+      return Promise.resolve(new Response('{}', { status: 404 }));
+    });
+    renderAt('/sign-up');
+    await userEvent.click(await screen.findByRole('radio', { name: /Collector/ }));
+    await userEvent.type(screen.getByLabelText(/Full name/), 'Asha Verma');
+    await userEvent.type(screen.getByLabelText(/Email address/), 'asha@example.org');
+    await userEvent.type(screen.getByLabelText(/^Password/), 'a long passphrase 1');
+    await userEvent.type(screen.getByLabelText(/Confirm password/), 'a long passphrase 1');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account and request role' }));
+    expect(await screen.findByText(/Tell the administrator why/)).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    await userEvent.type(screen.getByLabelText(/Why do you need this role/), 'I drive the Tuesday north loop for the ward.');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account and request role' }));
+    await vi.waitFor(() => expect(fetchSpy.mock.calls.some(([u]) => String(u).endsWith('/access-requests'))).toBe(true));
+    const register = fetchSpy.mock.calls.find(([u]) => String(u).endsWith('/auth/register')) as [string, RequestInit];
+    // The role is never part of registration; it travels only as a request an administrator decides.
+    expect(JSON.parse(String(register[1].body))).toEqual({ email: 'asha@example.org', password: 'a long passphrase 1', full_name: 'Asha Verma' });
+    const request = fetchSpy.mock.calls.find(([u]) => String(u).endsWith('/access-requests')) as [string, RequestInit];
+    expect(JSON.parse(String(request[1].body))).toMatchObject({ requested_role: 'collector' });
   });
 
   it('shows a duplicate email on the email field', async () => {

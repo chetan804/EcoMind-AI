@@ -38,7 +38,8 @@ export function ForecastingPage() {
   const run = useRunForecast();
   const [result, setResult] = useState<Forecast | null>(null);
 
-  const first = seriesList.data?.[0]?.ref ?? '';
+  // Open on a series that has data, so the first view is a chart and not an empty state.
+  const first = (seriesList.data?.find((s) => s.points > 0) ?? seriesList.data?.[0])?.ref ?? '';
   const series = chosen || first;
   const history = useHistory(series);
   const latest = useLatestForecast(series);

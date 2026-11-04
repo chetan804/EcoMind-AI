@@ -6,7 +6,9 @@ example.org addresses, the report photo is a generated placeholder, and the faci
 and Hyderabad addresses are invented. Reference series are imported separately with
 `python -m app.cli import-reference-series`.
 
-Use on a fresh database only (it is not idempotent):
+Safe to re-run: it exits without changing anything when the database already holds facilities or
+collection tasks (set DEMO_FORCE=1 to override on a throw-away database). Use it on a fresh local
+database:
   DEMO_PASSWORD=... DEMO_DSN="host=/tmp/pgdev user=postgres dbname=ecomind_demo" python scripts/demo/seed_demo.py
 Needs httpx2 (or httpx), psycopg and pillow; `make setup` installs all three. Refuses to run against a non-local API.
 """
@@ -19,6 +21,7 @@ if not API.startswith(("http://localhost", "http://127.0.0.1")):
     sys.exit("Refusing to seed a non-local API")
 import datetime as dt
 import io
+import math
 
 try:  # the backend's dev environment ships `httpx2`; an older environment may have `httpx`
     import httpx2 as httpx
@@ -46,9 +49,15 @@ people = {
     "citizen": ("citizen@example.org", "Asha Citizen", None),
     "verifier": ("verifier@example.org", "Vera Verifier", "facility_operator"),
 }
+c = psycopg.connect(os.environ["DEMO_DSN"], autocommit=True)
+_existing = c.execute(
+    "select (select count(*) from facilities) + (select count(*) from collection_tasks)"
+).fetchone()
+if _existing and _existing[0] and os.environ.get("DEMO_FORCE") != "1":
+    print("already seeded (facilities or tasks exist); nothing changed")
+    sys.exit(0)
 for k, (e, n, _) in people.items():
     reg(e, n)
-c = psycopg.connect(os.environ["DEMO_DSN"], autocommit=True)
 for k, (e, n, role) in people.items():
     if role:
         c.execute(
@@ -246,6 +255,67 @@ call(
     json={"collected_weight_kg": "118.500", "destination_facility_id": mrf["id"]},
 )
 call("collector", "POST", f"/collection/tasks/{tasks[1]['id']}/start")
+
+# Ten weeks of completed pick-ups so the trend charts show a history. The API stamps "now" on a
+# completion, so the timestamps of these demo rows are moved back with SQL afterwards.
+_PLACES = (
+    "Tolichowki market lane",
+    "Banjara Hills block C",
+    "Gachibowli IT park gate",
+    "Madhapur food street",
+    "Kondapur apartment cluster",
+    "Begumpet bus stand",
+    "Ameerpet metro exit",
+    "Kukatpally housing board",
+    "Miyapur depot road",
+    "Secunderabad market",
+    "Uppal ring road",
+    "LB Nagar junction",
+)
+
+
+def _history():
+    """Two pick-ups a week for 28 weeks: a gentle trend and wobble, plus one invented spike week."""
+    out = []
+    for n, weeks_ago in enumerate(range(28, 0, -1)):
+        for k in range(2):
+            kg = 150 + n * 1.8 + 22 * math.sin(n / 3.0 + k) + (n * 7 + k * 13) % 11
+            if weeks_ago == 6 and k == 0:
+                kg += 260  # an unusually heavy week, so the anomaly view has something to examine
+            out.append((weeks_ago, round(kg, 1), _PLACES[(n * 2 + k) % len(_PLACES)]))
+    return tuple(out)
+
+
+HISTORY = _history()
+today = dt.datetime.now(dt.timezone.utc)
+for i, (weeks_ago, kg, place) in enumerate(HISTORY):
+    stamp = today - dt.timedelta(weeks=weeks_ago, days=i % 3, hours=2)
+    h = call(
+        "manager",
+        "POST",
+        "/collection/tasks",
+        json={
+            "title": f"Demo history pick-up, {place}",
+            "address_text": place,
+            "latitude": str(round(17.35 + (i % 7) * 0.02, 4)),
+            "longitude": str(round(78.38 + (i % 5) * 0.03, 4)),
+            "priority": "normal",
+            "destination_facility_id": mrf["id"],
+        },
+    )
+    call("manager", "POST", f"/collection/tasks/{h['id']}/assign", json={"assignee_id": col["id"], "vehicle_id": v1["id"]})
+    call("collector", "POST", f"/collection/tasks/{h['id']}/start")
+    call(
+        "collector",
+        "POST",
+        f"/collection/tasks/{h['id']}/complete",
+        json={"collected_weight_kg": f"{kg:.3f}", "destination_facility_id": mrf["id"]},
+    )
+    c.execute("update collection_events set occurred_at=%s where collection_task_id=%s", (stamp, h["id"]))
+    c.execute(
+        "update collection_tasks set created_at=%s, updated_at=%s where id=%s",
+        (stamp - dt.timedelta(hours=6), stamp, h["id"]),
+    )
 cats = call("manager", "GET", "/sorting-guide/categories")["items"]
 cm = {x["code"]: x for x in cats}
 print("categories", list(cm))
@@ -378,4 +448,13 @@ for series in ("reference:austin", "reference:ballarat"):
         json={"series": series, "horizon_weeks": 8, "save": True},
     )
     call("manager", "POST", "/anomalies/scan", json={"series": series, "lookback_weeks": 104})
+# Run the real forecasting and anomaly detectors over every series that has enough history. A
+# series that is too short answers 422 `insufficient_history`, which is expected and skipped.
+for ser in call("manager", "GET", "/forecasting/series"):
+    for path, body in (
+        ("/forecasting/forecasts", {"series": ser["ref"], "horizon_weeks": 4, "save": True}),
+        ("/anomalies/scan", {"series": ser["ref"], "lookback_weeks": 104}),
+    ):
+        r = httpx.post(f"{B}{path}", headers=H("manager"), json=body)
+        print(path, ser["ref"], r.status_code)
 print("seeded")

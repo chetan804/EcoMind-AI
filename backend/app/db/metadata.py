@@ -9,6 +9,7 @@ listed before it.
 from __future__ import annotations
 
 from app.db.base import Base
+from app.modules.access_requests import models as access_requests_models
 from app.modules.anomaly_detection import models as anomaly_detection_models
 from app.modules.audit import models as audit_models
 from app.modules.auth import models as auth_models
@@ -43,6 +44,7 @@ _REGISTERED_MODEL_MODULES = (
     circular_economy_models,
     material_passports_models,
     community_incidents_models,
+    access_requests_models,
     marketplace_models,
     rewards_models,
     notifications_models,

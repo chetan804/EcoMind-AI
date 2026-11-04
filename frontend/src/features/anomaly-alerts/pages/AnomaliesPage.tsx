@@ -35,7 +35,7 @@ function actionsFor(status: Alert['status']): AlertAction[] {
 
 export function AnomaliesPage() {
   const { can } = useAuth();
-  const [filters, setFilters] = useState({ page: 1, status: 'open', severity: '', data_kind: 'platform' });
+  const [filters, setFilters] = useState({ page: 1, status: 'open', severity: '', data_kind: '' });
   const query = useAlerts(filters);
   const [pending, setPending] = useState<{ alert: Alert; action: AlertAction } | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -77,6 +77,7 @@ export function AnomaliesPage() {
         <Field label="Data">
           {(c) => (
             <Select {...c} value={filters.data_kind} onChange={(e) => set({ data_kind: e.target.value })}>
+              <option value="">All data</option>
               <option value="platform">Platform data</option>
               <option value="public_reference">Public reference data</option>
             </Select>

@@ -104,6 +104,7 @@ export const routes: RouteObject[] = [
           { path: 'classify/review', lazy: guardedPage(['classification:review'], () => import('@/features/waste-classification'), 'ReviewQueuePage') },
           { path: 'classify', lazy: lazyPage(() => import('@/features/waste-classification'), 'ClassificationPage') },
           { path: 'settings/security', lazy: lazyPage(() => import('@/features/settings'), 'SecurityPage') },
+          { path: 'settings/access', lazy: lazyPage(() => import('@/features/access-requests'), 'AccessPage') },
           { path: 'settings/users', lazy: guardedPage(['users:read'], () => import('@/features/users'), 'UsersPage') },
           { path: 'settings/audit', lazy: guardedPage(['audit:read'], () => import('@/features/audit'), 'AuditPage') },
           { path: 'settings/system-status', lazy: lazyPage(() => import('@/features/settings'), 'SystemStatusPage') },
