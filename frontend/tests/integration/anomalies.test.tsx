@@ -17,7 +17,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('anomalies page', () => {
-  it('describes alerts as suspected, defaults to open platform data and offers lifecycle actions to managers', async () => {
+  it('describes alerts as suspected, defaults to open alerts across all data and offers lifecycle actions to managers', async () => {
     const api = routeApi(fetchSpy, { 'GET /api/v1/anomalies': page([alertFixture()]) }, manager);
     renderAt('/anomalies');
     expect(await screen.findByText(/not confirmed incidents/)).toBeInTheDocument();
@@ -29,7 +29,8 @@ describe('anomalies page', () => {
     }
     const q = api.calls[0]?.query;
     expect(q?.get('status')).toBe('open');
-    expect(q?.get('data_kind')).toBe('platform');
+    // Both platform and reference-series alerts are listed until the reader narrows the filter.
+    expect(q?.get('data_kind')).toBeNull();
   });
 
   it('gives read-only users no actions and no scan button', async () => {

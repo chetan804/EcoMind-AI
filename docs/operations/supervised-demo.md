@@ -20,7 +20,7 @@ Do **not** expose this stack to the Internet. It uses the local development Comp
    `docker compose exec -e DEMO_PASSWORD='<your password>' backend python -m app.cli seed-demo-accounts`
    gives `admin@`, `manager@`, `collector@`, `operator@`, `citizen@`, `verifier@example.org`, already verified.
 5. Optional demonstration records (facilities, vehicles, reports, all invented and labelled): `scripts/demo/seed_demo.py`
-   against a throw-away database only; it is not idempotent. Reference series: `python -m app.cli import-reference-series --key austin`.
+   against a throw-away database. It is safe to re-run: it exits without changing anything when facilities or collection tasks already exist (`DEMO_FORCE=1` overrides on a throw-away database). It also back-dates 28 weeks of completed pick-ups (so trends and the platform forecast work), publishes three marketplace listings and runs the forecaster and the anomaly detector. Import the reference series first. Reference series: `python -m app.cli import-reference-series --key austin`.
 6. Optional real base map: follow `docs/maps/OFFLINE_MAPS.md` (the owner downloads the MapTiler file, then
    `python scripts/maps/mbtiles_to_pmtiles.py <file>.mbtiles`). Without it the map shows markers on a plain background and says so.
 7. Open http://localhost:5173 and run `python3 tests/smoke/smoke.py --api http://localhost:8000 --web http://localhost:5173`.

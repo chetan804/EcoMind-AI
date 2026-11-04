@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.modules.access_requests.router import router as access_requests_router
 from app.modules.administration.router import router as administration_router
 from app.modules.analytics.router import router as analytics_router
 from app.modules.anomaly_detection.router import router as anomaly_router
@@ -60,6 +61,9 @@ api_v1_router.include_router(
     incidents_router, prefix="/community-incidents", tags=["community-incidents"]
 )
 api_v1_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
+api_v1_router.include_router(
+    access_requests_router, prefix="/access-requests", tags=["access-requests"]
+)
 api_v1_router.include_router(administration_router, prefix="/admin", tags=["administration"])
 api_v1_router.include_router(marketplace_router, prefix="/marketplace", tags=["marketplace"])
 api_v1_router.include_router(tracking_router, prefix="/tracking", tags=["tracking"])

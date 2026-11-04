@@ -2,10 +2,13 @@
 
 Public marketing page at `/`. It is outside the application shell and needs no authentication.
 
-**Status:** UI implemented (Stage 1 UI milestone). Static content only: it calls no API.
+**Status:** implemented. Static content plus real screenshots; it calls no API.
 
 - **Backend module:** none. This is the one frontend feature that is not a backend domain; it is registered in `scripts/quality/check_structure.py` as a known feature.
-- **Contents:** `PublicHeader` (in-page anchor navigation, "Get started" to `/sign-up`), hero with an original layered SVG scene (`HeroArt`, geometry in `hero-scene.ts`; scrims measured for text contrast), a statistics strip, four capability cards, Impact and About sections, an "under active development" note and a footer disclosure.
-- **Honesty:** the strip shows verifiable repository facts (5 user roles, 6 waste classes the classifier knows, 3 ML capabilities built, **0 classifiers approved for use**), not the marketing figures in the design reference (85 %, 40 %, 2.5x, 1000+), which have no evidence. "Watch demo" is an unavailable control with a reason. Replacing the strip with real product metrics, or changing the copy, is a product decision for the owner.
+- **Structure:** `content.ts` holds every claim (facts, problems, capabilities, roles, security points, demo steps and screenshot captions). `pages/LandingPage.tsx` composes the 18 sections: hero, problem, solution, capabilities, classification, forecasting, anomaly, routing, command center, citizen participation, marketplace, traceability, impact and rewards, workflow, roles, security and transparency, final call to action, footer. `components/FeatureSection` and `ProductShot` render a text block beside a framed screenshot.
+- **Header:** `PublicHeader` is `position: sticky` at `--z-sticky`, outside the hero (which has `overflow: hidden`). Section links, Sign in and Get started; below 1024 px the links move into a menu (`aria-expanded`, Escape closes and returns focus).
+- **Watch demo:** `DemoDialog` is a native modal `<dialog>` (the page behind is inert, Escape and the X close it, focus returns to the button). It is a five-step walkthrough (classify, forecast, anomalies, routes, recovery) with a screenshot, what is built and what the limit is. It is deliberately not a video player. The earlier button was built with `unavailableReason`, which makes `Button` ignore clicks by design; that is why it did nothing.
+- **Screenshots:** `frontend/public/landing/*.webp` (1200 px wide, 28 to 45 KB each) are captures of the running application on the labelled demonstration data from `scripts/demo/seed_demo.py`. Retake them after a visible UI change (see `docs/operations/supervised-demo.md`).
+- **Honesty:** the facts are counts of things that exist (5 roles, 10 sorting-guide categories, 3 ML capabilities, 0 approved classifiers). No customers, partners, certifications, accuracy, cost, carbon or landfill figures appear, because none can be substantiated. Keep every statement true when features change; `frontend/tests/integration/ui-pages.test.tsx` checks the sections, the demo dialog and the absence of accuracy claims.
 - **Public interface:** `import { LandingPage } from '@/features/landing'`.
 - **Design:** see `docs/ui/design-system.md` (deviations 2 and 3).

@@ -8,7 +8,7 @@ The sign-in (`/sign-in`), sign-up (`/sign-up`), forgot-password, reset-password 
 - **Redirects:** `RedirectIfSignedIn` keeps signed-in users off these pages and returns them to the page they originally requested. `utils/auth-errors.ts#safeRedirectTarget` accepts only same-site paths (open-redirect protection) and never an auth page.
 - **Schemas:** `schemas/auth-forms.ts`. The 12-character minimum mirrors the server policy for early feedback only; the server decides.
 - **Unavailable controls:** Google and Microsoft sign-in stay disabled with a reason (`unavailableReason`); no identity provider is connected. Password reset and e-mail confirmation are real (`/forgot-password`, `/reset-password`, `/verify-email`; see `docs/operations/account-recovery.md`). An account that needs two-step verification gets a second step after the password.
-- **Layout:** `AuthCard` (illustration panel + form panel), `AuthIllustration` (original SVG), `SocialButtons`.
+- **Layout:** `AuthCard` (illustration panel + form panel, visible close link and Escape back to the landing page), `AuthIllustration` (original SVG), `AccountTypePicker` (sign-up: citizen is immediate, other types send a role request after the account exists; see `docs/api/access-requests-api.md`). There are no social sign-in buttons: none can work.
 - **Public interface:** `import { SignInPage, SignUpPage } from '@/features/auth'`.
 
 ## Where the session lives

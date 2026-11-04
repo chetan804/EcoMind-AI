@@ -16,7 +16,7 @@ describe('signInSchema', () => {
 });
 
 describe('signUpSchema', () => {
-  const valid = { name: 'Asha', email: 'asha@example.org', password: 'a-long-passphrase', confirmPassword: 'a-long-passphrase' };
+  const valid = { name: 'Asha', email: 'asha@example.org', password: 'a-long-passphrase', confirmPassword: 'a-long-passphrase', accountType: 'citizen' as const };
 
   it('accepts valid input', () => {
     expect(signUpSchema.safeParse(valid).success).toBe(true);
@@ -27,5 +27,12 @@ describe('signUpSchema', () => {
     const mismatch = signUpSchema.safeParse({ ...valid, confirmPassword: 'different-passphrase' });
     expect(mismatch.error?.issues[0]?.path).toEqual(['confirmPassword']);
     expect(mismatch.error?.issues[0]?.message).toBe('The passwords do not match.');
+  });
+
+  it('never accepts administrator as an account type, and asks for a reason for operational roles', () => {
+    expect(signUpSchema.safeParse({ ...valid, accountType: 'administrator' }).success).toBe(false);
+    const noReason = signUpSchema.safeParse({ ...valid, accountType: 'manager', reason: 'short' });
+    expect(noReason.error?.issues[0]?.path).toEqual(['reason']);
+    expect(signUpSchema.safeParse({ ...valid, accountType: 'manager', reason: 'I coordinate the ward collection teams.' }).success).toBe(true);
   });
 });

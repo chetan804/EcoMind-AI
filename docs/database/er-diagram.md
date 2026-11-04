@@ -183,6 +183,11 @@ erDiagram
         uuid role_id PK, FK
         uuid permission_id PK, FK
     }
+    role_requests {
+        uuid user_id FK
+        uuid decided_by_id FK
+        uuid id PK
+    }
     roles {
         uuid id PK
     }
@@ -309,6 +314,8 @@ erDiagram
     users ||--o{ reward_redemptions : "user_id"
     permissions ||--o{ role_permissions : "permission_id"
     roles ||--o{ role_permissions : "role_id"
+    users |o--o{ role_requests : "decided_by_id"
+    users ||--o{ role_requests : "user_id"
     users ||--o{ route_plans : "created_by_id"
     users |o--o{ route_plans : "driver_id"
     facilities |o--o{ route_plans : "end_facility_id"
@@ -334,6 +341,7 @@ erDiagram
 
 ## Tables by owning module
 
+- **access_requests**: `role_requests`
 - **anomaly_detection**: `anomaly_alerts`
 - **audit**: `audit_logs`
 - **auth**: `account_tokens`, `auth_sessions`, `mfa_factors`, `mfa_recovery_codes`

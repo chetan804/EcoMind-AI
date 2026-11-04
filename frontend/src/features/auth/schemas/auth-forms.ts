@@ -14,6 +14,14 @@ export const signInSchema = z.object({
   password: z.string().min(1, 'Enter your password.'),
 });
 
+export const ACCOUNT_TYPES = ['citizen', 'collector', 'facility_operator', 'manager'] as const;
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
+export const MIN_ROLE_REASON = 20;
+
+/**
+ * Everyone registers as a citizen. Choosing an operational account type only sends a role request
+ * after the account exists: it needs a reason, and an administrator decides.
+ */
 export const signUpSchema = z
   .object({
     name: z.string().trim().min(1, 'Enter your name.'),
@@ -22,10 +30,17 @@ export const signUpSchema = z
       .string()
       .min(MIN_PASSWORD_LENGTH, `Use at least ${MIN_PASSWORD_LENGTH} characters.`),
     confirmPassword: z.string().min(1, 'Repeat your password.'),
+    accountType: z.enum(ACCOUNT_TYPES),
+    organisation: z.string().trim().max(200).optional(),
+    reason: z.string().trim().max(2000).optional(),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ['confirmPassword'],
     message: 'The passwords do not match.',
+  })
+  .refine((values) => values.accountType === 'citizen' || (values.reason ?? '').length >= MIN_ROLE_REASON, {
+    path: ['reason'],
+    message: `Tell the administrator why you need this role (at least ${MIN_ROLE_REASON} characters).`,
   });
 
 export const forgotPasswordSchema = z.object({ email });

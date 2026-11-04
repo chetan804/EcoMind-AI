@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RouterProvider } from 'react-router/dom';
 import { createTestRouter } from '@/app/router';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 import { authResponse, dataCalls, resetSession, signInViaRefresh, testUser } from '../helpers/session';
 
 const fetchSpy = vi.fn();
@@ -19,31 +20,53 @@ function renderAt(path: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <RouterProvider router={createTestRouter([path])} />
+      <ToastProvider>
+        <RouterProvider router={createTestRouter([path])} />
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }
 
 describe('landing page', () => {
-  it('renders the hero without the application shell and links to sign-up', async () => {
+  it('renders the hero without the application shell and links to sign-up and sign-in', async () => {
     renderAt('/');
     expect(await screen.findByRole('heading', { level: 1, name: /Waste Management/ })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/sign-up');
-    expect(screen.getByRole('link', { name: 'Explore platform' })).toHaveAttribute('href', '/dashboard');
+    for (const link of screen.getAllByRole('link', { name: 'Get started' })) expect(link).toHaveAttribute('href', '/sign-up');
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
   });
 
-  it('does not claim unavailable things: the demo is unavailable and facts are not performance claims', async () => {
+  it('has every content section the page promises, and a footer', async () => {
     renderAt('/');
-    const demo = await screen.findByRole('button', { name: 'Watch demo' });
-    expect(demo).toHaveAttribute('aria-disabled', 'true');
-    expect(demo).toHaveAccessibleDescription('No product demo is available yet.');
+    await screen.findByRole('heading', { level: 1 });
+    for (const id of ['problem', 'product', 'capabilities', 'classification', 'forecasting', 'anomaly', 'routing', 'command-center', 'citizens', 'marketplace', 'traceability', 'impact', 'workflow', 'roles', 'security']) {
+      expect(document.getElementById(id), `section ${id}`).not.toBeNull();
+    }
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
+  });
+
+  it('does not make claims it cannot back: no accuracy figures, and the classifier is stated as not approved', async () => {
+    renderAt('/');
+    await screen.findByRole('heading', { level: 1 });
     expect(screen.getByText('Classifiers approved for use')).toBeInTheDocument();
-    expect(screen.queryByText(/accuracy/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+(\.\d+)?\s?% (accuracy|accurate)/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/not approved|No classifier is approved/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/under active development/i)).toBeInTheDocument();
   });
 
-  it('exposes in-page section links that have a target', async () => {
+  it('Watch demo opens an accessible walkthrough that can be stepped through and closed', async () => {
+    renderAt('/');
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Watch demo' }))[0] as HTMLElement);
+    const dialog = await screen.findByRole('dialog', { name: 'Product walkthrough' });
+    expect(within(dialog).getAllByRole('tab')).toHaveLength(5);
+    await userEvent.click(within(dialog).getByRole('tab', { name: 'Forecast' }));
+    expect(within(dialog).getByRole('heading', { name: '2. Forecast collection volume' })).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/Demonstration data/).length).toBeGreaterThan(0);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close dialog' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Product walkthrough' })).not.toBeInTheDocument());
+  });
+
+  it('exposes in-page section links that have a target, and a mobile menu that opens and closes with Escape', async () => {
     renderAt('/');
     await screen.findByRole('heading', { level: 1 });
     const nav = screen.getByRole('navigation', { name: 'Sections' });
@@ -51,6 +74,14 @@ describe('landing page', () => {
       const id = link.getAttribute('href')?.slice(1) ?? '';
       expect(document.getElementById(id), `target for ${link.textContent}`).not.toBeNull();
     }
+    const toggle = screen.getByRole('button', { name: 'Open menu' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('navigation', { name: 'Menu sections' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveFocus();
   });
 });
 
@@ -246,7 +277,9 @@ describe('sign-in', () => {
     const router = createTestRouter(['/classify']);
     render(
       <QueryClientProvider client={client}>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </QueryClientProvider>,
     );
     await submitSignIn();
@@ -261,12 +294,17 @@ describe('sign-in', () => {
     expect(screen.queryByRole('heading', { name: 'Welcome back' })).not.toBeInTheDocument();
   });
 
-  it('social sign-in is visibly unavailable, and password reset is a real link', async () => {
+  it('offers no social sign-in buttons that cannot work, and password reset is a real link', async () => {
     renderAt('/sign-in');
+    expect(await screen.findByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
     for (const name of ['Google', 'Microsoft']) {
-      expect(await screen.findByRole('button', { name })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
-    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
+  });
+
+  it('has a keyboard-reachable close control that returns to the landing page', async () => {
+    renderAt('/sign-in');
+    expect(await screen.findByRole('link', { name: /close/i })).toHaveAttribute('href', '/');
   });
 
   it('switches to sign-up and validates the confirmation', async () => {
@@ -310,6 +348,31 @@ describe('sign-up', () => {
       password: 'a long passphrase 1',
       full_name: 'Asha Verma',
     });
+  });
+
+  it('asks for a reason before an operational account type and then sends a role request', async () => {
+    fetchSpy.mockImplementation((url: string) => {
+      if (url.endsWith('/auth/register')) return Promise.resolve(Response.json(authResponse(), { status: 201 }));
+      if (url.endsWith('/access-requests')) return Promise.resolve(Response.json({ id: 'r1' }, { status: 201 }));
+      return Promise.resolve(new Response('{}', { status: 404 }));
+    });
+    renderAt('/sign-up');
+    await userEvent.click(await screen.findByRole('radio', { name: /Collector/ }));
+    await userEvent.type(screen.getByLabelText(/Full name/), 'Asha Verma');
+    await userEvent.type(screen.getByLabelText(/Email address/), 'asha@example.org');
+    await userEvent.type(screen.getByLabelText(/^Password/), 'a long passphrase 1');
+    await userEvent.type(screen.getByLabelText(/Confirm password/), 'a long passphrase 1');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account and request role' }));
+    expect(await screen.findByText(/Tell the administrator why/)).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    await userEvent.type(screen.getByLabelText(/Why do you need this role/), 'I drive the Tuesday north loop for the ward.');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account and request role' }));
+    await vi.waitFor(() => expect(fetchSpy.mock.calls.some(([u]) => String(u).endsWith('/access-requests'))).toBe(true));
+    const register = fetchSpy.mock.calls.find(([u]) => String(u).endsWith('/auth/register')) as [string, RequestInit];
+    // The role is never part of registration; it travels only as a request an administrator decides.
+    expect(JSON.parse(String(register[1].body))).toEqual({ email: 'asha@example.org', password: 'a long passphrase 1', full_name: 'Asha Verma' });
+    const request = fetchSpy.mock.calls.find(([u]) => String(u).endsWith('/access-requests')) as [string, RequestInit];
+    expect(JSON.parse(String(request[1].body))).toMatchObject({ requested_role: 'collector' });
   });
 
   it('shows a duplicate email on the email field', async () => {

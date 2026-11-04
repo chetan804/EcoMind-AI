@@ -379,3 +379,22 @@ describe('navigation', () => {
     expect(labels.some((l) => l.startsWith('Routes'))).toBe(false);
   });
 });
+
+describe('collector home', () => {
+  const collector = userWith(['collection:read', 'collection:execute', 'notifications:read_own'], { roles: ['collector'] });
+
+  it('lists only the collector\'s own open tasks, asked for with mine=true, and shows no analytics', async () => {
+    const api = routeApi(fetchSpy, {
+      'GET /api/v1/collection/tasks': page([
+        task({ id: id(6), title: 'Pick-up at Market Road', status: 'assigned' }),
+        task({ id: id(7), title: 'Finished pick-up', status: 'completed' }),
+      ]),
+    }, collector);
+    renderAt('/dashboard');
+    expect(await screen.findByRole('heading', { name: 'My open tasks' })).toBeInTheDocument();
+    expect(await screen.findByText('Pick-up at Market Road')).toBeInTheDocument();
+    expect(screen.queryByText('Finished pick-up')).not.toBeInTheDocument();
+    expect(api.calls.find((c) => c.key === 'GET /api/v1/collection/tasks')?.query.get('mine')).toBe('true');
+    expect(api.calls.some((c) => c.key.includes('/analytics'))).toBe(false);
+  });
+});

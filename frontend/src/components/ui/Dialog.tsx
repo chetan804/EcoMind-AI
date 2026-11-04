@@ -17,6 +17,7 @@ export function Dialog({
   description,
   footer,
   wide,
+  className,
   children,
 }: {
   open: boolean;
@@ -25,6 +26,7 @@ export function Dialog({
   description?: string;
   footer?: ReactNode;
   wide?: boolean;
+  className?: string;
   children?: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -46,7 +48,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className={cx('dialog', wide && 'dialog--wide')}
+      className={cx('dialog', wide && 'dialog--wide', className)}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onClose={onClose}

@@ -4,6 +4,31 @@
 
 Conventions are described in [schema-overview.md](schema-overview.md). `PK` primary key, `FK` foreign key, `UQ` unique, `NN` not null. Quantity units are part of the column name (`*_kg`, `*_km`, `*_min`, `*_bytes`, `*_px`) or an explicit `unit` column.
 
+## Module `access_requests`
+
+### `role_requests`
+
+| Column | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `user_id` | uuid | NN |  | FK -> `users.id` |
+| `decided_by_id` | uuid | null |  | FK -> `users.id` |
+| `requested_role` | varchar(25) | NN |  |  |
+| `status` | varchar(17) | NN | `pending` |  |
+| `reason` | text | NN |  |  |
+| `organisation` | varchar(200) | null |  |  |
+| `decided_at` | timestamptz | null |  |  |
+| `decision_note` | text | null |  |  |
+| `id` | uuid | NN | `gen_random_uuid()` | PK |
+| `created_at` | timestamptz | NN | `now()` |  |
+| `updated_at` | timestamptz | NN | `now()` |  |
+
+Constraints:
+
+- `ck_role_requests_decider_consistent`: `(status IN ('approved', 'rejected')) = (decided_by_id IS NOT NULL)`
+- `ck_role_requests_decision_timestamp_consistent`: `(status IN ('approved', 'rejected')) = (decided_at IS NOT NULL)`
+- `uq_role_requests_one_pending_per_user`: unique index WHERE `status = 'pending'`
+- Allowed values: `requested_role` in (collector, facility_operator, manager); `status` in (pending, approved, rejected, withdrawn)
+
 ## Module `anomaly_detection`
 
 ### `anomaly_alerts`

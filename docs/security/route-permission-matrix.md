@@ -2,10 +2,15 @@
 
 > **Generated** by `scripts/security/generate_route_matrix.py` from the mounted application and the RBAC catalog (`backend/app/modules/users/rbac.py`). Do not edit by hand; CI fails if this file is stale. `backend/tests/security/test_route_inventory.py` fails if a route becomes public or signed-in-only without being listed there.
 
-168 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
+173 operations. Authorization is decided on the server from the database on every request; hiding a button in the UI is only a convenience. Object-level rules (for example a citizen reading only their own reports) are enforced inside the services and covered by the module tests.
 
 | Method | Path | Access | Roles that hold it |
 |---|---|---|---|
+| GET | `/api/v1/access-requests` | `users:manage` | administrator |
+| POST | `/api/v1/access-requests` | signed in | any signed-in user |
+| GET | `/api/v1/access-requests/mine` | signed in | any signed-in user |
+| POST | `/api/v1/access-requests/{request_id}/decision` | `users:manage` | administrator |
+| POST | `/api/v1/access-requests/{request_id}/withdraw` | signed in | any signed-in user |
 | GET | `/api/v1/admin/audit-logs` | `audit:read` | administrator |
 | GET | `/api/v1/admin/roles` | `users:read` | manager, administrator |
 | GET | `/api/v1/admin/system` | `settings:manage` | administrator |

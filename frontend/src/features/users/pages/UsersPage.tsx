@@ -15,6 +15,8 @@ import { useAuth } from '@/services/session';
 import { formatDateTime, humanize } from '@/utils/format';
 import type { AdminUser, UserAction } from '../api/users-api';
 import { SettingsNav } from '@/features/settings';
+import { ReviewQueue } from '@/features/access-requests';
+import { Card, CardHeader } from '@/components/ui/Card';
 import { useRoles, useUserChange, useUsers } from '../hooks/useUsers';
 
 type Pending = { user: AdminUser; kind: 'roles' } | { user: AdminUser; kind: UserAction };
@@ -39,6 +41,12 @@ export function UsersPage() {
     <section aria-labelledby="users-title" className="stack stack--tight">
       <PageHeader title="Users" titleId="users-title" subtitle="Accounts, roles and sign-in security" />
       <SettingsNav />
+      {manage && (
+        <Card aria-labelledby="role-requests-title">
+          <CardHeader title="Role requests" titleId="role-requests-title" />
+          <ReviewQueue />
+        </Card>
+      )}
       <div className="filter-bar">
         <Field label="Search">{(c) => <SearchInput {...c} placeholder="Name or email" value={filters.q} onChange={(e) => set({ q: e.target.value })} />}</Field>
         <Field label="Role">

@@ -41,6 +41,10 @@ SIGNED_IN_ONLY = {
     ("POST", "/api/v1/auth/mfa/disable"),
     ("POST", "/api/v1/auth/mfa/recovery-codes"),
     ("GET", "/api/v1/classification/model"),
+    # a person asking for a role acts only on their own requests
+    ("POST", "/api/v1/access-requests"),
+    ("GET", "/api/v1/access-requests/mine"),
+    ("POST", "/api/v1/access-requests/{request_id}/withdraw"),
 }
 
 
