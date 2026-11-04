@@ -63,7 +63,7 @@ Tester: ______  Date: ______  Screen reader and version: ______  Browser and ver
 
 ## D. What automation already covers (for context only)
 
-* `accessibility.spec.ts`: axe-core (WCAG 2.0 to 2.2 A/AA tags) over all 22 signed-in routes in both themes, as an
+* `accessibility.spec.ts`: axe-core (WCAG 2.0 to 2.2 A/AA tags) over all 26 signed-in routes in both themes, as an
   administrator; fails on serious or critical findings and on any colour-contrast finding. Map canvases are excluded.
 * `keyboard.spec.ts` (7 tests): keyboard sign-in, skip link, visible focus on every Tab stop, no trap, account
   menu, search dialog, navigation drawer and sign-out from the sidebar.

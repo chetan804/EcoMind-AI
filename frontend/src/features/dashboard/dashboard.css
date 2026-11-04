@@ -1,4 +1,5 @@
 .dash { display: grid; gap: 30px; }
+.dash__demo { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin: 0; color: var(--color-text-secondary); font-size: var(--text-sm); }
 .dash__kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
 .dash__kpis .card { display: flex; align-items: center; min-height: 128px; padding: 0 var(--space-6); }
 .dash__row { display: grid; gap: 24px; align-items: stretch; }

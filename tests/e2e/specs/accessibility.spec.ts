@@ -19,6 +19,7 @@ const ROUTES = [
   '/dashboard', '/classify', '/classify/review', '/forecasts', '/anomalies', '/routes', '/marketplace', '/incidents',
   '/sorting-guide', '/passports', '/recovery', '/rewards', '/reports', '/locations', '/facilities', '/fleet',
   '/collection', '/analytics', '/notifications', '/assistant', '/support', '/settings/system-status',
+  '/settings/security', '/settings/access', '/settings/users', '/settings/audit',
 ];
 
 async function violations(page: Page, route: string): Promise<string[]> {

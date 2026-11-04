@@ -28,6 +28,7 @@ export const overviewSchema = z.object({
   rewards: z.object({ entries: z.number(), users: z.number(), net_points: z.number(), impact_weight_kg: decimal }),
   anomalies: z.object({ open_alerts: z.number(), critical_open: z.number() }),
   passports: z.object({ total: z.number(), by_status: z.array(countSchema) }),
+  contains_demonstration_data: z.boolean().default(false),
   basis: z.string(),
 });
 export type Overview = z.infer<typeof overviewSchema>;

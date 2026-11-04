@@ -92,6 +92,9 @@ class Overview(BaseModel):
     rewards: RewardStats
     anomalies: AnomalyStats
     passports: PassportStats
+    # True when generated demonstration records (see docs/database/synthetic-data.md) are present,
+    # so the dashboard can say that the figures are not live operations.
+    contains_demonstration_data: bool = False
     basis: str = BASIS
 
 

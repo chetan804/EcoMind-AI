@@ -7,12 +7,13 @@ import decimal
 import uuid
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import SQLColumnExpression
 
 from app.common.enums import SortOrder
 from app.common.pagination import PageParams
+from app.modules.collection import repository as collection_repository
 from app.modules.collection.models import CollectionTask
 from app.modules.route_planning.constants import RoutePlanStatus
 from app.modules.route_planning.models import RoutePlan, RouteStop
@@ -77,6 +78,24 @@ def tasks_in_active_plans(db: Session, task_ids: list[uuid.UUID]) -> dict[uuid.U
     return {tid: name for tid, name in db.execute(stmt).all() if tid is not None}
 
 
+def _involves(user_id: uuid.UUID) -> ColumnElement[bool]:
+    """Plans a person drives, or that contain a task they work (or finished working)."""
+    own_stops = select(RouteStop.route_plan_id).where(
+        RouteStop.collection_task_id.in_(collection_repository.worked_by(user_id))
+    )
+    return or_(RoutePlan.driver_id == user_id, RoutePlan.id.in_(own_stops))
+
+
+def involves(db: Session, plan_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    return bool(
+        db.scalar(
+            select(func.count())
+            .select_from(RoutePlan)
+            .where(RoutePlan.id == plan_id, _involves(user_id))
+        )
+    )
+
+
 def list_page(
     db: Session,
     params: PageParams,
@@ -86,8 +105,11 @@ def list_page(
     date_to: dt.date | None,
     sort_by: str,
     order: SortOrder,
+    visible_to: uuid.UUID | None = None,
 ) -> tuple[list[RoutePlan], int]:
     stmt = select(RoutePlan)
+    if visible_to is not None:
+        stmt = stmt.where(_involves(visible_to))
     if status is not None:
         stmt = stmt.where(RoutePlan.status == status)
     if date_from is not None:

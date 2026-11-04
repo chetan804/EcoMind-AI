@@ -280,9 +280,24 @@ def _detail(db: Session, plan: RoutePlan, warnings: list[str] | None = None) -> 
     )
 
 
-def get_plan(db: Session, plan_id: uuid.UUID) -> PlanDetail:
+def sees_own_plans_only(principal: Principal) -> bool:
+    """A field collector reads only the plans they drive or work on.
+
+    Keyed on permissions, not role names: whoever may read routes but not manage them is limited
+    to plans whose driver is themselves or that contain a task they work. A plan's stops carry
+    other people's task titles and coordinates, so the rest must not be listable or readable by id.
+    """
+    return principal.has("routes:read") and not principal.has("routes:manage")
+
+
+def get_plan(db: Session, plan_id: uuid.UUID, viewer: Principal | None = None) -> PlanDetail:
     plan = repository.get(db, plan_id)
-    if plan is None:
+    if plan is None or (
+        viewer is not None
+        and sees_own_plans_only(viewer)
+        and not repository.involves(db, plan.id, viewer.user_id)
+    ):
+        # 404, not 403: do not confirm that someone else's plan exists.
         raise NotFoundError("Route plan not found")
     return _detail(db, plan)
 
@@ -296,6 +311,7 @@ def list_plans(
     date_to: dt.date | None,
     sort_by: str,
     order: SortOrder,
+    viewer: Principal | None = None,
 ) -> Page[PlanOut]:
     rows, total = repository.list_page(
         db,
@@ -305,6 +321,7 @@ def list_plans(
         date_to=date_to,
         sort_by=sort_by,
         order=order,
+        visible_to=viewer.user_id if viewer is not None and sees_own_plans_only(viewer) else None,
     )
     return Page.build(
         [PlanOut.model_validate(r, from_attributes=True) for r in rows], total, params
@@ -342,13 +359,18 @@ def transition(
     return _detail(db, plan)
 
 
-def road_route(db: Session, plan_id: uuid.UUID, provider: RoadRouteProvider) -> RoadRouteOut:
+def road_route(
+    db: Session,
+    plan_id: uuid.UUID,
+    provider: RoadRouteProvider,
+    viewer: Principal | None = None,
+) -> RoadRouteOut:
     """Ask the routing provider for the road route through the plan, depot to depot.
 
     Never raises for provider problems: the answer says why no road route is available, so the
     screen can show a labelled fallback. Nothing is stored.
     """
-    detail = get_plan(db, plan_id)
+    detail = get_plan(db, plan_id, viewer)
     if detail.start_latitude is None or detail.start_longitude is None:
         return RoadRouteOut(plan_id=plan_id, available=False, reason="too_few_points")
     depot = LatLng(float(detail.start_latitude), float(detail.start_longitude))

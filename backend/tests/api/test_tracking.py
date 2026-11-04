@@ -605,14 +605,32 @@ def test_route_tracking_progress_comes_from_task_state_and_paths_from_events(env
     )
 
 
-def test_route_tracking_hides_vehicle_from_unrelated_collector(env: Env) -> None:
+def test_route_tracking_is_limited_to_collectors_who_work_the_plan(env: Env) -> None:
     plan_id, _ = make_plan(env)
     report(env, route_plan_id=plan_id)
-    mine = env.client.get(f"{BASE}/route-plans/{plan_id}", headers=env.h["collector"]).json()
-    assert mine["vehicle"] is not None
-    theirs = env.client.get(f"{BASE}/route-plans/{plan_id}", headers=env.h["collector2"]).json()
-    assert theirs["vehicle"] is None and theirs["path"] == []
-    assert len(theirs["stops"]) == 2  # the plan itself is visible to every routes:read role
+    url = f"{BASE}/route-plans/{plan_id}"
+    # Before anyone is assigned, no collector works this plan, so neither may read it (its stops
+    # carry task titles). A manager still can.
+    assert env.client.get(url, headers=env.h["manager"]).status_code == 200
+    assert env.client.get(url, headers=env.h["collector"]).status_code == 404
+    first = env.client.get(url, headers=env.h["manager"]).json()["stops"][0]["task_id"]
+    assigned = env.client.post(
+        f"{TASKS}/{first}/assign",
+        json={"assignee_id": str(env.ids["collector"]), "vehicle_id": env.vehicle},
+        headers=env.h["manager"],
+    )
+    assert assigned.status_code == 200, assigned.text
+    mine = env.client.get(url, headers=env.h["collector"])
+    assert mine.status_code == 200 and mine.json()["vehicle"] is not None
+    # A different collector gets the same answer as for a plan that does not exist.
+    theirs = env.client.get(url, headers=env.h["collector2"])
+    assert theirs.status_code == 404
+    assert (
+        theirs.json()["error"]["code"]
+        == env.client.get(f"{BASE}/route-plans/{uuid.uuid4()}", headers=env.h["collector2"]).json()[
+            "error"
+        ]["code"]
+    )
 
 
 def _insert_event(

@@ -5,6 +5,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 from httpx2 import Response
 from pydantic import BaseModel
+from sqlalchemy.exc import TimeoutError as PoolTimeout
 
 from app.core.exceptions import ConflictError, NotFoundError
 from app.main import create_app
@@ -31,6 +32,10 @@ def app(make_settings: SettingsFactory) -> FastAPI:
     @router.get("/_test/boom")
     def boom() -> None:
         raise RuntimeError("database password is hunter2")
+
+    @router.get("/_test/pool-exhausted")
+    def pool_exhausted() -> None:
+        raise PoolTimeout("QueuePool limit of size 20 overflow 20 reached", None, RuntimeError())
 
     @router.post("/_test/validate")
     def validate(payload: Payload) -> Payload:
@@ -101,3 +106,12 @@ def test_request_id_is_generated_and_echoed(client: TestClient) -> None:
 def test_error_body_carries_the_request_id(client: TestClient) -> None:
     response = client.get("/_test/not-found", headers={"X-Request-ID": "trace-me-12345"})
     assert error(response)["request_id"] == "trace-me-12345"
+
+
+def test_an_exhausted_connection_pool_is_a_503_not_a_500(client: TestClient) -> None:
+    response = client.get("/_test/pool-exhausted")
+    assert response.status_code == 503
+    assert response.headers["retry-after"] == "2"
+    body = error(response)
+    assert body["code"] == "service_busy"
+    assert "QueuePool" not in response.text  # internals stay in the log

@@ -61,9 +61,24 @@ class SmtpEmailSender:
                     self._deliver(smtp, mime)
         except (smtplib.SMTPException, OSError, ValueError) as exc:
             # Never include the message body (it holds a one-time link) in the error.
-            raise EmailDeliveryError(f"SMTP delivery failed: {type(exc).__name__}") from exc
+            raise EmailDeliveryError(
+                f"SMTP delivery failed: {type(exc).__name__}", transient=_is_transient(exc)
+            ) from exc
 
     def _deliver(self, smtp: smtplib.SMTP, mime: MimeMessage) -> None:
         if self._username is not None and self._password is not None:
             smtp.login(self._username, self._password)
         smtp.send_message(mime)
+
+
+def _is_transient(exc: BaseException) -> bool:
+    """Worth retrying: the network or the server had a temporary problem."""
+    if isinstance(exc, smtplib.SMTPResponseException):
+        return (
+            400 <= exc.smtp_code < 500
+        )  # 4xx = "try again later"; 5xx and auth failures are final
+    if isinstance(
+        exc, (smtplib.SMTPAuthenticationError, smtplib.SMTPRecipientsRefused, ValueError)
+    ):
+        return False
+    return isinstance(exc, (smtplib.SMTPServerDisconnected, smtplib.SMTPConnectError, OSError))

@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import TimeoutError as SQLAlchemyTimeoutError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,22 @@ def register_exception_handlers(app: FastAPI) -> None:
         ]
         return error_response(
             request, 422, "validation_error", "Request validation failed", details
+        )
+
+    @app.exception_handler(SQLAlchemyTimeoutError)
+    async def _pool_exhausted(request: Request, exc: SQLAlchemyTimeoutError) -> JSONResponse:
+        # No database connection became free within the pool timeout: the service is overloaded.
+        # Say so (503 + Retry-After) instead of a generic 500, and keep the evidence in the log.
+        logger.error(
+            "Database connection pool exhausted",
+            extra={"request_id": getattr(request.state, "request_id", None)},
+        )
+        return error_response(
+            request,
+            503,
+            "service_busy",
+            "The service is busy. Please retry in a moment.",
+            headers={"Retry-After": "2"},
         )
 
     @app.exception_handler(Exception)

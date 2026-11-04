@@ -187,3 +187,68 @@ def test_factory_picks_the_backend_from_settings() -> None:
         _settings(email_backend="smtp", smtp_host="mail.example.org", email_from="a@example.org")
     )
     assert smtp.name == "smtp"
+
+
+class _FlakySender:
+    """Fails with the given errors in order, then succeeds."""
+
+    name = "flaky"
+
+    def __init__(self, *errors: EmailDeliveryError) -> None:
+        self.errors = list(errors)
+        self.calls = 0
+
+    def send(self, message: EmailMessage) -> None:
+        self.calls += 1
+        if self.errors:
+            raise self.errors.pop(0)
+
+
+def test_a_transient_failure_is_retried_with_backoff_and_then_delivered(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    sender = _FlakySender(
+        EmailDeliveryError("SMTP delivery failed: OSError", transient=True),
+        EmailDeliveryError("SMTP delivery failed: SMTPServerDisconnected", transient=True),
+    )
+    waits: list[float] = []
+    with caplog.at_level(logging.INFO):
+        assert deliver(sender, MESSAGE, sleep=waits.append) is True
+    assert sender.calls == 3 and waits == [0.5, 2.0]
+    text = " ".join(r.getMessage() for r in caplog.records)
+    assert "email.delivered" in text and "attempts=3" in text
+    assert "rita@example.org" not in text
+
+
+def test_retries_are_bounded_and_the_final_failure_is_logged_once(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    sender = _FlakySender(
+        *[EmailDeliveryError("SMTP delivery failed: OSError", transient=True)] * 5
+    )
+    with caplog.at_level(logging.INFO):
+        assert deliver(sender, MESSAGE, max_attempts=3, sleep=lambda _s: None) is False
+    assert sender.calls == 3
+    failures = [r for r in caplog.records if "email.delivery_failed" in r.getMessage()]
+    assert len(failures) == 1 and "attempts=3" in failures[0].getMessage()
+
+
+def test_a_permanent_failure_is_never_retried() -> None:
+    sender = _FlakySender(EmailDeliveryError("SMTP delivery failed: SMTPRecipientsRefused"))
+    assert deliver(sender, MESSAGE, sleep=lambda _s: pytest.fail("must not wait")) is False
+    assert sender.calls == 1
+
+
+def test_smtp_errors_are_classified_as_transient_or_permanent() -> None:
+    import smtplib
+
+    from app.integrations.email.smtp import _is_transient
+
+    assert _is_transient(TimeoutError())
+    assert _is_transient(ConnectionRefusedError())
+    assert _is_transient(smtplib.SMTPServerDisconnected())
+    assert _is_transient(smtplib.SMTPResponseException(451, b"try again later"))
+    assert not _is_transient(smtplib.SMTPResponseException(550, b"mailbox unavailable"))
+    assert not _is_transient(smtplib.SMTPAuthenticationError(535, b"bad credentials"))
+    assert not _is_transient(smtplib.SMTPRecipientsRefused({}))
+    assert not _is_transient(ValueError("header injection"))

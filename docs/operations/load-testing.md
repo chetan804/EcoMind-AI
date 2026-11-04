@@ -1,5 +1,10 @@
 # Load testing
 
+> **Update 2026-11-04:** a Locust scenario (`scripts/perf/locustfile.py`) and a larger run against the
+> 52 k-row synthetic dataset are in [../testing/load-test-report.md](../testing/load-test-report.md). That run
+> found and fixed a connection-pool stall at 100 concurrent users (the 2026-10-21 run below stopped at 50 users and did
+> not see it). The older numbers below were taken before that fix and a much smaller dataset.
+
 `scripts/perf/load_test.py` is a closed-loop load generator for the **read-only** API. It needs no extra
 packages (it uses the backend environment's `httpx2`) and writes nothing to the database.
 

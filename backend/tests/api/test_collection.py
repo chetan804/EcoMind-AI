@@ -532,3 +532,66 @@ def test_reward_policy_can_be_disabled_and_is_idempotent(
         client.get(f"{REPORTS}/{created['id']}", headers=heads["citizen"]).json()["status"]
         == "closed"
     )
+
+
+# ------------------------------------------------------------------ collector data boundary
+def test_collector_sees_only_their_own_tasks(env: Env) -> None:
+    """A collector cannot list or open another collector's task, with or without ``mine``."""
+    mine = new_task(env, title="Mine to collect")
+    theirs = new_task(env, title="Belongs to collector two")
+    unassigned = new_task(env, title="Nobody has this yet")
+    assign(env, mine, "collector")
+    assign(env, theirs, "collector2")
+
+    for query in ("", "?mine=true"):
+        listing = env.client.get(f"{TASKS}{query}", headers=env.h["collector"])
+        assert listing.status_code == 200, listing.text
+        titles = {row["title"] for row in listing.json()["items"]}
+        assert titles == {"Mine to collect"}, (query, titles)
+        assert listing.json()["total"] == 1
+    # asking for another collector's tasks by id returns nothing, not their rows
+    peek = env.client.get(
+        f"{TASKS}?assignee_id={env.ids['collector2']}", headers=env.h["collector"]
+    )
+    assert peek.status_code == 200 and peek.json()["total"] == 0
+
+    assert env.client.get(f"{TASKS}/{mine['id']}", headers=env.h["collector"]).status_code == 200
+    for other in (theirs, unassigned):
+        denied = env.client.get(f"{TASKS}/{other['id']}", headers=env.h["collector"])
+        assert denied.status_code == 404, denied.text
+    # the other collector gets the mirror image
+    assert env.client.get(TASKS, headers=env.h["collector2"]).json()["total"] == 1
+
+
+def test_manager_and_operator_keep_the_full_task_overview(env: Env) -> None:
+    for title, who in (("Task alpha", "collector"), ("Task bravo", "collector2")):
+        assign(env, new_task(env, title=title), who)
+    new_task(env, title="Task charlie")
+    for who in ("manager", "operator"):
+        body = env.client.get(TASKS, headers=env.h[who]).json()
+        assert body["total"] == 3, who
+
+
+def test_reassigned_task_leaves_the_previous_collectors_view(env: Env) -> None:
+    task = new_task(env, title="Handed over")
+    assign(env, task, "collector")
+    assert env.client.get(f"{TASKS}/{task['id']}", headers=env.h["collector"]).status_code == 200
+    assign(env, task, "collector2")
+    assert env.client.get(f"{TASKS}/{task['id']}", headers=env.h["collector"]).status_code == 404
+    assert env.client.get(TASKS, headers=env.h["collector"]).json()["total"] == 0
+
+
+def test_a_collector_keeps_their_finished_work_but_not_someone_elses(env: Env) -> None:
+    done = new_task(env, title="Finished by collector one")
+    other = new_task(env, title="Finished by collector two")
+    for task, who in ((done, "collector"), (other, "collector2")):
+        assign(env, task, who)
+        assert act(env, who, task, "start").status_code == 200
+        assert act(env, who, task, "complete", {"collected_weight_kg": "12"}).status_code == 200
+    listing = env.client.get(TASKS, headers=env.h["collector"]).json()
+    assert [row["title"] for row in listing["items"]] == ["Finished by collector one"]
+    assert env.client.get(f"{TASKS}/{done['id']}", headers=env.h["collector"]).status_code == 200
+    assert env.client.get(f"{TASKS}/{other['id']}", headers=env.h["collector"]).status_code == 404
+    # "mine" still means current work only, which the dashboard card relies on
+    mine = env.client.get(f"{TASKS}?mine=true", headers=env.h["collector"]).json()
+    assert mine["total"] == 0

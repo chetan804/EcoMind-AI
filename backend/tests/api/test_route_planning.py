@@ -47,6 +47,7 @@ def env(make_client: ClientFactory, db_engine: Engine) -> Env:
     for name, roles in (
         ("citizen", ("citizen",)),
         ("collector", ("collector",)),
+        ("collector2", ("collector",)),
         ("manager", ("manager",)),
     ):
         ids[name] = create_user(db_engine, email=f"{name}@example.org", roles=roles)
@@ -104,6 +105,49 @@ def test_permissions(env: Env, world: dict[str, Any]) -> None:
     assert create(env, "citizen", **body_for(world)).status_code == 403
     assert create(env, "collector", **body_for(world)).status_code == 403  # read-only role
     assert env.client.get(PLANS, headers=env.h["collector"]).status_code == 200
+
+
+def test_a_collector_reads_only_plans_they_drive_or_work(env: Env, world: dict[str, Any]) -> None:
+    mine = create(env, **body_for(world, driver_id=str(env.ids["collector"]))).json()
+    other = create(
+        env,
+        **body_for(
+            world, name="Other round", task_ids=[task(env, 0)], driver_id=str(env.ids["collector2"])
+        ),
+    ).json()
+    unassigned = create(
+        env, **body_for(world, name="Nobody's round", task_ids=[task(env, 1)])
+    ).json()
+
+    def listed(who: str) -> set[str]:
+        page = env.client.get(PLANS, params={"page_size": 100}, headers=env.h[who])
+        assert page.status_code == 200
+        body = page.json()
+        assert body["total"] == len(body["items"])  # the total never counts hidden plans
+        return {p["id"] for p in body["items"]}
+
+    assert listed("manager") == {mine["id"], other["id"], unassigned["id"]}
+    assert listed("collector") == {mine["id"]}
+    assert listed("collector2") == {other["id"]}
+    for who, hidden in (("collector", other), ("collector", unassigned), ("collector2", mine)):
+        for suffix in ("", "/road-route"):
+            r = env.client.get(f"{PLANS}/{hidden['id']}{suffix}", headers=env.h[who])
+            assert r.status_code == 404, (who, suffix)
+    assert env.client.get(f"{PLANS}/{mine['id']}", headers=env.h["collector"]).status_code == 200
+    assert (
+        env.client.get(f"{PLANS}/{mine['id']}/road-route", headers=env.h["collector"]).status_code
+        == 200
+    )
+    # The collector who works a task on someone else's plan is also allowed to see that plan.
+    task_id = unassigned["stops"][0]["collection_task_id"]
+    vehicle_id = vehicle(env, "SCOPE 1", "1000")
+    assigned = env.client.post(
+        f"{TASKS}/{task_id}/assign",
+        json={"assignee_id": str(env.ids["collector2"]), "vehicle_id": vehicle_id},
+        headers=env.h["manager"],
+    )
+    assert assigned.status_code == 200, assigned.text
+    assert unassigned["id"] in listed("collector2")
 
 
 def test_plan_is_the_optimal_order_for_straight_line_distance(

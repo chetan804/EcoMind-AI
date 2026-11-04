@@ -181,3 +181,28 @@ def test_mfa_required_roles_can_be_set_or_switched_off_explicitly() -> None:
 def test_mfa_required_roles_must_be_real_roles() -> None:
     with pytest.raises(ValueError, match="unknown roles: admin"):
         build(mfa_required_roles="admin,manager")
+
+
+def test_the_connection_pool_covers_the_request_thread_pool_by_default() -> None:
+    """Fewer connections than request threads can stall the process (see docs/testing/load-test-report.md)."""
+    settings = build()
+    assert settings.db_pool_size + settings.db_max_overflow >= 40
+    assert settings.db_pool_timeout_seconds <= 30
+
+
+def test_pool_settings_are_validated_and_reach_the_engine(monkeypatch: pytest.MonkeyPatch) -> None:
+    with pytest.raises(ValidationError):
+        build(db_pool_size=0)
+    from app.db import session
+
+    monkeypatch.setattr(
+        session,
+        "get_settings",
+        lambda: build(db_pool_size=3, db_max_overflow=2, db_pool_timeout_seconds=7),
+    )
+    session.get_engine.cache_clear()
+    try:
+        pool = session.get_engine().pool
+        assert (pool.size(), pool._max_overflow, pool._timeout) == (3, 2, 7)  # type: ignore[attr-defined]
+    finally:
+        session.get_engine.cache_clear()

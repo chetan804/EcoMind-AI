@@ -31,7 +31,7 @@ from app.modules.collection.constants import CollectionEventType, CollectionTask
 from app.modules.collection.models import CollectionEvent, CollectionTask
 from app.modules.community_incidents import service as incidents
 from app.modules.facilities.constants import FacilityStatus
-from app.modules.facilities.models import Facility
+from app.modules.facilities.models import Facility, Zone
 from app.modules.fleet.constants import VehicleStatus
 from app.modules.fleet.models import FleetVehicle
 from app.modules.forecasting.series import REFERENCE_PREFIX
@@ -60,6 +60,18 @@ def _weight(db: Session, *conditions: Any) -> decimal.Decimal:
         *conditions,
     )
     return decimal.Decimal(str(db.execute(stmt).scalar_one()))
+
+
+# Zone code prefix written by the synthetic dataset generator (scripts/demo/synthetic).
+SYNTHETIC_ZONE_CODE_PREFIX = "SYN-ZN-"
+
+
+def _contains_demonstration_data(db: Session) -> bool:
+    return bool(
+        db.execute(
+            select(Zone.id).where(Zone.code.like(SYNTHETIC_ZONE_CODE_PREFIX + "%")).limit(1)
+        ).first()
+    )
 
 
 def overview(db: Session, *, window_days: int, now: dt.datetime | None = None) -> Overview:
@@ -157,6 +169,7 @@ def overview(db: Session, *, window_days: int, now: dt.datetime | None = None) -
         ),
         anomalies=AnomalyStats(open_alerts=int(open_alerts), critical_open=int(critical)),
         passports=PassportStats(total=sum(c.count for c in passports), by_status=passports),
+        contains_demonstration_data=_contains_demonstration_data(db),
     )
 
 

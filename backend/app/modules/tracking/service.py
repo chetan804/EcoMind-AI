@@ -581,7 +581,7 @@ def route_tracking(
     plan = plans.get(db, plan_id)
     if plan is None:
         raise NotFoundError("Route plan not found")
-    detail = plan_service.get_plan(db, plan_id)
+    detail = plan_service.get_plan(db, plan_id, principal)
     task_ids = [s.collection_task_id for s in detail.stops if s.collection_task_id]
     statuses = repository.task_statuses(db, task_ids)
     stops = [

@@ -33,6 +33,16 @@ class Settings(BaseSettings):
     database_url: str
     secret_key: SecretStr
 
+    # Connection pool. Synchronous handlers run on a thread pool of 40 (the anyio default), and a
+    # session's connection is released only after the response, by code that also needs a thread.
+    # If the pool were SMALLER than that, every thread could end up waiting for a connection held by
+    # a finished request that is waiting for a thread, and the process stalls until the pool timeout
+    # (found by the 100-user load run). Keep pool_size + max_overflow >= 40, per worker process, and
+    # remember PostgreSQL's max_connections must cover workers x (pool_size + max_overflow).
+    db_pool_size: int = Field(default=20, ge=1, le=100)
+    db_max_overflow: int = Field(default=20, ge=0, le=100)
+    db_pool_timeout_seconds: int = Field(default=10, ge=1, le=60)
+
     jwt_algorithm: Literal["HS256"] = "HS256"
     access_token_expire_minutes: int = Field(default=15, ge=1, le=120)
     refresh_token_expire_days: int = Field(default=14, ge=1, le=90)

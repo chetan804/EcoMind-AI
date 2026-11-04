@@ -4,6 +4,7 @@ import { CheckCircle2, ClipboardList, Layers, Recycle, ShieldAlert, TriangleAler
 import { DonutChart } from '@/components/data-display/DonutChart';
 import { MetricTile } from '@/components/data-display/MetricTile';
 import { QueryBoundary } from '@/components/feedback/QueryBoundary';
+import { DemoDataNotice } from '@/components/feedback/DemoDataNotice';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Topbar } from '@/components/layout/Topbar';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -48,6 +49,12 @@ function OperationsOverview() {
             const total = statuses.reduce((sum, c) => sum + c.count, 0);
             return (
               <>
+                {o.contains_demonstration_data ? (
+                  <p className="dash__demo" role="note">
+                    <DemoDataNotice>Demonstration data, not live</DemoDataNotice>
+                    <span>This system holds generated sample records. The figures below describe that sample, not real operations.</span>
+                  </p>
+                ) : null}
                 <ul className="dash__kpis" aria-label="Key metrics">
                   <li>
                     <Card className="dash__kpi">
@@ -155,7 +162,12 @@ function OperationsOverview() {
 
 const MEMBER_LINKS = [
   { permission: 'waste_reports:create', to: '/classify', title: 'Classify an item', body: 'Photograph an item and get sorting guidance.' },
-  { permission: 'collection:read', to: '/collection', title: 'Collections', body: 'Your collection tasks.' },
+  { permission: 'collection:read', to: '/collection', title: 'Collections', body: 'Collection tasks you are allowed to see.' },
+  { permission: 'routes:read', to: '/routes', title: 'Routes', body: 'Planned collection routes and their stops.' },
+  { permission: 'classification:review', to: '/classify/review', title: 'Review queue', body: 'Classifications waiting for a person to check them.' },
+  { permission: 'circular_economy:read', to: '/recovery', title: 'Recovery', body: 'What was recovered from collected waste, and where it went.' },
+  { permission: 'passports:read', to: '/passports', title: 'Traceability', body: 'Chain-of-custody records for recovered material.' },
+  { permission: 'incidents:create', to: '/incidents', title: 'Incidents', body: 'Report a problem or follow one you reported.' },
   { permission: 'notifications:read_own', to: '/notifications', title: 'Notifications', body: 'Updates about your reports and tasks.' },
   { permission: 'rewards:read_own', to: '/rewards', title: 'Rewards', body: 'Your points and recorded impact.' },
 ];
@@ -166,7 +178,7 @@ function MemberHome({ name }: { name: string | null }) {
   return (
     <>
       <PageHeader title={`${greeting()}${name ? `, ${name}` : ''}`} subtitle="What would you like to do?" />
-      {can('collection:read') && <MyTasks />}
+      {can('collection:execute') && <MyTasks />}
       <ul className="member-links">
         {links.map((l) => (
           <li key={l.to}>
@@ -226,7 +238,11 @@ function AttentionList({ overview: o }: { overview: Overview }) {
   );
 }
 
-/** A collector's own open tasks, read from the collection API (only tasks assigned to the signed-in person). */
+/**
+ * A collector's own open tasks (only tasks assigned to the signed-in person). It is keyed on
+ * `collection:execute`, not `collection:read`: facility operators hold `collection:read` too but do
+ * not work tasks, so they keep the plain list of links.
+ */
 function MyTasks() {
   const query = useTasks({ page: 1, q: '', status: '', priority: '', mine: true });
   const open = (query.data?.items ?? []).filter((t) => t.status === 'assigned' || t.status === 'in_progress').slice(0, 5);

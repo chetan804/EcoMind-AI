@@ -70,6 +70,7 @@ def list_tasks(
         q=q,
         sort_by=sort_by,
         order=order,
+        visible_to=principal.user_id if service.sees_own_tasks_only(principal) else None,
     )
 
 
@@ -81,8 +82,8 @@ def create_task(
 
 
 @router.get("/tasks/{task_id}", response_model=TaskDetail)
-def get_task(task_id: uuid.UUID, db: DbSession, _: CanRead) -> TaskDetail:
-    return service.get_task(db, task_id)
+def get_task(task_id: uuid.UUID, db: DbSession, principal: CanRead) -> TaskDetail:
+    return service.get_task(db, task_id, viewer=principal)
 
 
 @router.post("/tasks/{task_id}/assign", response_model=TaskDetail)
