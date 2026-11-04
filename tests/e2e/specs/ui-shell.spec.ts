@@ -30,6 +30,7 @@ publicTest('sign-in and sign-up have a close control and offer no unavailable so
   await page.getByRole('link', { name: /close and return to the home page/i }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto('/sign-up');
+  await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page).toHaveURL(/\/$/);
 });

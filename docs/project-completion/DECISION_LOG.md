@@ -72,3 +72,19 @@ Four Dependabot pull requests were merged into `main` at about 14:42 IST, right 
 | `postgres` 16-alpine → 18-alpine in `compose.yaml` | A major database upgrade is a data migration, not a bump; the 18 images also use a different data directory layout than the `/var/lib/postgresql/data` mount in `compose.yaml`; the backend CI service and every test in this project run on 16. I could not run Docker to test 18 | **Reverted** to `postgres:16-alpine`. Dependabot now ignores PostgreSQL major bumps. Moving to 18 needs its own change: volume path, a tested `pg_upgrade` or dump/restore plan, and CI on 18 |
 | `@types/node` 22 → 26 (`/frontend`, `/tests/e2e`) | Type definitions only; the project runs Node 22 in CI and in the images, so the types describe APIs that do not exist at run time | **Pinned back to `^22.20.5`** in both packages on 2026-10-21 (branch `arena/94d6b905-ecomind-ai`) so the types match the Node 22 runtime; `.github/dependabot.yml` ignores `@types/node` majors above 22. `npm ci`, lint, typecheck and the browser suite pass |
 | `typescript` 7 in `/tests/e2e` | Was already `^7.0.2` before these merges and the browser suite passed with it | Unchanged |
+
+## Public registration stays citizen-only; operational roles by approved request (2026-11-04)
+
+**Decision.** The sign-up screen offers an account-type chooser (citizen, collector, facility operator, manager) but registration itself always creates a citizen. Choosing an operational type sends a role request after the account exists (`POST /api/v1/access-requests`, reason required); an administrator approves or rejects it (`users:manage`), the decision is audited and the requester is notified. Administrator is never requestable and is created only through the protected administrator process.
+
+**Why.** The master prompt asks for role-based registration, but letting anyone register as a collector or manager would be a privilege escalation. A request-and-approve workflow gives the same user experience without weakening authorisation.
+
+**Alternatives.** Invitation links (more machinery, needs e-mail that is not verified in production); a role field on `register` (rejected: insecure). Invitations can be added later on top of the same `role_requests` table.
+
+**Impact.** One new table (`role_requests`, migration 0018), five API operations, a new `access_requests` module and `/settings/access`. Existing `register` behaviour and tests are unchanged.
+
+## Watch demo is a screenshot walkthrough, not a video (2026-11-04)
+
+**Decision.** "Watch demo" opens a modal walkthrough of five core flows using screenshots of the running application on demonstration data. There is no recorded video and no fake player. Each step says what is built and what its limit is (for example, the classifier is not approved).
+
+**Why.** A video would age as the UI changes and would imply a finished product; screenshots are cheap to retake and can be labelled.

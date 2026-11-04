@@ -52,9 +52,11 @@ class Env:
 
     def audit_count(self, action: str) -> int:
         with self.engine.connect() as c:
-            return c.execute(
-                text("select count(*) from audit_logs where action=:a"), {"a": action}
-            ).scalar_one()
+            return int(
+                c.execute(
+                    text("select count(*) from audit_logs where action=:a"), {"a": action}
+                ).scalar_one()
+            )
 
 
 @pytest.fixture

@@ -8,8 +8,9 @@ Test coverage: `frontend/tests/integration/{security,operations,circular,...}.te
 |---|---|---|---|---|---|
 | System status | `/settings/system-status` | settings | `/health`, `/ready` | signed in | **Working** |
 | Not found / error / forbidden | `*` | components/feedback | none | all | **Working** |
-| Landing | `/` | landing | none | public | **UI only** (static content; stats are repository facts) |
-| Sign in / Sign up (with MFA step) | `/sign-in`, `/sign-up` | auth | auth, MFA | public | **Working** (registration, lockout and policy messages; second step when MFA is on) |
+| Landing | `/` | landing | none | public | **Working** (static content and real screenshots on labelled demonstration data; 18 sections, sticky header with mobile menu, accessible Watch demo walkthrough; no performance figures) |
+| Sign in / Sign up (with MFA step) | `/sign-in`, `/sign-up` | auth | auth, MFA, access-requests | public | **Working** (visible close control and Escape return to the landing page; sign-up always creates a citizen, an account-type chooser can send a role request afterwards; no social buttons; lockout, policy messages; second step when MFA is on) |
+| Access and roles (role guide, request an operational role, my requests, withdraw) | `/settings/access` | access-requests | access-requests (`/api/v1/access-requests/*`, docs/api/access-requests-api.md) | signed in | **Working** (administrators decide requests in Users: `users:manage`) |
 | Forgot / reset password, confirm e-mail address | `/forgot-password`, `/reset-password`, `/verify-email` | auth | auth (`/auth/password-reset/*`, `/auth/email-verification/*`; docs/operations/account-recovery.md) | public | **Working** (identical answer for known and unknown addresses; a link is never confirmed until the user presses the button; real SMTP delivery unverified) |
 | Dashboard (Operational Command Center) | `/dashboard` | dashboard | analytics, notifications | `analytics:read` for figures | **Working** (real queries; clear state without permission or data). Fleet map with live/delayed/stale/simulated positions and facilities (`fleet:read`) |
 | Classify an item | `/classify` | waste-classification | classification | `classification:predict` | **Working** (needs an activated model; says so otherwise) |
