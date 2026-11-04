@@ -48,7 +48,7 @@ def _ctx(request: Request) -> RequestContext:
 @router.get("/plans", response_model=Page[PlanOut])
 def list_plans(
     db: DbSession,
-    _: CanRead,
+    principal: CanRead,
     params: Pagination,
     status_filter: Annotated[RoutePlanStatus | None, Query(alias="status")] = None,
     date_from: dt.date | None = None,
@@ -64,6 +64,7 @@ def list_plans(
         date_to=date_to,
         sort_by=sort_by,
         order=order,
+        viewer=principal,
     )
 
 
@@ -76,19 +77,19 @@ def create_plan(
 
 
 @router.get("/plans/{plan_id}", response_model=PlanDetail)
-def get_plan(plan_id: uuid.UUID, db: DbSession, _: CanRead) -> PlanDetail:
-    return service.get_plan(db, plan_id)
+def get_plan(plan_id: uuid.UUID, db: DbSession, principal: CanRead) -> PlanDetail:
+    return service.get_plan(db, plan_id, principal)
 
 
 @router.get("/plans/{plan_id}/road-route", response_model=RoadRouteOut)
 def get_road_route(
-    plan_id: uuid.UUID, db: DbSession, _: CanRead, provider: RoadRouting
+    plan_id: uuid.UUID, db: DbSession, principal: CanRead, provider: RoadRouting
 ) -> RoadRouteOut:
     """Road geometry, distance and duration from the routing provider (never stored).
 
     Answers 200 with ``available: false`` and a reason when the provider is not configured or
     fails, so the client can show a labelled straight-line fallback."""
-    return service.road_route(db, plan_id, provider)
+    return service.road_route(db, plan_id, provider, principal)
 
 
 @router.post("/plans/{plan_id}/publish", response_model=PlanDetail)

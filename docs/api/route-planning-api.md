@@ -2,6 +2,8 @@
 
 Base path `/api/v1/route-planning`. Bearer authentication; standard error envelope. Reading needs `routes:read` (collectors, managers, administrators); planning needs `routes:manage` (managers, administrators).
 
+**Scope.** A principal with `routes:read` but without `routes:manage` (the collector) sees only plans they drive (`driver_id`) or that contain a collection task they work or finished working. List totals count only those plans; any other plan, its `road-route` and `GET /tracking/route-plans/{id}` answer `404` (the same answer as for a plan that does not exist). Managers and administrators see every plan.
+
 | Method and path | Purpose |
 |---|---|
 | `GET /route-planning/plans` | Paginated plans (filter `status`, `date_from`, `date_to`; sort) |

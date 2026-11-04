@@ -204,6 +204,11 @@ def _worked_by(user_id: uuid.UUID) -> Select[tuple[uuid.UUID]]:
     return select(both.c.collection_task_id)
 
 
+def worked_by(user_id: uuid.UUID) -> Select[tuple[uuid.UUID]]:
+    """Public form of the person's own work, for other modules that must scope by it."""
+    return _worked_by(user_id)
+
+
 def is_worked_by(db: Session, task_id: uuid.UUID, user_id: uuid.UUID) -> bool:
     found = db.scalar(
         select(func.count())

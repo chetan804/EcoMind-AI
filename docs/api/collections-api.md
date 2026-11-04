@@ -19,6 +19,8 @@ A **collection task** is a unit of field work: collect waste at a place (usually
 
 Roles: collectors hold `collection:read|execute`; managers and administrators also hold `collection:manage`. Citizens have no access.
 
+**Scope.** A principal who holds `collection:execute` but neither `collection:manage` nor `circular_economy:manage` (the collector) sees only tasks currently assigned to them and tasks they finished (completed or failed) as the latest assignee. Another person's task answers `404` on read, not `403`, so its existence is not confirmed. Managers, administrators and facility operators keep the full queue.
+
 ## Lifecycle
 
 ```
