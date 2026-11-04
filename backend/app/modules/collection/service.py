@@ -224,10 +224,30 @@ def list_tasks(
     return Page.build(_task_out(db, rows), total, params)
 
 
-def get_task(db: Session, task_id: uuid.UUID) -> TaskDetail:
+def sees_own_tasks_only(principal: Principal) -> bool:
+    """A field collector may read only the tasks currently assigned to them.
+
+    The rule keys on the permissions rather than the role name: whoever can work tasks
+    (``collection:execute``) but cannot plan them (``collection:manage``) and does not run a
+    facility (``circular_economy:manage``) is limited to their own assignments. Managers,
+    administrators and facility staff keep the operational overview they need.
+    """
+    return (
+        principal.has(EXECUTE)
+        and not principal.has(MANAGE)
+        and not principal.has("circular_economy:manage")
+    )
+
+
+def get_task(db: Session, task_id: uuid.UUID, *, viewer: Principal | None = None) -> TaskDetail:
     task = repository.get(db, task_id)
     if task is None:
         raise NotFoundError("Collection task not found")
+    if viewer is not None and sees_own_tasks_only(viewer):
+        current = repository.active_assignment(db, task.id)
+        if current is None or current.assignee_id != viewer.user_id:
+            # 404, not 403: do not confirm that someone else's task exists.
+            raise NotFoundError("Collection task not found")
     return _detail(db, task)
 
 

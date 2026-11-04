@@ -63,7 +63,9 @@ def list_tasks(
         params,
         status=status_filter,
         priority=priority,
-        assignee_id=principal.user_id if mine else assignee_id,
+        assignee_id=principal.user_id
+        if (mine or service.sees_own_tasks_only(principal))
+        else assignee_id,
         waste_report_id=waste_report_id,
         due_before=due_before,
         due_after=due_after,
@@ -81,8 +83,8 @@ def create_task(
 
 
 @router.get("/tasks/{task_id}", response_model=TaskDetail)
-def get_task(task_id: uuid.UUID, db: DbSession, _: CanRead) -> TaskDetail:
-    return service.get_task(db, task_id)
+def get_task(task_id: uuid.UUID, db: DbSession, principal: CanRead) -> TaskDetail:
+    return service.get_task(db, task_id, viewer=principal)
 
 
 @router.post("/tasks/{task_id}/assign", response_model=TaskDetail)
